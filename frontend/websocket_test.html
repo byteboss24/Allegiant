@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Audio Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        #transcription {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Audio Test</h1>
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div class="input-group">
+            <label for="fromNumber">From Number:</label>
+            <input type="text" id="fromNumber" placeholder="Enter phone number" value="+1234567890">
+        </div>
+        <div class="input-group">
+            <label for="callSid">Call SID:</label>
+            <input type="text" id="callSid" placeholder="Enter call SID" value="TEST_CALL_SID">
+        </div>
+
+        <div class="controls">
+            <button id="connectBtn">Connect</button>
+            <button id="disconnectBtn" disabled>Disconnect</button>
+        </div>
+
+        <div class="controls">
+            <button id="startRecordingBtn" disabled>Start Recording</button>
+            <button id="stopRecordingBtn" disabled>Stop Recording</button>
+        </div>
+
+        <div>
+            <h3>Transcription:</h3>
+            <div id="transcription"></div>
+        </div>
+
+        <div>
+            <h3>Audio Playback:</h3>
+            <audio id="audioPlayer" controls></audio>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        const audioPlayer = document.getElementById('audioPlayer');
+        const transcriptionDiv = document.getElementById('transcription');
+
+        // WebSocket connection
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const fromNumber = document.getElementById('fromNumber').value;
+            const callSid = document.getElementById('callSid').value;
+            const wsUrl = `${protocol}//${window.location.host}/twilio/stream?from_number=${encodeURIComponent(fromNumber)}&call_sid=${encodeURIComponent(callSid)}`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                document.getElementById('status').textContent = 'Connected';
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+                document.getElementById('startRecordingBtn').disabled = false;
+            };
+
+            ws.onclose = () => {
+                document.getElementById('status').textContent = 'Disconnected';
+                document.getElementById('status').className = 'status disconnected';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.getElementById('startRecordingBtn').disabled = true;
+                document.getElementById('stopRecordingBtn').disabled = true;
+            };
+
+            ws.onmessage = async (event) => {
+                if (event.data instanceof Blob) {
+                    // Handle audio response
+                    const audioUrl = URL.createObjectURL(event.data);
+                    audioPlayer.src = audioUrl;
+                } else {
+                    try {
+                        // Handle text response (transcription)
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'transcription') {
+                            transcriptionDiv.textContent = data.text;
+                        }
+                    } catch (error) {
+                        console.error('Error parsing message:', error);
+                    }
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                document.getElementById('status').textContent = 'Connection Error';
+                document.getElementById('status').className = 'status disconnected';
+            };
+        }
+
+        // Audio recording
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 8000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    } 
+                });
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const base64Audio = reader.result.split(',')[1];
+                                ws.send(JSON.stringify({
+                                    audio_data: base64Audio
+                                }));
+                            };
+                            reader.readAsDataURL(event.data);
+                        }
+                    }
+                };
+
+                mediaRecorder.start(1000); // Send chunks every second
+                document.getElementById('startRecordingBtn').disabled = true;
+                document.getElementById('stopRecordingBtn').disabled = false;
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                document.getElementById('startRecordingBtn').disabled = false;
+                document.getElementById('stopRecordingBtn').disabled = true;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('connectBtn').addEventListener('click', connect);
+        document.getElementById('disconnectBtn').addEventListener('click', () => {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        });
+        document.getElementById('startRecordingBtn').addEventListener('click', startRecording);
+        document.getElementById('stopRecordingBtn').addEventListener('click', stopRecording);
+    </script>
+</body>
+</html> 
