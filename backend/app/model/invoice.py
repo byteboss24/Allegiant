@@ -3,12 +3,22 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 class InvoiceBase(BaseModel):
-    name: str
-    phone: str
+    customer_id: str
+    first_name: str
+    last_name: str
+    salutation: str
+    file_number: str
+    mobile_number: str
+    phone_number: str
     claim_reference: str
-    invoice_details: str
+    invoice_number: str
+    invoice_date: datetime
+    invoice_amount: float
+    fsp_name: str
     outstanding_amount: float
-    created_at: datetime
+    email: str
+    mailing_postcode: str
+    resend_invoice: bool
 
     class Config:
         from_attributes = True
