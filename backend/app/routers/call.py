@@ -14,6 +14,7 @@ import json
 import websockets
 import asyncio
 from pathlib import Path
+import audioop
 
 router = APIRouter(
     prefix="/twilio",
@@ -50,24 +51,41 @@ async def make_answer(transcript: str):
 
 async def synthesize_speech(text: str, websocket: WebSocket, stream_sid: str):
     try:
+        print("Answer :", text)
         with client.audio.speech.with_streaming_response.create(
             model="gpt-4o-mini-tts",
             voice="alloy",
             input=text,
             response_format="wav"
         ) as response:
-            
-            for chunk in response.iter_bytes():
+            print(dir(response))
+            raw_wav = response.readframes(response.getnframes()) 
+            raw_ulaw = audioop.lin2ulaw(raw_wav,response.getsampwidth())
 
-                audio_delta = {
-                    "event": "media",
-                    "streamSid": stream_sid,
-                    "media": {
-                        "payload": chunk
-                    }
-                }
-                
-                await websocket.send_json(audio_delta)
+            audio_result = base64.b64encode(raw_ulaw).decode('utf-8')
+
+            # Stream the audio in chunks
+            # for chunk in response.iter_bytes(chunk_size=4096):
+            #     if chunk:  # Only process non-empty chunks
+                    
+            #         # Convert PCM data to base64
+            #         audio = audioop.lin2ulaw(chunk, 2)
+            #         audio_payload = base64.b64encode(audio).decode('utf-8')
+            #         print(f"Chunk size: {len(chunk)} bytes, Base64 length: {len(audio_payload)}")
+
+            #         audio_delta = {
+            #             "event": "media",
+            #             "streamSid": stream_sid,
+            #             "media": {
+            #                 "payload": audio_payload,
+            #                 "track": "inbound_track"  # Specify the track for better audio handling
+            #             }
+            #         }
+                    
+            #         await websocket.send_json(audio_delta)
+            #         # Add a small delay to prevent overwhelming the websocket
+            #         await asyncio.sleep(0.01)
+                    
     except Exception as e:
         print(f"Error during speech synthesis: {e}")
         return None
@@ -106,24 +124,91 @@ async def websocket_endpoint(websocket: WebSocket):
     print("Websocket connected")
     await manager.connect(websocket)
 
+    # async with websockets.connect(
+    #     'wss://api.openai.com/v1/realtime?intent=transcription',
+    #     additional_headers={
+    #         "Authorization": f"Bearer {OPENAI_API_KEY}",
+    #         "OpenAI-Beta": "realtime=v1"
+    #     }
+    # ) as openai_ws:
+
+    #     await initialize_session(openai_ws)
+    #     stream_sid = None
+        
+    #     async def receive_from_twilio():
+    #         """Receive audio data from Twilio and send it to the OpenAI Realtime API."""
+    #         nonlocal stream_sid
+    #         try:
+    #             async for message in websocket.iter_text():
+    #                 # print("data==============================================", message)
+    #                 data = json.loads(message)
+    #                 if data['event'] == 'media':
+    #                     audio_append = {
+    #                         "type": "input_audio_buffer.append",
+    #                         "audio": data['media']['payload']
+    #                     }
+    #                     await openai_ws.send(json.dumps(audio_append))
+    #                 elif data['event'] == 'start':
+    #                     stream_sid = data['start']['streamSid']
+    #                     print(f"Incoming stream has started {stream_sid}")
+    #         except WebSocketDisconnect:
+    #             print("Client disconnected.")
+    #             if openai_ws.open:
+    #                 await openai_ws.close()
+
+    #     async def send_to_twilio():
+    #         """Receive events from the OpenAI Realtime API, send audio back to Twilio."""
+    #         nonlocal stream_sid
+    #         try:
+    #             async for openai_message in openai_ws:
+    #                 response = json.loads(openai_message)
+    #                 # print("response==============================================", response)
+    #                 if response['type'] in LOG_EVENT_TYPES:
+    #                     print(f"Received event: {response['type']}", response)
+    #                 if response['type'] == 'session.updated':
+    #                     print("Session updated successfully:", response)
+    #                 if response['type'] == 'conversation.item.input_audio_transcription.completed' and response.get('transcript'):
+    #                     try:
+    #                         print("response['transcript']", response['transcript'])
+    #                         text = response['transcript']
+    #                         answer = await make_answer(text)
+    #                         print("answer", answer)
+    #                         audio_bytes = await synthesize_speech(answer, websocket, stream_sid)
+    #                         print("audio_bytes", dir(audio_bytes))
+    #                         # audio_bytes = base64.b64encode(base64.b64decode(audio_bytes)).decode('utf-8')
+    #                         # if audio_bytes:
+    #                         #     audio_delta = {
+    #                         #             "event": "media",
+    #                         #             "streamSid": stream_sid,
+    #                         #             "media": {
+    #                         #                 "payload": audio_bytes
+    #                         #             }
+    #                         #         }
+    #                         #     await websocket.send_json(audio_delta)
+
+    #                     except Exception as e:
+    #                         print(f"Error processing audio data: {e}")
+    #         except Exception as e:
+    #             print(f"Error in send_to_twilio: {e}")
+        
+    #     await asyncio.gather(receive_from_twilio(), send_to_twilio())
     async with websockets.connect(
-        'wss://api.openai.com/v1/realtime?intent=transcription',
+        'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17',
         additional_headers={
             "Authorization": f"Bearer {OPENAI_API_KEY}",
             "OpenAI-Beta": "realtime=v1"
         }
     ) as openai_ws:
-
         await initialize_session(openai_ws)
         stream_sid = None
-        
+
         async def receive_from_twilio():
             """Receive audio data from Twilio and send it to the OpenAI Realtime API."""
             nonlocal stream_sid
             try:
                 async for message in websocket.iter_text():
-                    # print("data==============================================", message)
                     data = json.loads(message)
+                    # print("==============data=============", data)
                     if data['event'] == 'media':
                         audio_append = {
                             "type": "input_audio_buffer.append",
@@ -135,8 +220,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         print(f"Incoming stream has started {stream_sid}")
             except WebSocketDisconnect:
                 print("Client disconnected.")
-                if openai_ws.open:
-                    await openai_ws.close()
 
         async def send_to_twilio():
             """Receive events from the OpenAI Realtime API, send audio back to Twilio."""
@@ -144,35 +227,25 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 async for openai_message in openai_ws:
                     response = json.loads(openai_message)
-                    # print("response==============================================", response)
                     if response['type'] in LOG_EVENT_TYPES:
                         print(f"Received event: {response['type']}", response)
                     if response['type'] == 'session.updated':
                         print("Session updated successfully:", response)
-                    if response['type'] == 'conversation.item.input_audio_transcription.completed' and response.get('transcript'):
+                    if response['type'] == 'response.audio.delta' and response.get('delta'):
                         try:
-                            print("response['transcript']", response['transcript'])
-                            text = response['transcript']
-                            answer = await make_answer(text)
-                            print("answer", answer)
-                            audio_bytes = await synthesize_speech(answer, websocket, stream_sid)
-                            print("audio_bytes", dir(audio_bytes))
-                            # audio_bytes = base64.b64encode(base64.b64decode(audio_bytes)).decode('utf-8')
-                            # if audio_bytes:
-                            #     audio_delta = {
-                            #             "event": "media",
-                            #             "streamSid": stream_sid,
-                            #             "media": {
-                            #                 "payload": audio_bytes
-                            #             }
-                            #         }
-                            #     await websocket.send_json(audio_delta)
-
+                            audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')
+                            audio_delta = {
+                                "event": "media",
+                                "streamSid": stream_sid,
+                                "media": {
+                                    "payload": audio_payload
+                                }
+                            }
+                            await websocket.send_json(audio_delta)
                         except Exception as e:
                             print(f"Error processing audio data: {e}")
             except Exception as e:
                 print(f"Error in send_to_twilio: {e}")
-        
         await asyncio.gather(receive_from_twilio(), send_to_twilio())
 
 @router.get("/outbound")
@@ -228,16 +301,29 @@ LOG_EVENT_TYPES = [
 
 async def initialize_session(openai_ws):
     """Control initial session with OpenAI."""
+    # session_update = {
+    #     "type": "transcription_session.update",
+    #     "session": {
+    #         "input_audio_format": "g711_ulaw",
+    #         "input_audio_transcription": {
+    #             "model": "gpt-4o-mini-transcribe",
+    #             "language": "en",
+    #             "prompt": "Transcribe the incoming audio in real time."
+    #         },
+    #         "turn_detection": {"type": "server_vad", "threshold": 0.35, "prefix_padding_ms": 1000, "silence_duration_ms": 1000}
+    #     }
+    # }
+
     session_update = {
-        "type": "transcription_session.update",
+        "type": "session.update",
         "session": {
+            "turn_detection": {"type": "server_vad"},
             "input_audio_format": "g711_ulaw",
-            "input_audio_transcription": {
-                "model": "gpt-4o-mini-transcribe",
-                "language": "en",
-                "prompt": "Transcribe the incoming audio in real time."
-            },
-            "turn_detection": {"type": "server_vad", "threshold": 0.35, "prefix_padding_ms": 1000, "silence_duration_ms": 1000}
+            "output_audio_format": "g711_ulaw",
+            "voice": VOICE,
+            "instructions": SYSTEM_MESSAGE,
+            "modalities": ["text", "audio"],
+            "temperature": 0.8,
         }
     }
 
@@ -275,7 +361,7 @@ async def make_call(phone_number_to_call: str):
 
     is_allowed = await check_number_allowed(phone_number_to_call)
     if not is_allowed:
-        raise ValueError(f"The number {phone_number_to_call} is not recognized as a valid outgoing number or caller ID.")
+        raise ValueError(f"The number {phone_number_to_call} is not regicognized as a valid outgoing number or caller ID.")
 
     # Ensure compliance with applicable laws and regulations
     # All of the rules of TCPA apply even if a call is made by AI.
