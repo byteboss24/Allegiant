@@ -7,18 +7,18 @@ class InvoiceBase(BaseModel):
     first_name: str
     last_name: str
     salutation: str
-    file_number: str
-    mobile_number: str
-    phone_number: str
+    file_number: Optional[str] = None
+    mobile_number: Optional[str] = None
+    phone_number: Optional[str] = None
     claim_reference: str
     invoice_number: str
     invoice_date: datetime
-    invoice_amount: float
+    invoice_amount: str
     fsp_name: str
-    outstanding_amount: float
+    outstanding_amount: str
     email: str
     mailing_postcode: str
-    resend_invoice: bool
+    payment_link: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -35,15 +35,9 @@ class Invoice(InvoiceBase):
     campaign_name: Optional[str] = None
     script: Optional[str] = None
     phone_strategy: Optional[str] = None
-    invoice_id: Optional[str] = None
+    resend_invoice: Optional[bool] = None
 
 class InvoiceResponseData(BaseModel):
-    invoice_id: int
-    name: str
-    phone: str
-    claim_reference: str
-    invoice_details: str
-    outstanding_amount: float
     created_at: datetime
     call_status: str
     campaign_name: str

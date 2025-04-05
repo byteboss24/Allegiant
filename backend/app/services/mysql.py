@@ -28,16 +28,21 @@ class MySQLService:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS invoices (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        name VARCHAR(255),
-                        phone VARCHAR(20),
-                        claim_reference JSON,
-                        invoice_details JSON,
-                        outstanding_amount DECIMAL(10,4),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        call_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
-                        campaign_name VARCHAR(255),
-                        script VARCHAR(50),
-                        phone_strategy VARCHAR(50)
+                        customer_id VARCHAR(255),
+                        first_name VARCHAR(255),
+                        last_name VARCHAR(255),
+                        salutation VARCHAR(255),
+                        file_number VARCHAR(255),
+                        mobile_number VARCHAR(255),
+                        phone_number VARCHAR(255),
+                        claim_reference VARCHAR(255),
+                        invoice_number VARCHAR(255),
+                        invoice_date DATETIME,
+                        invoice_amount VARCHAR(255),
+                        fsp_name VARCHAR(255),
+                        outstanding_amount VARCHAR(255),
+                        email VARCHAR(255),
+                        mailing_postcode VARCHAR(255)
                     )
                 """)
                 
@@ -57,7 +62,7 @@ class MySQLService:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS calls (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        customer_id INT,
+                        customer_id VARCHAR(255),
                         status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
                         transcript TEXT,
                         started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -69,7 +74,7 @@ class MySQLService:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS payments (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        customer_id INT,
+                        customer_id VARCHAR(255),
                         amount DECIMAL(10,2),
                         status ENUM('pending', 'paid', 'failed') DEFAULT 'pending',
                         transaction_id VARCHAR(255) UNIQUE,
@@ -189,33 +194,56 @@ class MySQLService:
             with connection.cursor() as cursor:
                 sql = """
                     INSERT INTO invoices (
-                        name, phone, claim_reference, invoice_details,
-                        outstanding_amount, created_at
+                        customer_id,
+                        first_name,
+                        last_name,
+                        salutation,
+                        file_number,
+                        mobile_number,
+                        phone_number,
+                        claim_reference,
+                        invoice_number,
+                        invoice_date,
+                        invoice_amount,
+                        fsp_name,
+                        outstanding_amount,
+                        email,
+                        mailing_postcode,
+                        payment_link
                     )
-                    VALUES (%s, %s, %s, %s, %f, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
 
                 print(invoice)
 
                 cursor.execute(sql, (
-                    invoice.name,
-                    invoice.phone,
+                    invoice.customer_id,
+                    invoice.first_name,
+                    invoice.last_name,
+                    invoice.salutation,
+                    invoice.file_number,
+                    invoice.mobile_number,
+                    invoice.phone_number,
                     invoice.claim_reference,
-                    invoice.invoice_details,
+                    invoice.invoice_number,
+                    invoice.invoice_date,
+                    invoice.invoice_amount,
+                    invoice.fsp_name,
                     invoice.outstanding_amount,
-                    invoice.created_at
+                    invoice.email,
+                    invoice.mailing_postcode
                 ))
                 connection.commit()
                 return cursor.lastrowid
         finally:
             connection.close()
 
-    async def get_invoice(self, invoice_id):
+    async def get_invoice(self, invoice_number):
         """Get an invoice by ID"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices WHERE id = %s", (invoice_id,))
+                cursor.execute("SELECT * FROM invoices WHERE invoice_number = %s", (invoice_number))
                 return cursor.fetchone()
         finally:
             connection.close()

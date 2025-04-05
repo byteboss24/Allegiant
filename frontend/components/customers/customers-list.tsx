@@ -18,14 +18,24 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
+import { v4 as uuidv4 } from 'uuid';
+import { useRouter } from "next/navigation"
+
 
 interface Invoice {
-  invoice_id: number
-  name: string
-  phone: string
+  first_name: string
+  last_name: string
+  mobile_number: string
+  phone_number: string
   claim_reference: string
-  invoice_details: string
-  outstanding_amount: number
+  invoice_number: string
+  invoice_date: string
+  invoice_amount: string
+  fsp_name: string
+  outstanding_amount: string
+  email: string
+  mailing_postcode: string
+  payment_link: string
   created_at: string
   call_status: string
   campaign_name: string
@@ -33,7 +43,7 @@ interface Invoice {
   phone_strategy: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://194.37.82.18:5000/api/v1'
 
 export function CustomersList() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -43,12 +53,13 @@ export function CustomersList() {
   const [isUploading, setIsUploading] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const { toast } = useToast()
+  const router = useRouter()
 
   // Fetch invoices from backend
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/invoices`)
+        const response = await fetch(`${API_BASE_URL}/invoices`)
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           throw new Error(errorData.detail || 'Failed to fetch invoices')
@@ -182,10 +193,11 @@ export function CustomersList() {
   }
 
   // Filter invoices based on search term and status
-  const filteredInvoices = invoices.filter((invoice) => {
+  const filteredInvoices = invoices?.filter((invoice) => {
     const matchesSearch =
-      invoice.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      `${invoice.first_name} ${invoice.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.mobile_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.claim_reference.toLowerCase().includes(searchTerm.toLowerCase())
 
     if (statusFilter === "all") return matchesSearch
@@ -286,16 +298,20 @@ export function CustomersList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer Name</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Claim Reference</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Mobile Number</TableHead>
+                  <TableHead>Phone Number</TableHead>
+                  <TableHead>Invoice Number</TableHead>
+                  <TableHead>Invoice Date</TableHead>
+                  <TableHead>Invoice Amount</TableHead>
+                  <TableHead>FSP Name</TableHead>
                   <TableHead>Outstanding Amount</TableHead>
                   <TableHead>Created At</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody key={uuidv4()}>
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
@@ -304,19 +320,23 @@ export function CustomersList() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredInvoices.length === 0 ? (
+                ) : filteredInvoices?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
                       No invoices found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredInvoices.map((invoice) => (
-                    <TableRow key={invoice.invoice_id}>
-                      <TableCell className="font-medium">{invoice.name}</TableCell>
-                      <TableCell>{invoice.phone}</TableCell>
-                      <TableCell>{invoice.claim_reference}</TableCell>
-                      <TableCell>£{invoice.outstanding_amount.toFixed(2)}</TableCell>
+                  filteredInvoices?.map((invoice) => (
+                    <TableRow key={uuidv4()}>
+                      <TableCell className="font-medium">{`${invoice.first_name} ${invoice.last_name}`}</TableCell>
+                      <TableCell>{invoice.mobile_number}</TableCell>
+                      <TableCell>{invoice.phone_number}</TableCell>
+                      <TableCell>{invoice.invoice_number}</TableCell>
+                      <TableCell>{invoice.invoice_date}</TableCell>
+                      <TableCell>{invoice.invoice_amount}</TableCell>
+                      <TableCell>{invoice.fsp_name}</TableCell>
+                      <TableCell>{invoice.outstanding_amount}</TableCell>
                       <TableCell>{new Date(invoice.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <Badge
@@ -328,7 +348,7 @@ export function CustomersList() {
                                 : "destructive"
                           }
                         >
-                          {invoice.call_status.charAt(0).toUpperCase() + invoice.call_status.slice(1)}
+                          {invoice.call_status?.toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -338,7 +358,7 @@ export function CustomersList() {
                             size="icon"
                             className="h-8 w-8"
                             title="View Details"
-                            onClick={() => window.open(`/invoices/${invoice.invoice_id}`, "_blank")}
+                            onClick={() => router.push(`/invoices/${invoice.invoice_number}`)}
                           >
                             <ExternalLink className="h-4 w-4" />
                             <span className="sr-only">View Details</span>
@@ -352,7 +372,7 @@ export function CustomersList() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem>View details</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => router.push(`/invoices/${invoice.invoice_number}`)}>View details</DropdownMenuItem>
                               <DropdownMenuItem>Send reminder</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem>Mark as completed</DropdownMenuItem>
@@ -370,7 +390,7 @@ export function CustomersList() {
 
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-muted-foreground">
-              Showing <strong>{filteredInvoices.length}</strong> of <strong>{invoices.length}</strong> customers
+              Showing <strong>{filteredInvoices?.length}</strong> of <strong>{invoices.length}</strong> customers
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" disabled>

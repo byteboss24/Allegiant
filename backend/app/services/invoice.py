@@ -16,13 +16,24 @@ class InvoiceService:
         try:
             # Create invoice object
             invoice = Invoice(
-                name=request.name,
-                phone=request.phone,
+                customer_id=request.customer_id,
+                first_name=request.first_name,
+                last_name=request.last_name,
+                salutation=request.salutation,
+                file_number=request.file_number,
+                mobile_number=request.mobile_number,
+                phone_number=request.phone_number,
                 claim_reference=request.claim_reference,
-                invoice_details=request.invoice_details,
+                invoice_number=request.invoice_number,
+                invoice_date=request.invoice_date,
+                invoice_amount=request.invoice_amount,
+                fsp_name=request.fsp_name,
                 outstanding_amount=request.outstanding_amount,
-                created_at=request.created_at,
+                email=request.email,
+                mailing_postcode=request.mailing_postcode
             )
+
+            print("invoice", invoice)
             
             # Insert into database
             invoice_id = await mysql_service.insert_invoice(invoice)
@@ -115,7 +126,7 @@ class InvoiceService:
             logger.error(f"Error updating invoice: {str(e)}")
             raise
 
-    async def process_invoice_csv(self, file: UploadFile, campaign_name: str, script: str, phone_strategy: str) -> CSVUploadResponse:
+    async def process_invoice_csv(self, file: UploadFile, campaign_name: str) -> CSVUploadResponse:
         try:
             # Read the CSV file content
             content = await file.read()
@@ -142,27 +153,35 @@ class InvoiceService:
             
             for row in csv_reader:
                 total_records += 1
-                try:
-                    # Validate required fields
-                    if not row['name'] or not row['phone'] or not row['outstanding_amount']:
-                        raise ValueError("Required fields cannot be empty")
-                    
+                try:                    
                     # Validate outstanding amount
                     try:
                         outstanding_amount = float(row['outstanding_amount'])
-                        if outstanding_amount < 0:
-                            raise ValueError("Outstanding amount cannot be negative")
+                        if outstanding_amount == "£ 0":
+                            raise ValueError("Outstanding amount cannot be 0")
                     except ValueError:
                         raise ValueError("Invalid outstanding amount format")
                     
                     # Create invoice from CSV row with campaign information
                     invoice = InvoiceCreate(
-                        name=row['name'],
-                        phone=row['phone'],
+                        customer_id=row['Customer ID'],
+                        first_name=row['First Name'],
+                        last_name=row['Last Name'],
+                        salutation=row['Salutation'],
+                        file_number=row['File Number'],
+                        mobile_number=row['Mobile'],
+                        phone_number=row['Phone'],
                         claim_reference=row['claim_reference'],
-                        invoice_details=row['invoice_details'],
-                        outstanding_amount=outstanding_amount,
+                        invoice_number=row['QB Invoice Number'],
+                        invoice_date=row['Invoice Date'],
+                        invoice_amount=row['Invoice Amount'],
+                        fsp_name=row['FSP Quick Find (Credit Control)'],
+                        outstanding_amount=row['Invoice Amount Paid'],
+                        email=row['Email_Id'],
+                        mailing_postcode=row['Mailing Postal Code'],
+                        payment_link=row['Payment link'],
                         created_at=datetime.now(timezone.utc), 
+                        campaign_name=campaign_name
                     )
 
                     print(invoice)
