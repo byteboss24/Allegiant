@@ -13,7 +13,6 @@ import json
 import websockets
 import asyncio
 from pathlib import Path
-import audioop
 from app.core.prompt_templates.prompt import main_prompt
 
 router = APIRouter(
@@ -59,8 +58,83 @@ async def test():
     ) as response:
         response.stream_to_file(speech_file_path)
 
+async def handle_media_event(data: dict, openai_ws: websockets.WebSocketClientProtocol):
+    """Handle media event from Twilio."""
+    audio_append = {
+        "type": "input_audio_buffer.append",
+        "audio": data['media']['payload']
+    }
+    await openai_ws.send(json.dumps(audio_append))
+
+async def handle_start_event(data: dict) -> str:
+    """Handle start event from Twilio and return stream_sid."""
+    stream_sid = data['start']['streamSid']
+    print(f"Incoming stream has started {stream_sid}")
+    return stream_sid
+
+async def handle_audio_delta(response: dict, websocket: WebSocket, stream_sid: str, openai_ws: websockets.WebSocketClientProtocol):
+    """Process and send audio delta to Twilio."""
+    try:
+        audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')
+        audio_delta = {
+            "event": "media",
+            "streamSid": stream_sid,
+            "media": {
+                "payload": audio_payload
+            }
+        }
+        await websocket.send_json(audio_delta)
+    except Exception as e:
+        print(f"Error processing audio data: {e}")
+        openai_ws.close()
+
+async def process_twilio_messages(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol) -> None:
+    """Process incoming messages from Twilio."""
+    try:
+        async for message in websocket.iter_text():
+            data = json.loads(message)
+            if data['event'] == 'media':
+                await handle_media_event(data, openai_ws)
+    except WebSocketDisconnect:
+        print("Client disconnected.")
+
+async def handle_twilio_connection(websocket: WebSocket) -> str:
+    """Wait for initial Twilio connection and return stream_sid."""
+    print("Waiting for initial Twilio connection...")
+    try:
+        while True:
+            message = await websocket.receive_text()
+            data = json.loads(message)
+            if data['event'] == 'start':
+                return await handle_start_event(data)
+    except WebSocketDisconnect:
+        print("Client disconnected during initial connection.")
+        return None
+
+async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol, stream_sid: str) -> None:
+    """Process messages from OpenAI and send responses to Twilio."""
+    try:
+        async for openai_message in openai_ws:
+            response = json.loads(openai_message)
+            # if response['type'] in LOG_EVENT_TYPES:
+            #     print(f"Received event: {response['type']}", response)
+            # elif response['type'] == 'input_audio_buffer.speech_started':
+            #     await websocket.send(json.dumps({
+            #         "event": "clear",
+            #         "streamSid": stream_sid
+            #     }))
+            if response['type'] == 'response.done':
+                print("AI Response:", response.get('response').get('output').get('content').get('text'))
+            elif response['type'] == 'response.audio.done':
+                await send_hello_message(openai_ws)
+            elif response['type'] == 'response.audio.delta' and response.get('delta'):
+                await handle_audio_delta(response, websocket, stream_sid, openai_ws)
+    except Exception as e:
+        print(f"Error in process_openai_messages: {e}")
+
 @router.websocket("/media-stream")
 async def websocket_endpoint(websocket: WebSocket):
+    """Handle WebSocket connection for media streaming between Twilio and OpenAI."""
     print("Websocket connected")
     await manager.connect(websocket)
 
@@ -71,58 +145,14 @@ async def websocket_endpoint(websocket: WebSocket):
             "OpenAI-Beta": "realtime=v1"
         }
     ) as openai_ws:
+        print("OpenAI WebSocket connected")
         await initialize_session(openai_ws)
-        stream_sid = None
-
-        async def receive_from_twilio():
-            """Receive audio data from Twilio and send it to the OpenAI Realtime API."""
-            nonlocal stream_sid
-            try:
-                async for message in websocket.iter_text():
-                    data = json.loads(message)
-                    # print("==============data=============", data)
-                    if data['event'] == 'media':
-                        audio_append = {
-                            "type": "input_audio_buffer.append",
-                            "audio": data['media']['payload']
-                        }
-                        await openai_ws.send(json.dumps(audio_append))
-                    elif data['event'] == 'start':
-                        stream_sid = data['start']['streamSid']
-                        print(f"Incoming stream has started {stream_sid}")
-            except WebSocketDisconnect:
-                print("Client disconnected.")
-
-        async def send_to_twilio():
-            """Receive events from the OpenAI Realtime API, send audio back to Twilio."""
-            nonlocal stream_sid
-            try:
-                async for openai_message in openai_ws:
-                    response = json.loads(openai_message)
-                    # if response['type'] in LOG_EVENT_TYPES:
-                    #     print(f"Received event: {response['type']}", response)
-                    if response['type'] == 'input_audio_buffer.speech_started':
-                        await websocket.send(json.dumps({
-                            "event": "clear",
-                            "streamSid": stream_sid
-                        }))
-                        
-                    if response['type'] == 'response.audio.delta' and response.get('delta'):
-                        try:
-                            audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')
-                            audio_delta = {
-                                "event": "media",
-                                "streamSid": stream_sid,
-                                "media": {
-                                    "payload": audio_payload
-                                }
-                            }
-                            await websocket.send_json(audio_delta)
-                        except Exception as e:
-                            print(f"Error processing audio data: {e}")
-            except Exception as e:
-                print(f"Error in send_to_twilio: {e}")
-        await asyncio.gather(receive_from_twilio(), send_to_twilio())
+        stream_sid = await handle_twilio_connection(websocket)
+        print(f"Stream SID: {stream_sid}")
+        await asyncio.gather(
+            process_twilio_messages(websocket, openai_ws),
+            process_openai_messages(websocket, openai_ws, stream_sid)
+        )
 
 @router.get("/outbound")
 async def outbound(phone_number: str):
@@ -131,6 +161,41 @@ async def outbound(phone_number: str):
     print("Making call to", phone_number)
     await make_call(phone_number)
     return phone_number
+
+async def send_hello_message(openai_ws):
+    """Wait for speech_started event for 5 seconds, if not received send a hello message."""
+    print("Waiting for speech_started event...")
+    try:
+        # Create a task to listen for speech_started event
+        async def wait_for_speech():
+            async for openai_message in openai_ws:
+                response = json.loads(openai_message)
+                if response['type'] in LOG_EVENT_TYPES:
+                    print(f"Received event: {response['type']}", response)
+                elif response['type'] == 'input_audio_buffer.speech_started':
+                    return True
+            return False
+
+        # Wait for speech_started event with timeout
+        try:
+            await asyncio.wait_for(wait_for_speech(), timeout=7.0)
+            print("Speech detected within 5 seconds")
+            return
+        except asyncio.TimeoutError:
+            print("No speech detected in 5 seconds, sending hello message")
+            welcome_message = {
+                "type": "response.create",
+                "response": {
+                    "modalities": ["text", "audio"],
+                    "temperature": 0.8,
+                    "instructions": "Say: Call customer with 'Hello' or 'Are you there' and say again.",
+                    "voice": VOICE
+                }
+            }
+            await openai_ws.send(json.dumps(welcome_message))
+            return
+    except Exception as e:
+        print(f"Error in send_hello_message: {e}")
 
 async def send_initial_conversation_item(openai_ws):
     """Send initial conversation so AI talks first."""
@@ -159,15 +224,17 @@ LOG_EVENT_TYPES = [
 
 async def initialize_session(openai_ws):
     """Control initial session with OpenAI."""
-    first_name = "John"
-    last_name = "Doe"
-    lender_name = "Richard"
-    invoice_amount = "£ 2030"
-    amount = "£ 20"
-    invoice_number = "INV-QB-72004"
-    percentage = "10%"
+    invoice = {
+        "first_name": "John",
+        "last_name": "Doe",
+        "lender_name": "Richard",
+        "invoice_amount": "£ 2030",
+        "amount": "£ 20",
+        "invoice_number": "INV-QB-72004",
+        "percentage": "10%"
+    }
 
-    SYSTEM_MESSAGE = main_prompt.format(first_name=first_name, last_name=last_name, lender_name=lender_name, invoice_amount=invoice_amount, amount=amount, invoice_number=invoice_number, percentage=percentage)
+    SYSTEM_MESSAGE = main_prompt.format(**invoice)
 
     session_update = {
         "type": "session.update",
@@ -224,7 +291,7 @@ async def make_call(phone_number_to_call: str):
 
     outbound_twiml = (
         f'<?xml version="1.0" encoding="UTF-8"?>'
-        f'<Response><Connect><Stream url="wss://80f8-194-37-82-18.ngrok-free.app/twilio/media-stream"/></Connect></Response>'
+        f'<Response><Connect><Stream url="wss://bc45-194-37-82-18.ngrok-free.app/twilio/media-stream"/></Connect></Response>'
     )
 
     call = twilio_client.calls.create(
