@@ -50,16 +50,6 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.get("/test")
-async def test():
-    with client.audio.speech.with_streaming_response.create(
-        model="gpt-4o-mini-tts",
-        voice="coral",
-        input="Today is a wonderful day to build something people love!",
-        instructions="Speak in a cheerful and positive tone.",
-    ) as response:
-        response.stream_to_file(speech_file_path)
-
 async def handle_media_event(data: dict, openai_ws: websockets.WebSocketClientProtocol):
     """Handle media event from Twilio."""
     audio_append = {
