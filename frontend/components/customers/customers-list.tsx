@@ -43,7 +43,7 @@ interface Invoice {
   phone_strategy: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://194.37.82.18:5000/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://194.37.82.18:5000'
 
 export function CustomersList() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -59,7 +59,7 @@ export function CustomersList() {
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/invoices`)
+        const response = await fetch(`${API_BASE_URL}/api/v1/invoices`)
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           throw new Error(errorData.detail || 'Failed to fetch invoices')
@@ -406,4 +406,3 @@ export function CustomersList() {
     </div>
   )
 }
-

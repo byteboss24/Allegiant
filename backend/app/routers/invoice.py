@@ -33,7 +33,7 @@ async def get_invoices():
 
 @router.get("/invoices/{invoice_number}", response_model=Invoice)
 async def get_invoice(invoice_number: str):
-    """Get an invoice by ID"""
+    """Get an invoice by invoice number"""
     invoice = await invoice_service.get_invoice(invoice_number)
     if not invoice:
         raise HTTPException(
@@ -75,6 +75,7 @@ async def upload_invoices_csv(
     campaign_name: str = Form(...)
 ):
     """Upload a CSV file containing invoice information"""
+    print("uploading csv")
     if not file.filename.endswith('.csv'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -24,6 +24,8 @@ class InvoiceBase(BaseModel):
         from_attributes = True
 
 class InvoiceCreate(InvoiceBase):
+    created_at: datetime
+    campaign_name: Optional[str] = None
     pass
 
 class InvoiceUpdate(BaseModel):
@@ -39,8 +41,8 @@ class Invoice(InvoiceBase):
 
 class InvoiceResponseData(BaseModel):
     created_at: datetime
-    call_status: str
-    campaign_name: str
+    call_status: Optional[str] = None
+    campaign_name: Optional[str] = None
     script: Optional[str] = None
     phone_strategy: Optional[str] = None
 

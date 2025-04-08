@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, WebSocket
+from fastapi import APIRouter, Request, WebSocket, Depends
 from fastapi.responses import HTMLResponse
 from app.core.config import settings
 from twilio.twiml.voice_response import VoiceResponse, Connect
@@ -14,6 +14,8 @@ import websockets
 import asyncio
 from pathlib import Path
 from app.core.prompt_templates.prompt import main_prompt
+from app.services.invoice import InvoiceService
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/twilio",
@@ -88,6 +90,8 @@ async def handle_audio_delta(response: dict, websocket: WebSocket, stream_sid: s
         print(f"Error processing audio data: {e}")
         openai_ws.close()
 
+issaying = False
+
 async def process_twilio_messages(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol) -> None:
     """Process incoming messages from Twilio."""
     try:
@@ -116,21 +120,42 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
     try:
         async for openai_message in openai_ws:
             response = json.loads(openai_message)
-            # if response['type'] in LOG_EVENT_TYPES:
-            #     print(f"Received event: {response['type']}", response)
-            # elif response['type'] == 'input_audio_buffer.speech_started':
-            #     await websocket.send(json.dumps({
-            #         "event": "clear",
-            #         "streamSid": stream_sid
-            #     }))
-            if response['type'] == 'response.done':
-                print("AI Response:", response.get('response').get('output').get('content').get('text'))
-            elif response['type'] == 'response.audio.done':
+            if response['type'] in LOG_EVENT_TYPES:
+                print(f"Received event1: {response['type']}", response)
+            elif response['type'] == 'input_audio_buffer.speech_started':
+                print("Speech detected")
+                if issaying:
+                    await openai_ws.send(json.dumps({
+                        "type": "response.cancel"
+                    }))
+                    issaying = False
+                # await websocket.send_json({
+                #     "event": "clear",
+                #     "streamSid": stream_sid
+                # })
+            elif response['type'] == 'response.done':
+                issaying = False
+                print("AI Response Transcript", response['response'])
                 await send_hello_message(openai_ws)
             elif response['type'] == 'response.audio.delta' and response.get('delta'):
+                issaying = True
                 await handle_audio_delta(response, websocket, stream_sid, openai_ws)
     except Exception as e:
         print(f"Error in process_openai_messages: {e}")
+
+class OutboundRequest(BaseModel):
+    invoice_number: str
+
+current_invoice = None
+
+@router.post("/outbound", response_model=str)
+async def outbound(request: OutboundRequest):
+    """Make an outbound call with invoice details"""
+    invoice = await InvoiceService.get_invoice(request.invoice_number)
+    
+    current_invoice = invoice
+    await make_call(invoice)
+    return request.invoice_number
 
 @router.websocket("/media-stream")
 async def websocket_endpoint(websocket: WebSocket):
@@ -154,14 +179,6 @@ async def websocket_endpoint(websocket: WebSocket):
             process_openai_messages(websocket, openai_ws, stream_sid)
         )
 
-@router.get("/outbound")
-async def outbound(phone_number: str):
-    print("Outbound call")
-
-    print("Making call to", phone_number)
-    await make_call(phone_number)
-    return phone_number
-
 async def send_hello_message(openai_ws):
     """Wait for speech_started event for 5 seconds, if not received send a hello message."""
     print("Waiting for speech_started event...")
@@ -170,11 +187,11 @@ async def send_hello_message(openai_ws):
         async def wait_for_speech():
             async for openai_message in openai_ws:
                 response = json.loads(openai_message)
-                if response['type'] in LOG_EVENT_TYPES:
-                    print(f"Received event: {response['type']}", response)
-                elif response['type'] == 'input_audio_buffer.speech_started':
+                if response['type'] == 'input_audio_buffer.speech_started':
+                    print("Speech detected within 5 seconds")
                     return True
-            return False
+                else:
+                    return False
 
         # Wait for speech_started event with timeout
         try:
@@ -188,7 +205,7 @@ async def send_hello_message(openai_ws):
                 "response": {
                     "modalities": ["text", "audio"],
                     "temperature": 0.8,
-                    "instructions": "Say: Call customer with 'Hello' or 'Are you there' and say again.",
+                    "instructions": "To keep the customer focused on the call, say 'Hello' or 'Are you there?'",
                     "voice": VOICE
                 }
             }
@@ -217,13 +234,15 @@ async def send_initial_conversation_item(openai_ws):
 
 VOICE = 'ballad'
 LOG_EVENT_TYPES = [
-    'error', 'response.content.done', 'rate_limits.updated', 'response.done',
+    'error', 'response.content.done', 'rate_limits.updated',
     'input_audio_buffer.committed', 'input_audio_buffer.speech_stopped',
-    'input_audio_buffer.speech_started', 'session.created'
+    'input_audio_buffer.speech_started', 'session.created', 'response.text.done'
 ]
 
 async def initialize_session(openai_ws):
     """Control initial session with OpenAI."""
+    print("Current_invoice in initial Session", current_invoice)
+
     invoice = {
         "first_name": "John",
         "last_name": "Doe",
@@ -276,27 +295,20 @@ async def check_number_allowed(to):
         print(f"Error checking phone number: {e}")
         return False
 
-async def make_call(phone_number_to_call: str):
+async def make_call(invoice):
+    print("Invoice", invoice.mobile_number)
     """Make an outbound call."""
-    if not phone_number_to_call:
+    if not invoice.mobile_number:
         raise ValueError("Please provide a phone number to call.")
-
-    # is_allowed = await check_number_allowed(phone_number_to_call)
-    # if not is_allowed:
-    #     raise ValueError(f"The number {phone_number_to_call} is not regicognized as a valid outgoing number or caller ID.")
-
-    # Ensure compliance with applicable laws and regulations
-    # All of the rules of TCPA apply even if a call is made by AI.
-    # Do your own diligence for compliance.
 
     outbound_twiml = (
         f'<?xml version="1.0" encoding="UTF-8"?>'
-        f'<Response><Connect><Stream url="wss://bc45-194-37-82-18.ngrok-free.app/twilio/media-stream"/></Connect></Response>'
+        f'<Response><Connect><Stream url="wss://2efd-194-37-82-18.ngrok-free.app/twilio/media-stream"/></Connect></Response>'
     )
 
     call = twilio_client.calls.create(
         from_="+441925596272",
-        to=phone_number_to_call,
+        to=invoice.mobile_number,
         twiml=outbound_twiml
     )
 

@@ -42,7 +42,8 @@ class MySQLService:
                         fsp_name VARCHAR(255),
                         outstanding_amount VARCHAR(255),
                         email VARCHAR(255),
-                        mailing_postcode VARCHAR(255)
+                        mailing_postcode VARCHAR(255),
+                        payment_link VARCHAR(255)
                     )
                 """)
                 
@@ -214,8 +215,6 @@ class MySQLService:
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
 
-                print(invoice)
-
                 cursor.execute(sql, (
                     invoice.customer_id,
                     invoice.first_name,
@@ -231,7 +230,8 @@ class MySQLService:
                     invoice.fsp_name,
                     invoice.outstanding_amount,
                     invoice.email,
-                    invoice.mailing_postcode
+                    invoice.mailing_postcode,
+                    invoice.payment_link
                 ))
                 connection.commit()
                 return cursor.lastrowid
