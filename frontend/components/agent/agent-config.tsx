@@ -1,23 +1,63 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@radix-ui/react-switch"
+import { Switch } from "@/components/ui/switch"
 
-export function AgentConfig() {
+interface Agent {
+  id: number
+  name: string
+}
+
+export function AgentConfig({ agents }: { agents: Agent[] }) {
   const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt)
-  const [isActive, setIsActive] = useState(true)
+  const [isActive, setIsActive] = useState(false)
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Fetch selected agent from backend
+    const fetchSelectedAgent = async () => {
+      const response = await fetch('/api/v1/agents/selected')
+      const data = await response.json()
+      if (data.selected_agent_id) {
+        setSelectedAgentId(data.selected_agent_id)
+      }
+    }
+    fetchSelectedAgent()
+  }, [])
+
+  const handleAgentSelect = async (agentId: number) => {
+    await fetch(`/api/v1/agents/select/${agentId}`, { method: 'POST' })
+    setSelectedAgentId(agentId)
+    router.refresh()
+  }
+
+  const selectedAgent = agents.find(agent => agent.id === selectedAgentId)
 
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-2xl">David - AI Voice Agent</CardTitle>
+            <select 
+              value={selectedAgentId || ''} 
+              onChange={(e) => handleAgentSelect(Number(e.target.value))}
+            >
+              {agents.map(agent => (
+                <option key={agent.id} value={agent.id}>
+                  {agent.name}
+                </option>
+              ))}
+            </select>
+            <CardTitle className="text-2xl">
+              {selectedAgent?.name || 'Select an agent'}
+            </CardTitle>
             <CardDescription>Configure your AI voice agent's system prompt</CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -197,4 +237,3 @@ If vulnerability indicators are detected:
 - Respect customer privacy and comply with all data protection requirements
 - Do not contact customers at unreasonable times
 - Allow customers to exit the conversation politely if they wish`
-

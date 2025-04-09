@@ -1,6 +1,7 @@
 import pymysql
 from app.core.config import settings
 import json
+from fastapi import Request
 
 class MySQLService:
     def __init__(self):
@@ -96,7 +97,7 @@ class MySQLService:
                     CREATE TABLE IF NOT EXISTS agents (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         name VARCHAR(255) NOT NULL,
-                        status ENUM('active', 'inactive') DEFAULT 'active',
+                        status ENUM('active', 'inactive') DEFAULT 'inactive',
                         voice VARCHAR(255) DEFAULT 'ballad',
                         system_prompt TEXT NOT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -323,7 +324,7 @@ class MySQLService:
         finally:
             connection.close()
     
-    async def insert_agent(self, name, system_prompt, voice="alloy", status="active"):
+    async def insert_agent(self, name, system_prompt, voice="alloy", status="inactive"):
         """Insert a new agent into the database"""
         connection = self._get_connection()
         try:

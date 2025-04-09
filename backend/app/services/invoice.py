@@ -1,12 +1,11 @@
 from typing import List, Optional
 from app.core.logger import logger
-from app.model.invoice import InvoiceCreate, InvoiceUpdate, Invoice, InvoiceResponse, InvoiceResponseData, CSVUploadResponse
+from app.model.invoice import InvoiceCreate, InvoiceUpdate, Invoice, InvoiceResponse, CSVUploadResponse
 from app.services.mysql import mysql_service
 from fastapi import UploadFile
 import csv
 from io import StringIO
 from datetime import datetime, timezone
-import json
 
 class InvoiceService:
     def __init__(self):
