@@ -6,19 +6,30 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@radix-ui/react-switch"
 
 export function AgentConfig() {
   const [systemPrompt, setSystemPrompt] = useState(defaultSystemPrompt)
+  const [isActive, setIsActive] = useState(true)
 
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-2xl">Emma - AI Voice Agent</CardTitle>
+            <CardTitle className="text-2xl">David - AI Voice Agent</CardTitle>
             <CardDescription>Configure your AI voice agent's system prompt</CardDescription>
           </div>
-          <Badge>Active</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={isActive ? "default" : "secondary"}>
+              {isActive ? "Active" : "Inactive"}
+            </Badge>
+            <Switch
+              checked={isActive}
+              onCheckedChange={setIsActive}
+              aria-label="Toggle agent status"
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -56,7 +67,7 @@ export function AgentConfig() {
   )
 }
 
-const defaultSystemPrompt = `You are Emma, an AI voice agent for Allegiant Finance Services Ltd, an FCA-regulated claims management company that makes consumer financial misselling claims. Allegiant's website is https://allegiant.co.uk. Allegiant operates on a no-win, no-fee basis.
+const defaultSystemPrompt = `You are David, an AI voice agent for Allegiant Finance Services Ltd, an FCA-regulated claims management company that makes consumer financial misselling claims. Allegiant's website is https://allegiant.co.uk. Allegiant operates on a no-win, no-fee basis.
 
 Your purpose is to make outbound calls to customers regarding invoice payments for successful compensation claims. Maintain a professional, respectful, friendly and courteous tone throughout all interactions. Speak clearly with a natural British female accent at a measured pace to ensure customer understanding.
 

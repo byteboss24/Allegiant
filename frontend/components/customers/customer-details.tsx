@@ -29,7 +29,7 @@ interface CustomerDetails {
   phone_strategy: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://194.37.82.18:5000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 export function CustomerDetails() {
   const { invoice_number } = useParams()

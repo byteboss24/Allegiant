@@ -36,7 +36,7 @@ class MySQLService:
                         mobile_number VARCHAR(255),
                         phone_number VARCHAR(255),
                         claim_reference VARCHAR(255),
-                        invoice_number VARCHAR(255),
+                        invoice_number VARCHAR(255) UNIQUE,
                         invoice_date DATETIME,
                         invoice_amount VARCHAR(255),
                         fsp_name VARCHAR(255),
@@ -51,36 +51,34 @@ class MySQLService:
                     CREATE TABLE IF NOT EXISTS customers (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         name VARCHAR(255),
-                        phone VARCHAR(20),
+                        phone VARCHAR(255),
                         claim_reference VARCHAR(255),
                         invoice_details JSON,
-                        outstanding_amount DECIMAL(10,4),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        call_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending'
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
                 
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS calls (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        customer_id VARCHAR(255),
+                        invoice_number VARCHAR(255),
                         status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
                         transcript TEXT,
                         started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         ended_at TIMESTAMP NULL,
-                        FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+                        FOREIGN KEY (invoice_number) REFERENCES invoices(invoice_number) ON DELETE CASCADE
                     )
                 """)
                 
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS payments (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        customer_id VARCHAR(255),
+                        invoice_number VARCHAR(255),
                         amount DECIMAL(10,2),
                         status ENUM('pending', 'paid', 'failed') DEFAULT 'pending',
                         transaction_id VARCHAR(255) UNIQUE,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+                        FOREIGN KEY (invoice_number) REFERENCES invoices(invoice_number) ON DELETE CASCADE
                     )
                 """)
                 
@@ -91,6 +89,18 @@ class MySQLService:
                         conversation_data JSON,
                         logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (call_id) REFERENCES calls(id) ON DELETE CASCADE
+                    )
+                """)
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS agents (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        status ENUM('active', 'inactive') DEFAULT 'active',
+                        voice VARCHAR(255) DEFAULT 'ballad',
+                        system_prompt TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                     )
                 """)
             connection.commit()
@@ -290,6 +300,68 @@ class MySQLService:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM invoices WHERE phone = %s", (phone,))
                 return cursor.fetchall()
+        finally:
+            connection.close()
+
+    async def get_all_agents(self):
+        """Get all agents from the database"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM agents")
+                return cursor.fetchall()
+        finally:
+            connection.close()
+    
+    async def get_agent_by_id(self, agent_id):
+        """Get an agent by ID"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM agents WHERE id = %s", (agent_id,))
+                return cursor.fetchone()
+        finally:
+            connection.close()
+    
+    async def insert_agent(self, name, system_prompt, voice="alloy", status="active"):
+        """Insert a new agent into the database"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                sql = """
+                    INSERT INTO agents (name, system_prompt, voice, status)
+                    VALUES (%s, %s, %s, %s)
+                """
+                cursor.execute(sql, (name, system_prompt, voice, status))
+                connection.commit()
+                return cursor.lastrowid
+        finally:
+            connection.close()
+    
+    async def update_agent(self, agent_id, **kwargs):
+        """Update an agent in the database"""
+        if not kwargs:
+            return
+        
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                set_clause = ", ".join([f"{key} = %s" for key in kwargs.keys()])
+                sql = f"UPDATE agents SET {set_clause} WHERE id = %s"
+                cursor.execute(sql, list(kwargs.values()) + [agent_id])
+                connection.commit()
+        finally:
+            connection.close()
+    
+    async def delete_agent(self, agent_id):
+        """Delete an agent from the database"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                sql = "DELETE FROM agents WHERE id = %s"
+                cursor.execute(sql, (agent_id,))
+                connection.commit()
+                return cursor.rowcount > 0
         finally:
             connection.close()
 

@@ -43,7 +43,7 @@ interface Invoice {
   phone_strategy: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://194.37.82.18:5000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 export function CustomersList() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -337,7 +337,7 @@ export function CustomersList() {
                       <TableCell>{invoice.invoice_amount}</TableCell>
                       <TableCell>{invoice.fsp_name}</TableCell>
                       <TableCell>{invoice.outstanding_amount}</TableCell>
-                      <TableCell>{new Date(invoice.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>{invoice.created_at ? new Date(invoice.created_at).toISOString().split('T')[0] : ''}</TableCell>
                       <TableCell>
                         <Badge
                           variant={

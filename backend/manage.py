@@ -6,7 +6,6 @@ import uvicorn
 from app.routers.invoice import router as invoice_router
 from app.routers.call import router as call_router
 from app.services.mysql import mysql_service
-from app.admin.admin import router as admin_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,7 +35,6 @@ app.add_middleware(
 
 app.include_router(invoice_router)
 app.include_router(call_router)
-app.include_router(admin_router)
 
 @app.get("/")
 async def health_check():
