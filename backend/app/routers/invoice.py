@@ -1,5 +1,8 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 from typing import List
+from fastapi.responses import StreamingResponse
+import csv
+import io
 
 from app.services.invoice import invoice_service
 from app.model.invoice import (
@@ -88,4 +91,43 @@ async def upload_invoices_csv(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=response.message
         )
+    return response
+
+@router.get("/invoices/export/csv")
+async def export_invoices_csv():
+    """Export all invoices as a properly formatted CSV file"""
+    invoices = await invoice_service.get_invoices()
+    
+    # Create a StringIO object to write CSV data
+    output = io.StringIO()
+    writer = csv.DictWriter(
+        output, 
+        fieldnames=[
+            'customer_id', 'first_name', 'last_name', 'salutation', 
+            'file_number', 'mobile_number', 'phone_number', 'claim_reference',
+            'invoice_number', 'invoice_date', 'invoice_amount', 'fsp_name',
+            'outstanding_amount', 'email', 'mailing_postcode', 'payment_link',
+            'call_status', 'campaign_name', 'script', 'phone_strategy', 'resend_invoice'
+        ]
+    )
+    
+    # Write header row
+    writer.writeheader()
+    
+    # Write invoice data
+    for invoice in invoices:
+        # Convert invoice model to dict and handle any date formatting
+        invoice_dict = invoice.model_dump()
+        if invoice_dict.get('invoice_date'):
+            invoice_dict['invoice_date'] = invoice_dict['invoice_date'].strftime('%Y-%m-%d')
+        writer.writerow(invoice_dict)
+    
+    # Create a StreamingResponse with the CSV data
+    output.seek(0)
+    response = StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv"
+    )
+    response.headers["Content-Disposition"] = "attachment; filename=invoices.csv"
+    
     return response

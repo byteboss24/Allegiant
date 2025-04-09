@@ -154,14 +154,17 @@ export function CustomersList() {
   const handleExport = async () => {
     setIsExporting(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/invoices`)
+      const response = await fetch(`${API_BASE_URL}/api/v1/invoices/export/csv`)
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.detail || 'Export failed')
       }
 
       // Get the filename from the Content-Disposition header or use a default
-      const filename = response.headers.get('Content-Disposition')?.split('filename=')[1] || 'invoices.csv'
+      const contentDisposition = response.headers.get('Content-Disposition')
+      const filename = contentDisposition ? 
+        contentDisposition.split('filename=')[1].replace(/"/g, '') : 
+        'invoices.csv'
       
       // Create a blob from the response
       const blob = await response.blob()
