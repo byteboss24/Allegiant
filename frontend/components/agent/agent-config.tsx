@@ -114,6 +114,31 @@ export function AgentConfig() {
     setIsEditingSystemPrompt(!isEditingSystemPrompt)
   }
 
+  const handleStatusChange = async () => {
+    setIsActive(!isActive)
+    if (selectedAgentId) {
+      const agent = {
+        id: selectedAgentId,
+        name,
+        voice,
+        system_prompt: systemPrompt,
+        status: isActive ? 'inactive' : 'active'
+      }
+      await fetch(`${API_BASE_URL}/api/v1/agents`, {
+        method: 'put',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(agent),
+      })
+      if (!isActive) {
+        fetch(`${API_BASE_URL}/api/v1/start-task`)
+      } else {
+        fetch(`${API_BASE_URL}/api/v1/stop-task`)
+      }
+    }
+  }
+
   const voices = ["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer"]
 
   return (
@@ -169,7 +194,7 @@ export function AgentConfig() {
             </Badge>
             <Switch
               checked={isActive}
-              onCheckedChange={setIsActive}
+              onCheckedChange={handleStatusChange}
               aria-label="Toggle agent status"
             />
           </div>

@@ -2,6 +2,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from app.model.agent import Agent
 from app.services.mysql import mysql_service
+import threading
+import time
+import asyncio
+import httpx
 
 router = APIRouter(
     prefix="/api/v1",
@@ -43,14 +47,60 @@ async def select_agent(agent_id: int):
     selected_agent_id = agent_id
     return {"message": f"Agent {agent_id} selected successfully"}
 
-@router.post("/initialize-openai-session")
-async def initialize_openai_session():
-    if not selected_agent_id:
-        raise HTTPException(status_code=400, detail="No agent selected")
-    
-    agent_data = await mysql_service.get_agent_by_id(selected_agent_id)
-    
-    # Initialize OpenAI session with agent's voice model and settings
-    # Your OpenAI initialization code here using agent_data
-    
-    return {"message": "OpenAI session initialized with agent settings"}
+task_thread = None
+agent = None
+
+async def run_task():
+    global agent
+    while agent['status'] == "active":
+        try:
+            # Get all pending invoices
+            invoices = await mysql_service.get_invoices()
+
+            for invoice in invoices:
+                print(invoice['invoice_number'])
+
+                # Make asynchronous HTTP call
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        "http://194.37.82.18/twilio/outbound",
+                        headers={"Content-Type": "application/json"},
+                        json={"invoice_number": invoice['invoice_number']}
+                    )
+                    response.raise_for_status()
+
+                print(f"Initiated call to {invoice['invoice_number']} for invoice {invoice['id']}")
+                await asyncio.sleep(5)  # Rate limiting
+
+            await asyncio.sleep(60)  # Check for new invoices every minute
+
+        except Exception as e:
+            print(f"Outbound task error: {str(e)}")
+            await asyncio.sleep(30)
+
+async def start_task():
+    global task_thread, agent
+    agent = await mysql_service.get_agent_by_id(selected_agent_id)
+    if agent['status'] == "active":
+        task_thread = threading.Thread(target=lambda: asyncio.run(run_task()), daemon=True)  # Daemon thread
+        task_thread.start()
+        print("Task started!")
+
+async def stop_task():
+    global task_thread, agent
+    agent = await mysql_service.get_agent_by_id(selected_agent_id)
+    if agent and agent['status'] == "inactive":
+        task_thread.join()  # Wait for the thread to finish
+        print("Task stopped!")
+    else:
+        print("No task is running!")
+
+@router.get("/start-task")
+async def startup_event():
+    await start_task()
+    return {"message": "Task started"}
+
+@router.get("/stop-task")
+async def stop_event():
+    await stop_task()
+    return {"message": "Task stopped"}

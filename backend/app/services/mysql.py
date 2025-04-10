@@ -317,7 +317,6 @@ class MySQLService:
     async def get_agent_by_id(self, agent_id):
         """Get an agent by ID"""
         connection = self._get_connection()
-        print(f"Fetching agent by ID: {agent_id}")
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM agents WHERE id = %s", (agent_id))

@@ -13,13 +13,14 @@ import asyncio
 from app.core.prompt_templates.prompt import main_prompt
 from typing import Optional, Dict, List
 from contextlib import asynccontextmanager
+import threading
 
 # Constants
 OPENAI_API_KEY = settings.openai_api_key
 TWILIO_CLIENT = Client(settings.twilio_account_sid, settings.twilio_auth_token)
 OPENAI_CLIENT = OpenAI(api_key=OPENAI_API_KEY)
 VOICE = 'ballad'
-WEBSOCKET_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17'
+WEBSOCKET_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17'
 LOG_EVENT_TYPES = frozenset([
     'error', 'response.content.done', 'rate_limits.updated',
     'input_audio_buffer.committed', 'input_audio_buffer.speech_stopped',
@@ -190,6 +191,7 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
 
 @router.post("/outbound")
 async def outbound(request: OutboundRequest) -> str:
+    print("Initiating outbound call...", request.invoice_number)
     try:
         invoice = await InvoiceService.get_invoice(request.invoice_number)
         if not invoice:
@@ -203,7 +205,7 @@ async def outbound(request: OutboundRequest) -> str:
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<Response><Connect>'
-            '<Stream url="wss://2efd-194-37-82-18.ngrok-free.app/twilio/media-stream"/>'
+            '<Stream url="wss://319a-194-37-82-18.ngrok-free.app/twilio/media-stream"/>'
             '</Connect></Response>'
         )
         
