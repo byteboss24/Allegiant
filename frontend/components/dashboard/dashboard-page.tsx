@@ -152,7 +152,7 @@ export default function DashboardPage() {
           </TabsContent>
 
           <TabsContent value="agent" className="space-y-4">
-            <AgentConfig />
+            <AgentConfig/>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4">

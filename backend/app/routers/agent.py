@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException
 from app.model.agent import Agent
 from app.services.mysql import mysql_service
 
@@ -7,6 +7,9 @@ router = APIRouter(
     prefix="/api/v1",
     tags=["agents"]
 )
+
+# Global variable to store selected agent ID
+selected_agent_id: Optional[int] = 1
 
 @router.get("/agents/{agent_id}", response_model=Agent)
 async def get_agent(agent_id: int):
@@ -29,3 +32,25 @@ async def update_agent(agent: Agent):
 @router.delete("/agents/{agent_id}")
 async def delete_agent(agent_id: int):
     return await mysql_service.delete_agent(agent_id)
+
+@router.get("/selected-agent")
+async def get_selected_agent():
+    return {"selected_agent_id": selected_agent_id}
+
+@router.post("/select-agent/{agent_id}")
+async def select_agent(agent_id: int):
+    global selected_agent_id
+    selected_agent_id = agent_id
+    return {"message": f"Agent {agent_id} selected successfully"}
+
+@router.post("/initialize-openai-session")
+async def initialize_openai_session():
+    if not selected_agent_id:
+        raise HTTPException(status_code=400, detail="No agent selected")
+    
+    agent_data = await mysql_service.get_agent_by_id(selected_agent_id)
+    
+    # Initialize OpenAI session with agent's voice model and settings
+    # Your OpenAI initialization code here using agent_data
+    
+    return {"message": "OpenAI session initialized with agent settings"}

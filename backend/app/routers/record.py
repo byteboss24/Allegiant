@@ -236,9 +236,9 @@ async def initialize_session(openai_ws):
     invoice = {
         "first_name": current_invoice.first_name,
         "last_name": current_invoice.last_name,
-        "lender_name": "Richard",
+        "fsp_name": current_invoice.fsp_name,
         "invoice_amount": current_invoice.invoice_amount,
-        "amount": current_invoice.outstanding_amount,
+        "outstanding_amount": current_invoice.outstanding_amount,
         "invoice_number": current_invoice.invoice_number,
         "percentage": "10%"
     }

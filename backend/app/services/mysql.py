@@ -317,9 +317,10 @@ class MySQLService:
     async def get_agent_by_id(self, agent_id):
         """Get an agent by ID"""
         connection = self._get_connection()
+        print(f"Fetching agent by ID: {agent_id}")
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM agents WHERE id = %s", (agent_id,))
+                cursor.execute("SELECT * FROM agents WHERE id = %s", (agent_id))
                 return cursor.fetchone()
         finally:
             connection.close()
@@ -363,6 +364,24 @@ class MySQLService:
                 cursor.execute(sql, (agent_id,))
                 connection.commit()
                 return cursor.rowcount > 0
+        finally:
+            connection.close()
+
+    async def get_agent_data_by_id(self, agent_id: int):
+        """
+        Retrieve agent data by ID
+        """
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM agents WHERE id = %s", (agent_id,))
+                agent_data = cursor.fetchone()
+                return {
+                    'id': agent_data['id'],
+                    'name': agent_data['name'],
+                    'voice_model': agent_data['voice'],
+                    # Other agent properties
+                }
         finally:
             connection.close()
 

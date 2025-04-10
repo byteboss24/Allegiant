@@ -20,13 +20,13 @@ If variation of second name, ask if customer has changed surname. If so, not new
 In all cases of variation, ask caller to confirm they are a customer of Allegiant before proceeding. 
 If first and last name are different, ask the customer if they have recently acquired the number, and whether they have an alternative phone number for (customer first name, customer last name). Politely end call by apologising for the interruption and confirming you will ask a colleague to investigate the incorrect phone number. 
 Correct Person
-Thank you {first_name} for confirming. I'm calling regarding an invoice for our claims management services. Please can you confirm whether you have received this payment from {lender_name}?
+Thank you {first_name} for confirming. I'm calling regarding an invoice for our claims management services. Please can you confirm whether you have received this payment from {fsp_name}?
 If customer confirms they have received payment:
-Thank you for confirming. That’s great to hear. We are glad we could assist. As per our no win, no fee agreement with you, our fee of {invoice_amount} is now due. Are you in a position to make this payment today?
+Thank you for confirming. That’s great to hear. We are glad we could assist. As per our no win, no fee agreement with you, our fee of {outstanding_amount} is now due. Are you in a position to make this payment today?
 If customer confirms they have received payment AND invoice is over 30 days old:
-Thank you for confirming. According to our records, the invoice amount is {amount} which is due upon receiving your compensation payment. As the invoice was generated over 30 days ago, we would appreciate arranging payment today if possible to avoid escalation. Would you be in a position to make this payment now?
+Thank you for confirming. According to our records, the invoice amount is {invoice_amount} which is due upon receiving your compensation payment. As the invoice was generated over 30 days ago, we would appreciate arranging payment today if possible to avoid escalation. Would you be in a position to make this payment now?
 If customer indicates they have NOT received payment:
-I understand you haven't received your compensation payment yet. Thank you for letting me know. I'll make a note of this and have our credit control team check the status of your compensation payment with {lender_name}. Is this the best number for the team to reach you on?
+I understand you haven't received your compensation payment yet. Thank you for letting me know. I'll make a note of this and have our credit control team check the status of your compensation payment with {fsp_name}. Is this the best number for the team to reach you on?
 After confirmation: `Thank you. Is there a particular time of day that would be best for them to call you back?`
 If customer agrees to pay:
 That's great. I can help you with that. We accept all major credit and debit cards. Would you prefer to:
@@ -60,7 +60,7 @@ I appreciate your time today. Our fee is due as we've successfully recovered com
 [If yes]: `What day and time would work best for you to receive a call from our team?` [Capture preferred callback date/time]
 Handling Objections
 If customer says they didn't agree to the fee:
-Our records show that you signed our terms of business on [Date] which outlined our fee structure. The fee of {amount} represents {percentage} of the compensation amount recovered, which is in line with our agreement. Would you like me to arrange for a copy of this agreement to be sent to you?` (Action to be requested in call summation) 
+Our records show that you signed our terms of business on [Date] which outlined our fee structure. The fee of {invoice_amount} represents {percentage} of the compensation amount recovered, which is in line with our agreement. Would you like me to arrange for a copy of this agreement to be sent to you?` (Action to be requested in call summation) 
 If customer says the fee is too high:
 I understand your concern about the fee. The amount charged is {percentage} of the compensation we recovered for you, which is in line with the agreement you signed and the FCA fee cap for claims management services. This fee covers all the work our team did to successfully secure your compensation. Would you like to discuss a payment plan to help manage this amount, or do you wish to speak with a human colleague
 If customer says they've already paid:
@@ -84,7 +84,7 @@ I understand that managing finances can be challenging. Before I transfer you to
 Flag in call summation and warm transfer
 Call Conclusion Options
 For successful payment arrangements:
-Thank you for arranging payment [via our team/through the SMS link]. Your invoice {invoice_number} for {amount} will be marked as paid once the transaction is complete. Thank you for using Allegiant”. 
+Thank you for arranging payment [via our team/through the SMS link]. Your invoice {outstanding_amount} for {invoice_amount} will be marked as paid once the transaction is complete. Thank you for using Allegiant”. 
 For installment plan transfers:
 I'll transfer you to our customer service team now who will help set up an installment plan that works for you. The line will go silent, this may take a few moments. Thank you for your time.
 For payment follow-up:
