@@ -280,128 +280,27 @@ const callRecordings = [
     outcome: "Transferred",
     transcript: [
       {
-        speaker: "Emma",
-        text: "Hello, my name is Emma calling from Allegiant Finance Services Ltd, an FCA-regulated claims management company. Am I speaking with John Smith?",
+        speaker: "David",
+        text: "Hello, my name is David calling from Allegiant Finance Services Ltd, an FCA-regulated claims management company. Am I speaking with John Smith?",
       },
       { speaker: "Customer", text: "Yes, this is John." },
       {
-        speaker: "Emma",
+        speaker: "David",
         text: "Thank you John for confirming. I'm calling regarding an invoice for our claims management services. Please can you confirm whether you have received this payment from Barclays Bank?",
       },
       { speaker: "Customer", text: "Yes, I received that last week actually." },
       {
-        speaker: "Emma",
+        speaker: "David",
         text: "Thank you for confirming. That's great to hear. We are glad we could assist. As per our no win, no fee agreement with you, our fee of £245 is now due. Are you in a position to make this payment today?",
       },
       { speaker: "Customer", text: "Yes, that would be fine." },
       {
-        speaker: "Emma",
+        speaker: "David",
         text: "That's great. I can help you with that. We accept all major credit and debit cards. Would you prefer to be transferred to a member of our team to process your payment right now, or receive a secure payment link via SMS?",
       },
       { speaker: "Customer", text: "I'd prefer to speak with someone." },
-      { speaker: "Emma", text: "I'll transfer you to our payments team right away. Please hold while I connect you." },
+      { speaker: "David", text: "I'll transfer you to our payments team right away. Please hold while I connect you." },
     ],
-  },
-  {
-    id: "2",
-    customer: "Sarah Johnson",
-    datetime: "2023-05-10 10:16 AM",
-    duration: "2:44",
-    outcome: "SMS Sent",
-    transcript: [
-      {
-        speaker: "Emma",
-        text: "Hello, my name is Emma calling from Allegiant Finance Services Ltd, an FCA-regulated claims management company. Am I speaking with Sarah Johnson?",
-      },
-      { speaker: "Customer", text: "Yes, speaking." },
-      {
-        speaker: "Emma",
-        text: "Thank you Sarah for confirming. I'm calling regarding an invoice for our claims management services. Please can you confirm whether you have received this payment from Halifax?",
-      },
-      { speaker: "Customer", text: "Yes, I have." },
-      {
-        speaker: "Emma",
-        text: "Thank you for confirming. That's great to hear. We are glad we could assist. As per our no win, no fee agreement with you, our fee of £189.50 is now due. Are you in a position to make this payment today?",
-      },
-      { speaker: "Customer", text: "Could you send me a link please? I'm a bit busy right now." },
-      {
-        speaker: "Emma",
-        text: "I'll send a secure payment link to this number right away. You'll be able to pay using any credit or debit card. You'll receive the SMS shortly. Thank you for your time today.",
-      },
-    ],
-  },
-  {
-    id: "3",
-    customer: "Michael Brown",
-    datetime: "2023-05-10 10:12 AM",
-    duration: "0:32",
-    outcome: "No Answer",
-    transcript: [
-      {
-        speaker: "AI",
-        text: "Hello, this is Sarah from Claims Management calling about your outstanding invoice. Am I speaking with Michael Brown?",
-      },
-      { speaker: "AI", text: "Hello? Is anyone there?" },
-      { speaker: "AI", text: "I'll try to reach you at a more convenient time. Thank you." },
-    ],
-  },
-  {
-    id: "4",
-    customer: "Emma Wilson",
-    datetime: "2023-05-10 10:08 AM",
-    duration: "4:17",
-    outcome: "Transferred",
-    transcript: [
-      {
-        speaker: "AI",
-        text: "Hello, this is Sarah from Claims Management calling about your outstanding invoice. Am I speaking with Emma Wilson?",
-      },
-      { speaker: "Customer", text: "Yes, that's me." },
-      {
-        speaker: "AI",
-        text: "Great, thank you for confirming. I'm calling regarding your outstanding invoice number INV-2023-0424 for £312.75. Have you received compensation from the third party for your claim reference CLM-8768-D?",
-      },
-      { speaker: "Customer", text: "Yes, I received it about two weeks ago." },
-      {
-        speaker: "AI",
-        text: "Thank you for letting me know. In that case, would you like to settle your invoice today? I can transfer you to one of our agents to process the payment.",
-      },
-      { speaker: "Customer", text: "Can you explain what this is for again? I'm not sure I remember all the details." },
-      {
-        speaker: "AI",
-        text: "Of course. This invoice is for the claims management services we provided for your compensation claim referenced as CLM-8768-D. As per our agreement, now that you've received your compensation, our fee of £312.75 is due. Would you like me to transfer you to an agent who can provide more details and help process the payment?",
-      },
-      { speaker: "Customer", text: "Yes, please transfer me. I'd like to discuss this further." },
-      { speaker: "AI", text: "I'll transfer you to an agent now. Please hold the line." },
-    ],
-  },
-  {
-    id: "5",
-    customer: "David Taylor",
-    datetime: "2023-05-10 9:52 AM",
-    duration: "1:08",
-    outcome: "SMS Sent",
-    transcript: [
-      {
-        speaker: "AI",
-        text: "Hello, this is Sarah from Claims Management calling about your outstanding invoice. Am I speaking with David Taylor?",
-      },
-      { speaker: "Customer", text: "Yes." },
-      {
-        speaker: "AI",
-        text: "Great, thank you for confirming. I'm calling regarding your outstanding invoice number INV-2023-0425 for £178.25. Have you received compensation from the third party for your claim reference CLM-8769-E?",
-      },
-      { speaker: "Customer", text: "Yes, but I can't talk right now." },
-      {
-        speaker: "AI",
-        text: "I understand. Would it be helpful if I sent you a payment link via SMS so you can settle the invoice at your convenience?",
-      },
-      { speaker: "Customer", text: "Yes, that would be better." },
-      {
-        speaker: "AI",
-        text: "I'll send you a payment link via SMS right away. Thank you for your time, and have a great day!",
-      },
-    ],
-  },
+  }
 ]
 

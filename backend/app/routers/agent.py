@@ -63,9 +63,9 @@ async def run_task():
                 # Make asynchronous HTTP call
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
-                        "http://194.37.82.18/twilio/outbound",
+                        "https://ce8e-194-37-82-18.ngrok-free.app/twilio/outbound",
                         headers={"Content-Type": "application/json"},
-                        json={"invoice_number": invoice['invoice_number']}
+                        json={"invoice_number": str(invoice['invoice_number'])}
                     )
                     response.raise_for_status()
 
