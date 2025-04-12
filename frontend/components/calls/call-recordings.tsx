@@ -1,27 +1,52 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function CallRecordings() {
   const [selectedCall, setSelectedCall] = useState<any>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying)
-  }
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl)
+      }
+    }
+  }, [audioUrl])
 
-  const handleSelectCall = (call: any) => {
-    setSelectedCall(call)
-    setCurrentTime(0)
-    setIsPlaying(false)
+  const username = 'AC2991852720fc87a94f76d1e1738e7596'
+  const password = 'dcd6bcda33f966a474b23201ce3e95dd'
+  const credentials = btoa(`${username}:${password}`)
+
+  const handleSelectCall = async (call: any) => {
+    try {
+      setSelectedCall(call)
+      const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/AC2991852720fc87a94f76d1e1738e7596/Recordings/REf9a8ff6a813373a16c015c0b662129f6', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${credentials}`
+        }
+      })
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      setAudioUrl(url)
+
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.load()
+        audioRef.current.play()
+      }
+    } catch (error) {
+      console.error('Error playing audio:', error)
+    }
   }
 
   return (
@@ -135,89 +160,12 @@ export function CallRecordings() {
                   </div>
 
                   <div className="space-y-4 pt-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">0:00</span>
-                      <span className="text-sm">{selectedCall.duration}</span>
-                    </div>
-                    <Slider value={[currentTime]} max={100} step={1} className="w-full" />
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => setCurrentTime(Math.max(0, currentTime - 10))}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4"
-                        >
-                          <polygon points="19 20 9 12 19 4 19 20"></polygon>
-                          <line x1="5" y1="19" x2="5" y2="5"></line>
-                        </svg>
-                      </Button>
-                      <Button size="icon" onClick={handlePlayPause}>
-                        {isPlaying ? (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-4 w-4"
-                          >
-                            <rect x="6" y="4" width="4" height="16"></rect>
-                            <rect x="14" y="4" width="4" height="16"></rect>
-                          </svg>
-                        ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-4 w-4"
-                          >
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                          </svg>
-                        )}
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => setCurrentTime(Math.min(100, currentTime + 10))}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4"
-                        >
-                          <polygon points="5 4 15 12 5 20 5 4"></polygon>
-                          <line x1="19" y1="5" x2="19" y2="19"></line>
-                        </svg>
-                      </Button>
-                    </div>
+                    {audioUrl && (
+                      <audio ref={audioRef} controls className="mt-4 w-full">
+                        <source src={audioUrl} type="audio/wav" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    )}
                   </div>
 
                   <div className="pt-4">
@@ -303,4 +251,3 @@ const callRecordings = [
     ],
   }
 ]
-

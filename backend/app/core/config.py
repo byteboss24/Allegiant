@@ -1,4 +1,3 @@
-from enum import Enum
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
@@ -17,16 +16,12 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_USER: str
     DB_PORT: int
+    # FastAPI Domain
+    fastapi_domain: str
     
     class Config:
         env_file = ".env"
-        case_sensitive = True
-
-class ModelType(str, Enum):
-    GPT4O = 'gpt-4'
-    GPT35 = 'gpt-3.5-turbo'
-    WHISPER = 'whisper-1'
-    TTS = 'tts-1'
+        case_sensitive = False
 
 @lru_cache()
 def get_settings():

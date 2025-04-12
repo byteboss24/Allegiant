@@ -1,7 +1,6 @@
 import pymysql
 from app.core.config import settings
 import json
-from fastapi import Request
 
 class MySQLService:
     def __init__(self):
@@ -65,6 +64,7 @@ class MySQLService:
                         invoice_number VARCHAR(255),
                         status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
                         transcript TEXT,
+                        audio_url VARCHAR(255),
                         started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         ended_at TIMESTAMP NULL,
                         FOREIGN KEY (invoice_number) REFERENCES invoices(invoice_number) ON DELETE CASCADE
@@ -82,17 +82,7 @@ class MySQLService:
                         FOREIGN KEY (invoice_number) REFERENCES invoices(invoice_number) ON DELETE CASCADE
                     )
                 """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS call_logs (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        call_id INT,
-                        conversation_data JSON,
-                        logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (call_id) REFERENCES calls(id) ON DELETE CASCADE
-                    )
-                """)
-                
+
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS agents (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -145,20 +135,6 @@ class MySQLService:
                     VALUES (%s, %s, %s, %s)
                 """
                 cursor.execute(sql, (customer_id, amount, status, transaction_id))
-                connection.commit()
-                return cursor.lastrowid
-        finally:
-            connection.close()
-    
-    async def insert_call_log(self, call_id, conversation_data):
-        connection = self._get_connection()
-        try:
-            with connection.cursor() as cursor:
-                sql = """
-                    INSERT INTO call_logs (call_id, conversation_data)
-                    VALUES (%s, %s)
-                """
-                cursor.execute(sql, (call_id, json.dumps(conversation_data)))
                 connection.commit()
                 return cursor.lastrowid
         finally:
@@ -294,17 +270,7 @@ class MySQLService:
         finally:
             connection.close()
 
-    async def get_invoices_by_phone(self, phone):
-        """Get all invoices for a phone number"""
-        connection = self._get_connection()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices WHERE phone = %s", (phone,))
-                return cursor.fetchall()
-        finally:
-            connection.close()
-
-    async def get_all_agents(self):
+    async def get_agents(self):
         """Get all agents from the database"""
         connection = self._get_connection()
         try:
@@ -365,22 +331,47 @@ class MySQLService:
                 return cursor.rowcount > 0
         finally:
             connection.close()
-
-    async def get_agent_data_by_id(self, agent_id: int):
-        """
-        Retrieve agent data by ID
-        """
+    
+    async def insert_call(self, record):
+        """Insert a call record into the database"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM agents WHERE id = %s", (agent_id,))
-                agent_data = cursor.fetchone()
-                return {
-                    'id': agent_data['id'],
-                    'name': agent_data['name'],
-                    'voice_model': agent_data['voice'],
-                    # Other agent properties
-                }
+                sql = """
+                    INSERT INTO calls (invoice_number, duration, transcript, audio_url)
+                    VALUES (%s, %f, %s, %s)
+                """
+                cursor.execute(sql, (record.invoice_number, record.duration, record.transcript, record.audio_url))
+                connection.commit()
+                return cursor.lastrowid
+        finally:
+            connection.close()
+
+    async def get_records(self):
+        """Get All records from the database"""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM calls")
+                return cursor.fetchall()
+        finally:
+            connection.close()
+    
+    async def get_record(self, id):
+        """Get record with id from the database"""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM calls WHERE id = %d", (id,))
+                return cursor.fetchone()
+        finally:
+            connection.close()
+
+    async def delete_record(self, id):
+        """Delete a record with id from the database"""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM calls WHERE id = %d", (id,))
+                connection.commit()
+                return cursor.rowcount > 0
         finally:
             connection.close()
 
