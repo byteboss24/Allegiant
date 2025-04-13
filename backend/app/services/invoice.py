@@ -97,9 +97,9 @@ class InvoiceService:
             logger.error(f"Error updating invoice: {e}")
             raise
 
-    async def delete_invoice(self, invoice_id: int) -> bool:
+    async def delete_invoice(self, invoice_number: str) -> bool:
         try:
-            return await mysql_service.delete_invoice(invoice_id)
+            return await mysql_service.delete_invoice(invoice_number)
         except Exception as e:
             logger.error(f"Error deleting invoice: {e}")
             raise

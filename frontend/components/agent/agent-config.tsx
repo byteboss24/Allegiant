@@ -132,9 +132,21 @@ export function AgentConfig() {
         body: JSON.stringify(agent),
       })
       if (!isActive) {
-        fetch(`${API_BASE_URL}/api/v1/start-task`)
+        await fetch(`${API_BASE_URL}/twilio/control_call`, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ control_type: 'start_call' }),
+        })
       } else {
-        fetch(`${API_BASE_URL}/api/v1/stop-task`)
+        await fetch(`${API_BASE_URL}/twilio/control_call`, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ control_type: 'stop_call' }),
+        })
       }
     }
   }

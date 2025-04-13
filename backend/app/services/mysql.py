@@ -272,22 +272,22 @@ class MySQLService:
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' limit 10")
+                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' and status != 'calling' limit 10")
                 return cursor.fetchall()
         finally:
             connection.close()
 
-    async def update_invoice(self, invoice_id, update_data):
+    async def update_invoice(self, invoice_number, update_data):
         """Update an invoice"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
                 set_clause = ", ".join([f"{k} = %s" for k in update_data.keys()])
-                sql = f"UPDATE invoices SET {set_clause} WHERE id = %s"
-                values = list(update_data.values()) + [invoice_id]
+                sql = f"UPDATE invoices SET {set_clause} WHERE invoice_number = %s"
+                values = list(update_data.values()) + [invoice_number]
                 cursor.execute(sql, values)
                 connection.commit()
-                return await self.get_invoice(invoice_id)
+                return await self.get_invoice(invoice_number)
         finally:
             connection.close()
 
@@ -303,12 +303,12 @@ class MySQLService:
         finally:
             connection.close()
 
-    async def delete_invoice(self, invoice_id):
+    async def delete_invoice(self, invoice_number):
         """Delete an invoice"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM invoices WHERE id = %s", (invoice_id,))
+                cursor.execute("DELETE FROM invoices WHERE invoice_number = %s", (invoice_number,))
                 connection.commit()
                 return cursor.rowcount > 0
         finally:
