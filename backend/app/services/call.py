@@ -84,7 +84,7 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
             "turn_detection": {"type": "server_vad"},
             "input_audio_format": "g711_ulaw",
             "output_audio_format": "g711_ulaw",
-            "voice": "ballad",
+            "voice": settings.voice_type,
             "instructions": system_message,
             "modalities": ["text", "audio"],
             "temperature": 0.8,

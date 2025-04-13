@@ -33,7 +33,7 @@ class InvoiceUpdate(BaseModel):
     call_recording_url: Optional[str] = None
 
 class Invoice(InvoiceBase):
-    call_status: Optional[str] = None
+    status: Optional[str] = None
     campaign_name: Optional[str] = None
     script: Optional[str] = None
     phone_strategy: Optional[str] = None
@@ -41,7 +41,7 @@ class Invoice(InvoiceBase):
 
 class InvoiceResponseData(BaseModel):
     created_at: datetime
-    call_status: Optional[str] = None
+    status: Optional[str] = None
     campaign_name: Optional[str] = None
     script: Optional[str] = None
     phone_strategy: Optional[str] = None
