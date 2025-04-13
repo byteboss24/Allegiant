@@ -24,3 +24,12 @@ class RecordResponse(BaseModel):
     message: str
     data: Optional[Record] = None
 
+class WeeklyStats(BaseModel):
+    date: str
+    total_calls: int
+    completed_calls: int
+    other_calls: int
+
+class RecentStats(Record):
+    first_name: str
+    last_name: str

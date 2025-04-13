@@ -3,19 +3,51 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { format } from "date-fns"
+import {useState, useEffect} from "react"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+
+interface RecentCall {
+  id: number
+  invoice_number: string
+  status: string
+  duration: number
+  created_at: string
+  first_name: string
+  last_name: string
+}
 
 export function RecentCalls() {
+  const [calls, setCalls] = useState<RecentCall[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchRecentCalls = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/record/recent`)
+        const data = await response.json()
+        setCalls(data)
+      } catch (error) {
+        console.error('Failed to fetch recent calls:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchRecentCalls()
+  }, [])
+
   return (
     <div className="space-y-8">
-      {recentCalls.map((call) => (
+      {calls.map((call) => (
         <div className="flex items-center" key={call.id}>
           <Avatar className="h-9 w-9">
-            <AvatarFallback>{call.customer.initials}</AvatarFallback>
+            <AvatarFallback>{call.first_name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">{call.customer.name}</p>
+            <p className="text-sm font-medium leading-none">{call.first_name+' '+call.last_name}</p>
             <p className="text-sm text-muted-foreground">
-              {call.time} • {call.duration}
+              {call.created_at} • {call.duration}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -26,9 +58,6 @@ export function RecentCalls() {
             >
               {call.status}
             </Badge>
-            <Button variant="ghost" size="sm">
-              Details
-            </Button>
           </div>
         </div>
       ))}
