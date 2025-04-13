@@ -23,7 +23,7 @@ interface CustomerDetails {
   mailing_postcode: string
   payment_link: string
   created_at: string
-  call_status: string
+  status: string
   campaign_name: string
   script: string
   phone_strategy: string
@@ -124,14 +124,14 @@ export function CustomerDetails() {
                 <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
                 <Badge
                   variant={
-                    customer.call_status === "completed"
+                    customer.status === "completed"
                       ? "default"
-                      : customer.call_status === "pending"
+                      : customer.status === "pending"
                         ? "outline"
                         : "destructive"
                   }
                 >
-                  {customer.call_status?.toUpperCase()}
+                  {customer.status?.toUpperCase()}
                 </Badge>
               </div>
             </div>

@@ -244,6 +244,29 @@ class MySQLService:
         finally:
             connection.close()
 
+    async def get_monthly_invoice_stats(self):
+        """Get this month's invoice completion statistics"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as total_invoices,
+                        SUM(CASE WHEN `status` = 'completed' THEN 1 ELSE 0 END) as completed_invoices,
+                        ROUND((SUM(CASE WHEN `status` = 'completed' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as completion_rate
+                    FROM invoices 
+                    WHERE MONTH(invoice_date) = MONTH(CURRENT_DATE())
+                    AND YEAR(invoice_date) = YEAR(CURRENT_DATE())
+                """)
+                result = cursor.fetchone()
+                return {
+                    'total_invoices': result['total_invoices'] or 0,
+                    'completed_invoices': result['completed_invoices'] or 0,
+                    'completion_rate': result['completion_rate'] or 0.0
+                }
+        finally:
+            connection.close()
+
     async def get_invoices_to_process(self):
         """Get all invoices to process"""
         connection = self._get_connection()
@@ -263,6 +286,18 @@ class MySQLService:
                 sql = f"UPDATE invoices SET {set_clause} WHERE invoice_number = %s"
                 values = list(update_data.values()) + [invoice_number]
                 cursor.execute(sql, values)
+                connection.commit()
+                return await self.get_invoice(invoice_number)
+        finally:
+            connection.close()
+
+    async def update_invoice_status(self, invoice_number: str, status: str):
+        """Update an invoice's status"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                sql = "UPDATE invoices SET status = %s WHERE invoice_number = %s"
+                cursor.execute(sql, (status, invoice_number))
                 connection.commit()
                 return await self.get_invoice(invoice_number)
         finally:
