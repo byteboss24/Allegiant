@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter
 from app.services.record import record_service
-from app.model.record import Record, RecordCreate
+from app.model.record import Record, RecordCreate, WeeklyStats, RecentStats
 
 router = APIRouter(
     prefix="/api/v1",
@@ -11,6 +11,14 @@ router = APIRouter(
 @router.get("/records", response_model=List[Record])
 async def get_records():
     return await record_service.get_records()
+
+@router.get("/record/week", response_model=List[WeeklyStats])
+async def get_record_week():
+    return await record_service.get_record_week()
+
+@router.get("/record/recent", response_model=List[RecentStats])
+async def get_record_recent(limit: int = 10):
+    return await record_service.get_record_recent(limit)
 
 @router.get("/record/{id}", response_model=Record)
 async def get_record(id: int):

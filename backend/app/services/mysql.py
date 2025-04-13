@@ -387,6 +387,61 @@ class MySQLService:
         finally:
             connection.close()
 
+    async def get_record_week(self):
+        """Get daily call statistics grouped by status for the last 7 days"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    WITH RECURSIVE date_range AS (
+                        SELECT DATE(NOW()) as date
+                        UNION ALL
+                        SELECT DATE_SUB(date, INTERVAL 1 DAY)
+                        FROM date_range
+                        WHERE date > DATE_SUB(NOW(), INTERVAL 6 DAY)
+                    ),
+                    daily_stats AS (
+                        SELECT 
+                            DATE(created_at) as date,
+                            COUNT(*) as total_calls,
+                            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_calls,
+                            SUM(CASE WHEN status != 'completed' THEN 1 ELSE 0 END) as other_calls
+                        FROM calls 
+                        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                        GROUP BY DATE(created_at)
+                    )
+                    SELECT 
+                        dr.date,
+                        COALESCE(ds.total_calls, 0) as total_calls,
+                        COALESCE(ds.completed_calls, 0) as completed_calls,
+                        COALESCE(ds.other_calls, 0) as other_calls
+                    FROM date_range dr
+                    LEFT JOIN daily_stats ds ON dr.date = ds.date
+                    ORDER BY dr.date ASC
+                """)
+                return cursor.fetchall()
+        finally:
+            connection.close()
+
+    async def get_record_recent(self, limit=10):
+        """Get recent call records with customer names from the database"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        c.*,
+                        i.first_name,
+                        i.last_name
+                    FROM calls c
+                    LEFT JOIN invoices i ON c.invoice_number = i.invoice_number
+                    ORDER BY c.created_at DESC
+                    LIMIT %s
+                """, (limit,))
+                return cursor.fetchall()
+        finally:
+            connection.close()
+
     async def delete_record(self, id):
         """Delete a record with id from the database"""
         connection = self._get_connection()
