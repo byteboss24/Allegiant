@@ -244,6 +244,16 @@ class MySQLService:
         finally:
             connection.close()
 
+    async def get_invoices_to_process(self):
+        """Get all invoices to process"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' limit 10")
+                return cursor.fetchall()
+        finally:
+            connection.close()
+
     async def update_invoice(self, invoice_id, update_data):
         """Update an invoice"""
         connection = self._get_connection()

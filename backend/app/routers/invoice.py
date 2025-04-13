@@ -67,11 +67,6 @@ async def delete_invoice(invoice_number: str):
             detail="Invoice not found"
         )
 
-@router.get("/invoices/phone/{phone_number}", response_model=List[Invoice])
-async def get_invoices_by_phone(phone_number: str):
-    """Get all invoices for a phone number"""
-    return await invoice_service.get_invoices_by_phone(phone_number)
-
 @router.post("/invoices/upload-csv", response_model=CSVUploadResponse)
 async def upload_invoices_csv(
     file: UploadFile = File(...),

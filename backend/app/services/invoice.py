@@ -98,6 +98,16 @@ class InvoiceService:
         except Exception as e:
             logger.error(f"Error getting invoices: {e}")
             raise
+
+    async def get_invoices_to_process(self) -> List[Invoice]:
+        try:
+            invoices = await mysql_service.get_invoices_to_process()
+            if not invoices:
+                return []
+            return [Invoice.model_validate(invoice) for invoice in invoices]
+        except Exception as e:
+            logger.error(f"Error getting invoices to process: {e}")
+            raise
         
     async def get_invoice_by_id(self, invoice_id: int) -> Optional[Invoice]:
         try:

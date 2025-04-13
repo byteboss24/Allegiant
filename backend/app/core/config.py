@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     agent_id: Optional[int] = None
     voice_type: Optional[str] = None
     system_prompt: Optional[str] = None
+    call_count: Optional[int] = 0
+    active: Optional[bool] = False
     
     class Config:
         env_file = ".env"

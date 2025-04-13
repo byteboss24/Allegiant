@@ -11,7 +11,7 @@ from app.services.call import (
     handle_twilio_connection,
     process_twilio_messages
 )
-from app.services.invoice import InvoiceService
+from app.services.invoice import invoice_service
 from app.services.record import record_service
 from app.model.record import RecordCreate
 from openai import OpenAI
@@ -67,7 +67,7 @@ async def monitor_speech(websocket: WebSocket, openai_ws: websockets.WebSocketCl
 async def outbound(request: OutboundRequest) -> str:
     print("Initiating outbound call...", request.invoice_number)
     try:
-        invoice = await InvoiceService.get_invoice(request.invoice_number)
+        invoice = await invoice_service.get_invoice(request.invoice_number)
         if not invoice:
             raise HTTPException(status_code=404, detail="Invoice not found")
         
@@ -91,6 +91,7 @@ async def outbound(request: OutboundRequest) -> str:
 
         isrecording = False
         recording = None
+        settings.call_count = settings.call_count + 1
 
         while True:
             data = TWILIO_CLIENT.calls(call.sid).fetch()
@@ -126,6 +127,7 @@ async def outbound(request: OutboundRequest) -> str:
             await asyncio.sleep(2)
 
         print("recording2", recording)
+        settings.call_count = settings.call_count - 1
 
         logger.info(f"Call initiated - SID: {call}")
         return call.sid
@@ -219,3 +221,40 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         
         # Disconnect the WebSocket
         await manager.disconnect(websocket)
+
+@router.post("/control_call")
+async def control_call(control_type: str):
+    if control_type == "start_call":
+        settings.active = True
+        while True:
+            if settings.active:
+                invoices = await invoice_service.get_invoices_to_process()
+                if not invoices:
+                    return {"status": "no_invoices", "message": "No invoices to process"}
+                
+                # Wait until we have available slots
+                while settings.call_count >= 10:
+                    await asyncio.sleep(1)
+
+                # Process up to 10 invoices at a time
+                for invoice in invoices[:10]:
+                    if settings.call_count >= 10:
+                        break
+                        
+                    try:
+                        # Create outbound request for each invoice
+                        request = OutboundRequest(invoice_number=invoice.invoice_number)
+                        asyncio.create_task(outbound(request))
+                    except Exception as e:
+                        logger.error(f"Error initiating call for invoice {invoice.invoice_number}: {e}")
+                        continue
+
+    elif control_type == "stop_call":
+        # Reset call count and return current state
+        current_count = settings.call_count
+        settings.call_count = 0
+        settings.active = False
+        return {"status": "stopped", "message": f"Stopped {current_count} active calls", "active_calls": 0}
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid control_type. Use 'start_call' or 'stop_call'")
