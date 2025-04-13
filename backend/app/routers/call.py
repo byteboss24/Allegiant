@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, HTTPException
 from fastapi.websockets import WebSocketDisconnect
 from app.core.config import settings
 from twilio.rest import Client
+from app.core.logger import logger
 from app.services.call import (
     call_state,
     manager,
@@ -11,9 +12,10 @@ from app.services.call import (
     process_twilio_messages
 )
 from app.services.invoice import InvoiceService
+from app.services.record import record_service
+from app.model.record import RecordCreate
 from openai import OpenAI
 from pydantic import BaseModel
-from typing import Dict
 import websockets
 import asyncio
 
@@ -24,23 +26,6 @@ OPENAI_CLIENT = OpenAI(api_key=settings.openai_api_key)
 
 class OutboundRequest(BaseModel):
     invoice_number: str
-
-async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invoice: Dict) -> None:
-    system_message = main_prompt.format(**invoice, percentage="10%")
-    session_config = {
-        "type": "session.update",
-        "session": {
-            "turn_detection": {"type": "server_vad"},
-            "input_audio_format": "g711_ulaw",
-            "output_audio_format": "g711_ulaw",
-            "voice": VOICE,
-            "instructions": system_message,
-            "modalities": ["text", "audio"],
-            "temperature": 0.8,
-        }
-    }
-    await openai_ws.send(json.dumps(session_config))
-    await send_initial_greeting(openai_ws)
 
 async def send_initial_greeting(openai_ws: websockets.WebSocketClientProtocol) -> None:
     print(call_state.current_invoice)
@@ -55,7 +40,7 @@ async def send_initial_greeting(openai_ws: websockets.WebSocketClientProtocol) -
                 "an FCA-regulated claims management company. Am I speaking with {first_name} {last_name}?' "
                 "Use a warm, professional tone. Keep it brief and welcoming."
             ).format(first_name=call_state.current_invoice['first_name'], last_name=call_state.current_invoice['last_name']), 
-            "voice": VOICE
+            "voice": settings.voice_type
         }
     }
     await openai_ws.send(json.dumps(welcome_message))
@@ -70,56 +55,13 @@ async def monitor_speech(websocket: WebSocket, openai_ws: websockets.WebSocketCl
                     "modalities": ["text", "audio"],
                     "temperature": 0.8,
                     "instructions": "To keep the customer focused on the call, say 'Hello' or 'Are you there?'",
-                    "voice": VOICE
+                    "voice": settings.voice_type
                 }
             }))
     except Exception as e:
         logger.error(f"Error in monitor_speech: {e}")
 
-async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol, stream_sid: str) -> None:
-    try:
-        async for message in openai_ws:
-            response = json.loads(message)
-            
-            # if response['type'] == 'input_audio_buffer.speech_started':
-            #     print("Human start saying")
-            #     call_state.is_speaking = True
-            #     if call_state.is_speaking:
-            #         await openai_ws.send(json.dumps({"type": "response.cancel"}))
-            #         call_state.is_speaking = False
-            if response['type'] in LOG_EVENT_TYPES:
-                print(f"Received event: {response['type']}", response)
-            # if response['type'] == 'session.updated':
-            #     print("Session updated successfully:", response)
-            elif response['type'] == 'response.done':
-                call_state.is_speaking = False
-                try:
-                    transcript = response.get('response', {}).get('output', [{}])[0].get('content', [{}])[0].get('transcript', "No transcript available")
-                    print(f"AI Transcript: {transcript}")
-                except Exception as e:
-                    logger.error(f"Error getting transcript: {e}")
-                    transcript = "No transcript available"
-                # # Create task but don't await it directly to avoid blocking
-                # monitor_task = asyncio.create_task(monitor_speech(websocket, openai_ws))
-                # Optional: Add error handling for the task
-                # monitor_task.add_done_callback(
-                #     lambda t: logger.error(f"Monitor speech task error: {t.exception()}") if t.exception() else None
-                # )
-            
-            elif response['type'] == 'response.audio.delta' and response.get('delta'):
-                audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')
-                await websocket.send_json({
-                    "event": "media",
-                    "streamSid": stream_sid,
-                    "media": {"payload": audio_payload}
-                })
-    except websockets.exceptions.ConnectionClosed as e:
-        logger.warning(f"OpenAI WebSocket closed: {e}")
-    except asyncio.CancelledError:
-        logger.info("OpenAI message processing cancelled")
-    except Exception as e:
-        logger.error(f"Error in process_openai_messages: {e}", exc_info=True)
-        raise
+
 
 @router.post("/outbound")
 async def outbound(request: OutboundRequest) -> str:
@@ -159,8 +101,26 @@ async def outbound(request: OutboundRequest) -> str:
                 recording = TWILIO_CLIENT.calls(call.sid).recordings.create()
                 print("recording1", recording)
 
-            if data.status in ['completed', 'failed', 'busy', 'no-answer', 'canceled']:
+            if data.status in ['failed', 'busy', 'no-answer', 'canceled']:
                 print("Call ended with status:", data.status)
+                await record_service.create_record(RecordCreate(
+                    invoice_number=invoice.invoice_number,
+                    duration=0,
+                    transcript="",
+                    audio_url="",
+                    status=data.status
+                ))
+                break
+
+            if data.status == 'completed':
+                print("Call completed successfully", data)
+                await record_service.create_record(RecordCreate(
+                    invoice_number=invoice.invoice_number,
+                    duration=int(data.duration),
+                    transcript="",
+                    audio_url=f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Recordings/{recording.sid}",
+                    status=data.status
+                ))
                 break
 
             await asyncio.sleep(2)
@@ -192,6 +152,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 }
             ) as openai_ws:
                 logger.info("OpenAI WebSocket connected")
+                print("Current invoice:", call_state.current_invoice)
 
                 if not call_state.current_invoice:
                     call_state.current_invoice = {

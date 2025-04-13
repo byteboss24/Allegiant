@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     DB_PORT: int
     # FastAPI Domain
     fastapi_domain: str
+    # Agent Settings
+    agent_id: Optional[int] = None
+    voice_type: Optional[str] = None
+    system_prompt: Optional[str] = None
     
     class Config:
         env_file = ".env"

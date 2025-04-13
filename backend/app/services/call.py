@@ -2,11 +2,22 @@ from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from app.core.config import settings
 from app.core.logger import logger
+from app.core.prompt_templates.prompt import main_prompt
 import json
 import websockets
 import asyncio
 import base64
 from typing import Optional, Dict
+from openai import OpenAI
+
+from app.core.prompt_templates.prompt import main_prompt
+from typing import Optional, Dict
+
+LOG_EVENT_TYPES = frozenset([
+    'error', 'response.content.done', 'rate_limits.updated',
+    'input_audio_buffer.committed', 'input_audio_buffer.speech_stopped',
+    'input_audio_buffer.speech_started', 'session.created', 'response.text.done'
+])
 
 class ConnectionManager:
     def __init__(self):
@@ -16,8 +27,13 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections.append(websocket)
 
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+    async def disconnect(self, websocket: WebSocket):
+        try:
+            self.active_connections.remove(websocket)
+        except ValueError:
+            logger.warning("Connection already removed")
+        except Exception as e:
+            logger.error(f"Error disconnecting: {e}")
 
     async def send_text(self, message: dict, websocket: WebSocket):
         await websocket.send_json(message)
@@ -68,7 +84,7 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
             "turn_detection": {"type": "server_vad"},
             "input_audio_format": "g711_ulaw",
             "output_audio_format": "g711_ulaw",
-            "voice": settings.voice_type,
+            "voice": "ballad",
             "instructions": system_message,
             "modalities": ["text", "audio"],
             "temperature": 0.8,
@@ -117,15 +133,34 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
         async for message in openai_ws:
             response = json.loads(message)
             
-            if response['type'] in settings.log_event_types:
-                print(f"Received event: {response['type']}", response)
+            # if response['type'] == 'input_audio_buffer.speech_started':
+            #     print("Human start saying")
+            #     call_state.is_speaking = True
+            #     if call_state.is_speaking:
+            #         await openai_ws.send(json.dumps({"type": "response.cancel"}))
+            #         call_state.is_speaking = False
+            # if response['type'] in LOG_EVENT_TYPES:
+            #     print(f"Received event: {response['type']}", response)
+            if response['type'] == 'input_audio_buffer.speech_started':
+                print("Human start saying")
+                call_state.is_speaking = True
+            elif response['type'] == 'input_audio_buffer.speech_stopped':
+                print("Human stop saying")
+                call_state.is_speaking = False
             elif response['type'] == 'response.done':
                 call_state.is_speaking = False
                 try:
-                    transcript = response.get('response', {}).get('output', [{}])[0].get('content', [{}])[0].get('transcript', "No transcript available")
+                    transcript = response['response']['output']
                     print(f"AI Transcript: {transcript}")
                 except Exception as e:
                     logger.error(f"Error getting transcript: {e}")
+                    transcript = "No transcript available"
+                # # Create task but don't await it directly to avoid blocking
+                # monitor_task = asyncio.create_task(monitor_speech(websocket, openai_ws))
+                # Optional: Add error handling for the task
+                # monitor_task.add_done_callback(
+                #     lambda t: logger.error(f"Monitor speech task error: {t.exception()}") if t.exception() else None
+                # )
             
             elif response['type'] == 'response.audio.delta' and response.get('delta'):
                 audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')

@@ -65,9 +65,9 @@ class MySQLService:
                         status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
                         transcript TEXT,
                         audio_url VARCHAR(255),
-                        started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         ended_at TIMESTAMP NULL,
-                        FOREIGN KEY (invoice_number) REFERENCES invoices(invoice_number) ON DELETE CASCADE
+                        duration DECIMAL(10,2) DEFAULT 0
                     )
                 """)
                 
@@ -78,8 +78,7 @@ class MySQLService:
                         amount DECIMAL(10,2),
                         status ENUM('pending', 'paid', 'failed') DEFAULT 'pending',
                         transaction_id VARCHAR(255) UNIQUE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (invoice_number) REFERENCES invoices(invoice_number) ON DELETE CASCADE
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
 
@@ -332,23 +331,45 @@ class MySQLService:
         finally:
             connection.close()
     
-    async def insert_call(self, record):
+    async def insert_record(self, record):
         """Insert a call record into the database"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
+                print(record)
                 sql = """
-                    INSERT INTO calls (invoice_number, duration, transcript, audio_url)
-                    VALUES (%s, %f, %s, %s)
+                    INSERT INTO calls (invoice_number, duration, transcript, audio_url, status)
+                    VALUES (%s, %s, %s, %s, %s)
                 """
-                cursor.execute(sql, (record.invoice_number, record.duration, record.transcript, record.audio_url))
+                cursor.execute(sql, (record.invoice_number, record.duration, record.transcript, record.audio_url, record.status))
                 connection.commit()
                 return cursor.lastrowid
+        finally:
+            connection.close()
+    
+    async def update_record(self, record_id, record):
+        """Update a call record in the database"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                sql = """
+                    UPDATE calls
+                    SET invoice_number = %s,
+                        duration = %s,
+                        transcript = %s,
+                        audio_url = %s,
+                        status = %s
+                    WHERE id = %s
+                """
+                cursor.execute(sql, (record.invoice_number, record.duration, record.transcript, record.audio_url, record.status, record_id))
+                connection.commit()
+                return cursor.rowcount > 0
         finally:
             connection.close()
 
     async def get_records(self):
         """Get All records from the database"""
+        connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM calls")
@@ -358,6 +379,7 @@ class MySQLService:
     
     async def get_record(self, id):
         """Get record with id from the database"""
+        connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM calls WHERE id = %d", (id,))
@@ -367,6 +389,7 @@ class MySQLService:
 
     async def delete_record(self, id):
         """Delete a record with id from the database"""
+        connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM calls WHERE id = %d", (id,))

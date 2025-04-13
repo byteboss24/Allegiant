@@ -201,7 +201,8 @@ export function CustomersList() {
       `${invoice.first_name} ${invoice.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.mobile_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.claim_reference.toLowerCase().includes(searchTerm.toLowerCase())
+      invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.fsp_name.toLowerCase().includes(searchTerm.toLowerCase())
 
     if (statusFilter === "all") return matchesSearch
     return matchesSearch && invoice.call_status === statusFilter

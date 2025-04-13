@@ -8,10 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+const username = process.env.NEXT_PUBLIC_USERNAME
+const password = process.env.NEXT_PUBLIC_PASSWORD
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+
 export function CallRecordings() {
   const [selectedCall, setSelectedCall] = useState<any>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const [callRecordings, setData] = useState<any[]>([])
 
   useEffect(() => {
     return () => {
@@ -21,14 +26,24 @@ export function CallRecordings() {
     }
   }, [audioUrl])
 
-  const username = 'AC2991852720fc87a94f76d1e1738e7596'
-  const password = 'dcd6bcda33f966a474b23201ce3e95dd'
+
+  useEffect(()=>{
+    const fetchRecords = async () => {
+      const response = await fetch(`${API_BASE_URL}/api/v1/records`)
+      const data = await response.json()
+      return data
+    }
+    fetchRecords().then(records => {
+      setData(records)
+    })
+  },[])
+
   const credentials = btoa(`${username}:${password}`)
 
   const handleSelectCall = async (call: any) => {
     try {
       setSelectedCall(call)
-      const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/AC2991852720fc87a94f76d1e1738e7596/Recordings/REf9a8ff6a813373a16c015c0b662129f6', {
+      const response = await fetch(call.audio_url, {
         method: 'GET',
         headers: {
           'Authorization': `Basic ${credentials}`
@@ -84,36 +99,36 @@ export function CallRecordings() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Customer</TableHead>
+                    <TableHead>Invoice Number</TableHead>
                     <TableHead>Date & Time</TableHead>
                     <TableHead>Duration</TableHead>
-                    <TableHead>Outcome</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {callRecordings.map((call) => (
+                  {callRecordings?.map((call) => (
                     <TableRow
                       key={call.id}
                       className={selectedCall?.id === call.id ? "bg-muted/50" : ""}
                       onClick={() => handleSelectCall(call)}
                     >
-                      <TableCell className="font-medium">{call.customer}</TableCell>
-                      <TableCell>{call.datetime}</TableCell>
+                      <TableCell className="font-medium">{call.invoice_number}</TableCell>
+                      <TableCell>{call.created_at}</TableCell>
                       <TableCell>{call.duration}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            call.outcome === "Transferred"
+                            call.status === "Transferred"
                               ? "default"
-                              : call.outcome === "SMS Sent"
+                              : call.status === "SMS Sent"
                                 ? "outline"
-                                : call.outcome === "No Answer"
+                                : call.status === "No Answer"
                                   ? "destructive"
                                   : "secondary"
                           }
                         >
-                          {call.outcome}
+                          {call.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -139,21 +154,21 @@ export function CallRecordings() {
               {selectedCall ? (
                 <>
                   <div className="text-center space-y-2">
-                    <h3 className="font-medium">{selectedCall.customer}</h3>
-                    <p className="text-sm text-muted-foreground">{selectedCall.datetime}</p>
+                    <h3 className="font-medium">{selectedCall.first_name} {selectedCall.last_name}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedCall.created_at}</p>
                     <div className="flex justify-center items-center gap-2 mt-4">
                       <Badge
                         variant={
-                          selectedCall.outcome === "Transferred"
+                          selectedCall.status === "Transferred"
                             ? "default"
-                            : selectedCall.outcome === "SMS Sent"
+                            : selectedCall.status === "SMS Sent"
                               ? "outline"
-                              : selectedCall.outcome === "No Answer"
+                              : selectedCall.status === "No Answer"
                                 ? "destructive"
                                 : "secondary"
                         }
                       >
-                        {selectedCall.outcome}
+                        {selectedCall.status}
                       </Badge>
                       <span className="text-sm text-muted-foreground">{selectedCall.duration}</span>
                     </div>
@@ -171,15 +186,7 @@ export function CallRecordings() {
                   <div className="pt-4">
                     <h4 className="font-medium mb-2">Transcript</h4>
                     <div className="max-h-64 overflow-y-auto rounded-md border p-4 text-sm">
-                      {selectedCall.transcript.map((line: any, index: number) => (
-                        <div
-                          key={index}
-                          className={`mb-2 ${line.speaker === "AI" ? "text-blue-600" : "text-gray-800"}`}
-                        >
-                          <span className="font-semibold">{line.speaker}: </span>
-                          {line.text}
-                        </div>
-                      ))}
+                      {selectedCall.transcript}
                     </div>
                   </div>
 
@@ -218,36 +225,3 @@ export function CallRecordings() {
     </div>
   )
 }
-
-const callRecordings = [
-  {
-    id: "1",
-    customer: "John Smith",
-    datetime: "2023-05-10 10:24 AM",
-    duration: "3:12",
-    outcome: "Transferred",
-    transcript: [
-      {
-        speaker: "David",
-        text: "Hello, my name is David calling from Allegiant Finance Services Ltd, an FCA-regulated claims management company. Am I speaking with John Smith?",
-      },
-      { speaker: "Customer", text: "Yes, this is John." },
-      {
-        speaker: "David",
-        text: "Thank you John for confirming. I'm calling regarding an invoice for our claims management services. Please can you confirm whether you have received this payment from Barclays Bank?",
-      },
-      { speaker: "Customer", text: "Yes, I received that last week actually." },
-      {
-        speaker: "David",
-        text: "Thank you for confirming. That's great to hear. We are glad we could assist. As per our no win, no fee agreement with you, our fee of £245 is now due. Are you in a position to make this payment today?",
-      },
-      { speaker: "Customer", text: "Yes, that would be fine." },
-      {
-        speaker: "David",
-        text: "That's great. I can help you with that. We accept all major credit and debit cards. Would you prefer to be transferred to a member of our team to process your payment right now, or receive a secure payment link via SMS?",
-      },
-      { speaker: "Customer", text: "I'd prefer to speak with someone." },
-      { speaker: "David", text: "I'll transfer you to our payments team right away. Please hold while I connect you." },
-    ],
-  }
-]

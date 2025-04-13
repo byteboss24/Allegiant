@@ -6,6 +6,7 @@ import uvicorn
 from app.routers.invoice import router as invoice_router
 from app.routers.call import router as call_router
 from app.routers.agent import router as agent_router
+from app.routers.record import router as record_router
 from app.services.mysql import mysql_service
 
 @asynccontextmanager
@@ -37,6 +38,7 @@ app.add_middleware(
 app.include_router(invoice_router)
 app.include_router(call_router)
 app.include_router(agent_router)
+app.include_router(record_router)
 
 @app.get("/")
 async def health_check():
