@@ -33,7 +33,7 @@ class InvoiceUpdate(BaseModel):
     call_recording_url: Optional[str] = None
 
 class Invoice(InvoiceBase):
-    call_status: Optional[str] = None
+    status: Optional[str] = None
     campaign_name: Optional[str] = None
     script: Optional[str] = None
     phone_strategy: Optional[str] = None
@@ -63,3 +63,18 @@ class CSVUploadRequest(BaseModel):
     campaign_name: str
     script: str
     phone_strategy: str
+
+# ...existing code...
+
+class MonthlyInvoiceStats(BaseModel):
+    total_invoices: int
+    completed_invoices: int
+    completion_rate: float
+
+    class Config:
+        from_attributes = True
+
+
+class InvoiceStatusUpdate(BaseModel):
+    invoice_number: str
+    status: str

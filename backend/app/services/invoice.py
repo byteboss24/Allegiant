@@ -1,6 +1,6 @@
 from typing import List, Optional
 from app.core.logger import logger
-from app.model.invoice import InvoiceCreate, InvoiceUpdate, Invoice, InvoiceResponse, CSVUploadResponse
+from app.model.invoice import InvoiceCreate, InvoiceUpdate, Invoice, InvoiceResponse, CSVUploadResponse, MonthlyInvoiceStats
 from app.services.mysql import mysql_service
 from fastapi import UploadFile
 import csv
@@ -75,7 +75,22 @@ class InvoiceService:
 
             # Update only the fields that are provided
             update_dict = update_data.model_dump(exclude_unset=True)
-            updated_invoice = await mysql_service.update_invoice(invoice_id, update_dict)
+            updated_invoice = await mysql_service.update_invoice(invoice_number, update_dict)
+            
+            return Invoice.model_validate(updated_invoice) if updated_invoice else None
+        except Exception as e:
+            logger.error(f"Error updating invoice: {e}")
+            raise
+
+    async def update_invoice_status(self, invoice_number: str, status: str) -> Optional[Invoice]:
+        try:
+            # First get the existing invoice
+            existing = await self.get_invoice(invoice_number)
+            if not existing:
+                return None
+            
+            # Update only the fields that are provided
+            updated_invoice = await mysql_service.update_invoice_status(invoice_number, status)
             
             return Invoice.model_validate(updated_invoice) if updated_invoice else None
         except Exception as e:
@@ -97,6 +112,17 @@ class InvoiceService:
             return [Invoice.model_validate(invoice) for invoice in invoices]
         except Exception as e:
             logger.error(f"Error getting invoices: {e}")
+            raise
+
+    async def get_monthly_stats(self) -> MonthlyInvoiceStats:
+        try:
+            data = await mysql_service.get_monthly_invoice_stats()
+            print("Monthly stats data:", data)
+            if not data:
+                return {}
+            return data
+        except Exception as e:
+            logger.error(f"Error getting monthly data: {e}")
             raise
 
     async def get_invoices_to_process(self) -> List[Invoice]:

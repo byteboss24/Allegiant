@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 from typing import List
 from fastapi.responses import StreamingResponse
+from app.model.invoice import InvoiceStatusUpdate
 import csv
 import io
 
@@ -10,7 +11,8 @@ from app.model.invoice import (
     InvoiceUpdate,
     Invoice,
     InvoiceResponse,
-    CSVUploadResponse
+    CSVUploadResponse,
+    MonthlyInvoiceStats
 )
 
 router = APIRouter(
@@ -34,6 +36,26 @@ async def get_invoices():
     """Get all invoices"""
     return await invoice_service.get_invoices()
 
+@router.get("/invoices/month", response_model=MonthlyInvoiceStats)
+async def get_monthly_stats():
+    """Get all invoices"""
+    return await invoice_service.get_monthly_stats()
+
+
+@router.put("/invoices/status", response_model=Invoice)
+async def update_invoice_status(payload: InvoiceStatusUpdate):
+    """Update an invoice status"""
+    updated = await invoice_service.update_invoice_status(
+        payload.invoice_number, 
+        payload.status
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invoice not found"
+        )
+    return updated
+
 @router.get("/invoices/{invoice_number}", response_model=Invoice)
 async def get_invoice(invoice_number: str):
     """Get an invoice by invoice number"""
@@ -48,7 +70,6 @@ async def get_invoice(invoice_number: str):
 @router.put("/invoices/{invoice_number}", response_model=Invoice)
 async def update_invoice(invoice_number: str, update_data: InvoiceUpdate):
     """Update an invoice"""
-    print(invoice_number)
     updated = await invoice_service.update_invoice(invoice_number, update_data)
     if not updated:
         raise HTTPException(

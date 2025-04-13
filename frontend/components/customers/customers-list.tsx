@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation"
 
 
 interface Invoice {
+  id: string,
   first_name: string
   last_name: string
   mobile_number: string
@@ -37,7 +38,7 @@ interface Invoice {
   mailing_postcode: string
   payment_link: string
   created_at: string
-  call_status: string
+  status: string
   campaign_name: string
   script: string
   phone_strategy: string
@@ -52,6 +53,7 @@ export function CustomersList() {
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -195,6 +197,47 @@ export function CustomersList() {
     }
   }
 
+  const handleStatusUpdate = async (invoiceNumber: string, status: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/invoices/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          invoice_number: invoiceNumber,
+          status: status 
+        }),
+      })
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || 'Failed to update status')
+      }
+  
+      // Update the local state to reflect the change
+      setInvoices(invoices.map(invoice => 
+        invoice.invoice_number === invoiceNumber 
+          ? { ...invoice, status } 
+          : invoice
+      ))
+  
+      toast({
+        title: "Status updated",
+        description: "Invoice has been marked as completed",
+      })
+    } catch (error) {
+      console.error('Error updating status:', error)
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Failed to update status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
   // Filter invoices based on search term and status
   const filteredInvoices = invoices?.filter((invoice) => {
     const matchesSearch =
@@ -205,7 +248,7 @@ export function CustomersList() {
       invoice.fsp_name.toLowerCase().includes(searchTerm.toLowerCase())
 
     if (statusFilter === "all") return matchesSearch
-    return matchesSearch && invoice.call_status === statusFilter
+    return matchesSearch && invoice.status === statusFilter
   })
 
   return (
@@ -310,7 +353,6 @@ export function CustomersList() {
                   <TableHead>Invoice Amount</TableHead>
                   <TableHead>FSP Name</TableHead>
                   <TableHead>Outstanding Amount</TableHead>
-                  <TableHead>Created At</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -341,18 +383,17 @@ export function CustomersList() {
                       <TableCell>{invoice.invoice_amount}</TableCell>
                       <TableCell>{invoice.fsp_name}</TableCell>
                       <TableCell>{invoice.outstanding_amount}</TableCell>
-                      <TableCell>{invoice.created_at ? new Date(invoice.created_at).toISOString().split('T')[0] : ''}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            invoice.call_status === "completed"
+                            invoice.status === "completed"
                               ? "default"
-                              : invoice.call_status === "pending"
+                              : invoice.status === "pending"
                                 ? "outline"
                                 : "destructive"
                           }
                         >
-                          {invoice.call_status?.toUpperCase()}
+                          {invoice.status?.toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -379,7 +420,12 @@ export function CustomersList() {
                               <DropdownMenuItem onClick={() => router.push(`/invoices/${invoice.invoice_number}`)}>View details</DropdownMenuItem>
                               <DropdownMenuItem>Send reminder</DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem>Mark as completed</DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleStatusUpdate(invoice.invoice_number, 'completed')}
+                                disabled={invoice.status === 'completed'}
+                              >
+                                {invoice.status === 'completed' ? 'Already completed' : 'Mark as completed'}
+                              </DropdownMenuItem>
                               <DropdownMenuItem>Schedule call</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
