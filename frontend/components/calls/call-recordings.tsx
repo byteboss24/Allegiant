@@ -123,16 +123,16 @@ export function CallRecordings() {
                       <TableCell>
                         <Badge
                           variant={
-                            call.status === "Transferred"
+                            call.status === "transferred"
                               ? "default"
-                              : call.status === "SMS Sent"
+                              : call.status === "sms"
                                 ? "outline"
-                                : call.status === "No Answer"
+                                : (call.status === "no-answer" || call.status === "failed" || call.status === "busy")
                                   ? "destructive"
                                   : "secondary"
                           }
                         >
-                          {call.status}
+                          {call.status?.toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>

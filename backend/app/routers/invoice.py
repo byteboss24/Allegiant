@@ -41,7 +41,6 @@ async def get_monthly_stats():
     """Get all invoices"""
     return await invoice_service.get_monthly_stats()
 
-
 @router.put("/invoices/status", response_model=Invoice)
 async def update_invoice_status(payload: InvoiceStatusUpdate):
     """Update an invoice status"""
@@ -112,6 +111,7 @@ async def upload_invoices_csv(
 @router.get("/invoices/export/csv")
 async def export_invoices_csv():
     """Export all invoices as a properly formatted CSV file"""
+    print("exporting csv")
     invoices = await invoice_service.get_invoices()
     
     # Create a StringIO object to write CSV data
@@ -123,7 +123,7 @@ async def export_invoices_csv():
             'file_number', 'mobile_number', 'phone_number', 'claim_reference',
             'invoice_number', 'invoice_date', 'invoice_amount', 'fsp_name',
             'outstanding_amount', 'email', 'mailing_postcode', 'payment_link',
-            'call_status', 'campaign_name', 'script', 'phone_strategy', 'resend_invoice'
+            'call_status', 'campaign_name', 'script', 'phone_strategy', 'resend_invoice', 'status'
         ]
     )
     

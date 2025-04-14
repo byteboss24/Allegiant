@@ -33,3 +33,8 @@ class WeeklyStats(BaseModel):
 class RecentStats(Record):
     first_name: str
     last_name: str
+
+class TodayStatus(BaseModel):
+    total_calls: int
+    completed_calls: int
+    other_calls: int

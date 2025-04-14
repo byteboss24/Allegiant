@@ -1,5 +1,5 @@
 from typing import List, Optional
-from app.model.record import Record, WeeklyStats, RecentStats
+from app.model.record import Record, WeeklyStats, RecentStats, TodayStatus
 from app.services.mysql import mysql_service
 
 class RecordService:
@@ -31,7 +31,7 @@ class RecordService:
         
         return formatted_data
     
-    async def get_record_recent(self, limit: int = 10) -> List[RecentStats]:
+    async def get_record_recent(self, limit: int = 5) -> List[RecentStats]:
         return await mysql_service.get_record_recent(limit)
 
     async def update_record(self, record_id: int, record: Record) -> Optional[Record]:
@@ -39,5 +39,10 @@ class RecordService:
 
     async def delete_record(self, record_id: int) -> bool:
         return await mysql_service.delete_record(record_id)
+
+    async def get_today_status(self) -> TodayStatus:
+        data = await mysql_service.get_today_status()
+        print("Today's status:", data)
+        return TodayStatus(**data)
 
 record_service = RecordService()

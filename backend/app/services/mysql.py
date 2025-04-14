@@ -490,7 +490,7 @@ class MySQLService:
         finally:
             connection.close()
 
-    async def get_record_recent(self, limit=10):
+    async def get_record_recent(self, limit=5):
         """Get recent call records with customer names from the database"""
         connection = self._get_connection()
         try:
@@ -503,8 +503,8 @@ class MySQLService:
                     FROM calls c
                     LEFT JOIN invoices i ON c.invoice_number = i.invoice_number
                     ORDER BY c.created_at DESC
-                    LIMIT %s
-                """, (limit,))
+                    LIMIT 5
+                """)
                 return cursor.fetchall()
         finally:
             connection.close()
@@ -517,6 +517,23 @@ class MySQLService:
                 cursor.execute("DELETE FROM calls WHERE id = %d", (id,))
                 connection.commit()
                 return cursor.rowcount > 0
+        finally:
+            connection.close()
+    
+    async def get_today_status(self):
+        """Get today's call statistics"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as total_calls,
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_calls,
+                        SUM(CASE WHEN status != 'completed' THEN 1 ELSE 0 END) as other_calls
+                    FROM calls
+                    WHERE DATE(created_at) = DATE(NOW())
+                """)
+                return cursor.fetchone()
         finally:
             connection.close()
 

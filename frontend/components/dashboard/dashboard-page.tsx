@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/dashboard/overview"
@@ -11,9 +11,28 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { CustomersList } from "@/components/customers/customers-list"
 import { AgentConfig } from "@/components/agent/agent-config"
 
+interface TodayStatus {
+  total_calls: number
+  completed_calls: number
+  other_calls: number
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
+  const [todayStatus, setTodayStatus] = useState<null | TodayStatus>(null)
 
+  useEffect(() => {
+    async function fetchTodayStatus() {
+      const response = await fetch(`${API_BASE_URL}/api/v1/records/today`)
+      const data = await response.json()
+      console.log(data)
+      setTodayStatus(data)
+    }
+    fetchTodayStatus()
+  }, [])
+  
   return (
     <>
       <DashboardShell>
@@ -59,8 +78,8 @@ export default function DashboardPage() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">243</div>
-                  <p className="text-xs text-muted-foreground">+12.5% from yesterday</p>
+                  <div className="text-2xl font-bold">{todayStatus?.total_calls || 0}</div>
+                  <p className="text-xs text-muted-foreground">+{((todayStatus?.total_calls || 0) - (todayStatus?.total_calls || 0))}% from yesterday</p>
                 </CardContent>
               </Card>
               <Card>
@@ -83,7 +102,7 @@ export default function DashboardPage() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">68.4%</div>
+                  <div className="text-2xl font-bold">{(((todayStatus?.completed_calls || 0) / (todayStatus?.total_calls || 0)) * 100)?.toFixed(2)}%</div>
                   <p className="text-xs text-muted-foreground">+2.1% from last week</p>
                 </CardContent>
               </Card>
@@ -122,7 +141,7 @@ export default function DashboardPage() {
               <Card className="col-span-3">
                 <CardHeader>
                   <CardTitle>Recent Calls</CardTitle>
-                  <CardDescription>You made 243 calls today</CardDescription>
+                  <CardDescription>You made {todayStatus?.total_calls || 0} calls today</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <RecentCalls />

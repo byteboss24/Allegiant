@@ -44,7 +44,7 @@ export function CampaignStats() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold">{"April"}</h3>
-                  <p className="text-sm text-muted-foreground">Outstanding invoices from March {""}</p>
+                  <p className="text-sm text-muted-foreground">Outstanding invoices from April {""}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-medium">{stats.completion_rate}%</p>
@@ -77,29 +77,4 @@ export function CampaignStats() {
     </div>
   )
 }
-
-const campaigns = [
-  {
-    id: "1",
-    name: "March Invoices",
-    description: "Outstanding invoices from March",
-    progress: 68,
-    completed: 342,
-    total: 500,
-    connected: 289,
-    transferred: 124,
-    sms: 165,
-  },
-  {
-    id: "2",
-    name: "April Invoices",
-    description: "Outstanding invoices from April",
-    progress: 42,
-    completed: 210,
-    total: 500,
-    connected: 178,
-    transferred: 76,
-    sms: 102,
-  },
-]
 

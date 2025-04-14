@@ -1,7 +1,7 @@
 from typing import List, Dict
 from fastapi import APIRouter
 from app.services.record import record_service
-from app.model.record import Record, RecordCreate, WeeklyStats, RecentStats
+from app.model.record import Record, RecordCreate, WeeklyStats, RecentStats, TodayStatus
 
 router = APIRouter(
     prefix="/api/v1",
@@ -16,6 +16,11 @@ async def get_records(page: int = 1, per_page: int = 10) -> Dict:
 @router.get("/record/week", response_model=List[WeeklyStats])
 async def get_record_week():
     return await record_service.get_record_week()
+
+@router.get("/records/today", response_model=TodayStatus)
+async def get_today_status():
+    print("Getting today's status...")
+    return await record_service.get_today_status()
 
 @router.get("/record/recent", response_model=List[RecentStats])
 async def get_record_recent(limit: int = 10):

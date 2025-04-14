@@ -132,6 +132,7 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
     try:
         async for message in openai_ws:
             response = json.loads(message)
+            # print(f"Received OpenAI message: {response}")
             
             # if response['type'] == 'input_audio_buffer.speech_started':
             #     print("Human start saying")

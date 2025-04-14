@@ -53,10 +53,10 @@ export function RecentCalls() {
           <div className="ml-auto flex items-center gap-2">
             <Badge
               variant={
-                call.status === "Completed" ? "default" : call.status === "Connected" ? "outline" : "destructive"
+                call.status === "completed" ? "default" : call.status === "connected" ? "outline" : "destructive"
               }
             >
-              {call.status}
+              {call.status?.toUpperCase()}
             </Badge>
           </div>
         </div>

@@ -117,7 +117,6 @@ class InvoiceService:
     async def get_monthly_stats(self) -> MonthlyInvoiceStats:
         try:
             data = await mysql_service.get_monthly_invoice_stats()
-            print("Monthly stats data:", data)
             if not data:
                 return {}
             return data

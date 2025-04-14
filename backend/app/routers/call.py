@@ -89,6 +89,8 @@ async def outbound(request: OutboundRequest) -> str:
             twiml=twiml
         )
 
+        print(f"Now calling to {invoice.mobile_number}")
+
         isrecording = False
         recording = None
         invoice.status = "calling"
@@ -246,6 +248,7 @@ async def control_call(request: ControlCallRequest):
             while settings.call_count >= 10:
                 await asyncio.sleep(1)
 
+            tasks = []
             # Process up to 10 invoices at a time
             for invoice in invoices:
                 if settings.call_count >= 10:
@@ -255,11 +258,16 @@ async def control_call(request: ControlCallRequest):
                     print("start_call", invoice)
                     # Create outbound request for each invoice
                     request = OutboundRequest(invoice_number=invoice.invoice_number)
-                    task = asyncio.create_task(outbound(request))
-                    await task
+                    # task = outbound(request)
+                    # tasks.append(task)
+                    # await asyncio.gather(*tasks)
+                    task = outbound(request)
+                    tasks.append(task)
                 except Exception as e:
                     logger.error(f"Error initiating call for invoice {invoice.invoice_number}: {e}")
                     continue
+            
+            await asyncio.gather(*tasks)
 
     elif request.control_type == "stop_call":
         print("stop_call")
