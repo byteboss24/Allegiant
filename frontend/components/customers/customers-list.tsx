@@ -21,7 +21,6 @@ import { Loader2 } from "lucide-react"
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from "next/navigation"
 
-
 interface Invoice {
   id: string,
   first_name: string

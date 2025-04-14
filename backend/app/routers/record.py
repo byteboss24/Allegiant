@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter
 from app.services.record import record_service
 from app.model.record import Record, RecordCreate, WeeklyStats, RecentStats
@@ -8,9 +8,10 @@ router = APIRouter(
     tags=["record"]
 )
 
-@router.get("/records", response_model=List[Record])
-async def get_records():
-    return await record_service.get_records()
+@router.get("/records")
+async def get_records(page: int = 1, per_page: int = 10) -> Dict:
+    """Get paginated records"""
+    return await record_service.get_records(page, per_page)
 
 @router.get("/record/week", response_model=List[WeeklyStats])
 async def get_record_week():

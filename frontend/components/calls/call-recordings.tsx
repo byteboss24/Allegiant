@@ -17,6 +17,9 @@ export function CallRecordings() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [callRecordings, setData] = useState<any[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
 
   useEffect(() => {
     return () => {
@@ -29,14 +32,15 @@ export function CallRecordings() {
 
   useEffect(()=>{
     const fetchRecords = async () => {
-      const response = await fetch(`${API_BASE_URL}/api/v1/records`)
+      const response = await fetch(`${API_BASE_URL}/api/v1/records?page=${currentPage}&per_page=${itemsPerPage}`)
       const data = await response.json()
-      return data
+      setTotalItems(data.total)
+      return data.items
     }
     fetchRecords().then(records => {
       setData(records)
     })
-  },[])
+  },[currentPage, itemsPerPage])
 
   const credentials = btoa(`${username}:${password}`)
 
@@ -142,6 +146,27 @@ export function CallRecordings() {
               </Table>
             </CardContent>
           </Card>
+          <div className="flex items-center justify-between space-x-2 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {Math.ceil(totalItems / itemsPerPage)}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
+            >
+              Next
+            </Button>
+          </div>
         </div>
 
         <div className="md:col-span-1">

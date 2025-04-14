@@ -412,13 +412,35 @@ class MySQLService:
         finally:
             connection.close()
 
-    async def get_records(self):
-        """Get All records from the database"""
+    async def get_records(self, page: int = 1, per_page: int = 10):
+        """Get all records with pagination"""
+        offset = (page - 1) * per_page
+        
+        # Get total count
+        count_query = "SELECT COUNT(*) as total FROM calls"
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM calls")
-                return cursor.fetchall()
+                cursor.execute(count_query)
+                total = cursor.fetchone()
+        finally:
+            connection.close()
+        
+        # Get paginated records
+        query = f"""
+            SELECT * FROM calls 
+            ORDER BY created_at DESC 
+            LIMIT {per_page} OFFSET {offset}
+        """
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                records = cursor.fetchall()
+                return {
+                    "items": records,
+                    "total": total["total"] if total else 0
+                }
         finally:
             connection.close()
     
