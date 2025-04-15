@@ -10,9 +10,6 @@ import base64
 from typing import Optional, Dict
 from openai import OpenAI
 
-from app.core.prompt_templates.prompt import main_prompt
-from typing import Optional, Dict
-
 LOG_EVENT_TYPES = frozenset([
     'error', 'response.content.done', 'rate_limits.updated',
     'input_audio_buffer.committed', 'input_audio_buffer.speech_stopped',
@@ -20,6 +17,7 @@ LOG_EVENT_TYPES = frozenset([
 ])
 
 class ConnectionManager:
+    """Manages active WebSocket connections."""
     def __init__(self):
         self.active_connections: list[WebSocket] = []
 
@@ -42,6 +40,7 @@ class ConnectionManager:
         await websocket.send_bytes(data)
 
 class CallState:
+    """Tracks the current call state and invoice."""
     def __init__(self):
         self.is_speaking = False
         self.current_invoice: Optional[Dict] = None
@@ -49,21 +48,20 @@ class CallState:
 call_state = CallState()
 manager = ConnectionManager()
 
-async def handle_twilio_connection(websocket: WebSocket) -> str:
-    """Wait for initial Twilio connection and return stream_sid."""
-    print("Waiting for initial Twilio connection...")
+async def handle_twilio_connection(websocket: WebSocket) -> Optional[dict]:
+    """Wait for initial Twilio connection and return start event data."""
+    logger.info("Waiting for initial Twilio connection...")
     try:
         async for message in websocket.iter_text():
             data = json.loads(message)
             if data['event'] == 'start':
-                stream_sid = data['start']['streamSid']
-                return stream_sid
+                return data['start']
     except WebSocketDisconnect:
-        print("Client disconnected during initial connection.")
+        logger.info("Client disconnected during initial connection.")
         return None
 
 async def process_twilio_messages(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol) -> None:
-    """Process incoming messages from Twilio."""
+    """Process incoming messages from Twilio and forward audio to OpenAI."""
     try:
         async for message in websocket.iter_text():
             data = json.loads(message)
@@ -74,16 +72,24 @@ async def process_twilio_messages(websocket: WebSocket, openai_ws: websockets.We
                 }
                 await openai_ws.send(json.dumps(audio_append))
     except WebSocketDisconnect:
-        print("Client disconnected.")
+        logger.info("Twilio client disconnected.")
 
 async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invoice: Dict) -> None:
+    """Initialize OpenAI session with invoice data."""
     system_message = main_prompt.format(**invoice, percentage="10%")
     session_config = {
         "type": "session.update",
         "session": {
-            "turn_detection": {"type": "server_vad"},
+            "turn_detection": {
+                "type": "server_vad",
+                "prefix_padding_ms": 300,
+                "silence_duration_ms": 500,
+            },
             "input_audio_format": "g711_ulaw",
             "output_audio_format": "g711_ulaw",
+            "input_audio_transcription": {
+                "model": "whisper-1"
+            },
             "voice": settings.voice_type,
             "instructions": system_message,
             "modalities": ["text", "audio"],
@@ -94,6 +100,8 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
     await send_initial_greeting(openai_ws)
 
 async def send_initial_greeting(openai_ws: websockets.WebSocketClientProtocol) -> None:
+    """Send a welcome message to the user via OpenAI."""
+    invoice = call_state.current_invoice or {}
     welcome_message = {
         "type": "response.create",
         "response": {
@@ -104,15 +112,16 @@ async def send_initial_greeting(openai_ws: websockets.WebSocketClientProtocol) -
                 "an FCA-regulated claims management company. Am I speaking with {first_name} {last_name}?' "
                 "Use a warm, professional tone. Keep it brief and welcoming."
             ).format(
-                first_name=call_state.current_invoice['first_name'],
-                last_name=call_state.current_invoice['last_name']
-            ), 
+                first_name=invoice.get('first_name', ''),
+                last_name=invoice.get('last_name', '')
+            ),
             "voice": settings.voice_type
         }
     }
     await openai_ws.send(json.dumps(welcome_message))
 
-async def monitor_speech(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol) -> None:
+async def monitor_speech(openai_ws: websockets.WebSocketClientProtocol) -> None:
+    """Monitor if the human is speaking; prompt if silent."""
     try:
         await asyncio.sleep(7.0)
         if not call_state.is_speaking:
@@ -129,40 +138,26 @@ async def monitor_speech(websocket: WebSocket, openai_ws: websockets.WebSocketCl
         logger.error(f"Error in monitor_speech: {e}")
 
 async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol, stream_sid: str) -> None:
+    """Process messages from OpenAI and forward audio to Twilio."""
     try:
         async for message in openai_ws:
             response = json.loads(message)
-            # print(f"Received OpenAI message: {response}")
-            
-            # if response['type'] == 'input_audio_buffer.speech_started':
-            #     print("Human start saying")
-            #     call_state.is_speaking = True
-            #     if call_state.is_speaking:
-            #         await openai_ws.send(json.dumps({"type": "response.cancel"}))
-            #         call_state.is_speaking = False
-            # if response['type'] in LOG_EVENT_TYPES:
-            #     print(f"Received event: {response['type']}", response)
+            if response['type'] == 'conversation.item.input_audio_transcription.completed':
+                logger.info(f"response: {response.get('transcript')}")
             if response['type'] == 'input_audio_buffer.speech_started':
-                print("Human start saying")
+                logger.info("Human started speaking")
                 call_state.is_speaking = True
             elif response['type'] == 'input_audio_buffer.speech_stopped':
-                print("Human stop saying")
+                logger.info("Human stopped speaking")
                 call_state.is_speaking = False
             elif response['type'] == 'response.done':
                 call_state.is_speaking = False
                 try:
                     transcript = response['response']['output']
-                    print(f"AI Transcript: {transcript}")
+                    if transcript:
+                        logger.info(f"AI Transcript: {transcript[0]['content'][0]['transcript']}")
                 except Exception as e:
                     logger.error(f"Error getting transcript: {e}")
-                    transcript = "No transcript available"
-                # # Create task but don't await it directly to avoid blocking
-                # monitor_task = asyncio.create_task(monitor_speech(websocket, openai_ws))
-                # Optional: Add error handling for the task
-                # monitor_task.add_done_callback(
-                #     lambda t: logger.error(f"Monitor speech task error: {t.exception()}") if t.exception() else None
-                # )
-            
             elif response['type'] == 'response.audio.delta' and response.get('delta'):
                 audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')
                 await websocket.send_json({

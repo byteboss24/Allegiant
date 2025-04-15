@@ -9,7 +9,9 @@ from app.services.call import (
     initialize_session,
     process_openai_messages,
     handle_twilio_connection,
-    process_twilio_messages
+    process_twilio_messages,
+    monitor_speech,
+    send_initial_greeting
 )
 from app.services.invoice import invoice_service
 from app.services.record import record_service
@@ -27,86 +29,43 @@ OPENAI_CLIENT = OpenAI(api_key=settings.openai_api_key)
 class OutboundRequest(BaseModel):
     invoice_number: str
 
-async def send_initial_greeting(openai_ws: websockets.WebSocketClientProtocol) -> None:
-    print(call_state.current_invoice)
-
-    welcome_message = {
-        "type": "response.create",
-        "response": {
-            "modalities": ["text", "audio"],
-            "temperature": 0.8,
-            "instructions": (
-                "Say: 'Hello, my name is David calling from Allegiant Finance Services Ltd, "
-                "an FCA-regulated claims management company. Am I speaking with {first_name} {last_name}?' "
-                "Use a warm, professional tone. Keep it brief and welcoming."
-            ).format(first_name=call_state.current_invoice['first_name'], last_name=call_state.current_invoice['last_name']), 
-            "voice": settings.voice_type
-        }
-    }
-    await openai_ws.send(json.dumps(welcome_message))
-
-async def monitor_speech(websocket: WebSocket, openai_ws: websockets.WebSocketClientProtocol) -> None:
-    try:
-        await asyncio.sleep(7.0)
-        if not call_state.is_speaking:
-            await openai_ws.send(json.dumps({
-                "type": "response.create",
-                "response": {
-                    "modalities": ["text", "audio"],
-                    "temperature": 0.8,
-                    "instructions": "To keep the customer focused on the call, say 'Hello' or 'Are you there?'",
-                    "voice": settings.voice_type
-                }
-            }))
-    except Exception as e:
-        logger.error(f"Error in monitor_speech: {e}")
-
-
-
 @router.post("/outbound")
 async def outbound(request: OutboundRequest) -> str:
-    print("Initiating outbound call...", request.invoice_number)
+    """Initiate an outbound call to the invoice's mobile number."""
     try:
         invoice = await invoice_service.get_invoice(request.invoice_number)
         if not invoice:
             raise HTTPException(status_code=404, detail="Invoice not found")
-        
         if not invoice.mobile_number:
             raise HTTPException(status_code=400, detail="No mobile number provided")
-
         call_state.current_invoice = invoice.model_dump()
-        
+
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<Response><Connect>'
-            '<Stream url="wss://{fastapi_domain}/twilio/media-stream"/>'
+            f'<Stream url="wss://{settings.fastapi_domain}/twilio/media-stream"/>'
             '</Connect></Response>'
-        ).format(fastapi_domain=settings.fastapi_domain)
-        
+        )
         call = TWILIO_CLIENT.calls.create(
             from_="+441925596272",
             to=invoice.mobile_number,
             twiml=twiml
         )
-
-        print(f"Now calling to {invoice.mobile_number}")
-
-        isrecording = False
-        recording = None
+        logger.info(f"Now calling to {invoice.mobile_number} with SID {call.sid}")
         invoice.status = "calling"
         await invoice_service.update_invoice(invoice.invoice_number, invoice)
-        settings.call_count = settings.call_count + 1
-
+        settings.call_count += 1
+        # Poll for call status (could be optimized with webhook)
+        isrecording = False
+        recording = None
         while True:
             data = TWILIO_CLIENT.calls(call.sid).fetch()
-
             if data.status == 'in-progress' and not isrecording:
                 isrecording = True
                 recording = TWILIO_CLIENT.calls(call.sid).recordings.create()
-                print("recording1", recording)
-
+                logger.info(f"Recording started: {recording}")
             if data.status in ['failed', 'busy', 'no-answer', 'canceled']:
-                print("Call ended with status:", data.status)
+                logger.info(f"Call ended with status: {data.status}")
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=0,
@@ -115,118 +74,54 @@ async def outbound(request: OutboundRequest) -> str:
                     status=data.status
                 ))
                 invoice.status = data.status
-                await invoice_service.update_invoice(invoice.invoice_number,invoice)
+                await invoice_service.update_invoice(invoice.invoice_number, invoice)
                 break
-
             if data.status == 'completed':
-                print("Call completed successfully", recording)
+                logger.info(f"Call completed successfully: {recording}")
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
                     transcript="",
-                    audio_url=f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Recordings/{recording.sid}" or "",
+                    audio_url=f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Recordings/{recording.sid}" if recording else "",
                     status=data.status
                 ))
                 invoice.status = data.status
-                await invoice_service.update_invoice(invoice.invoice_number,invoice)
+                await invoice_service.update_invoice(invoice.invoice_number, invoice)
                 break
-
             await asyncio.sleep(2)
-
-        print("recording2", recording)
-        settings.call_count = settings.call_count - 1
-
-        logger.info(f"Call initiated - SID: {call}")
+        settings.call_count -= 1
+        logger.info(f"Call initiated - SID: {call.sid}")
         return call.sid
-        
+    except asyncio.CancelledError:
+        return
     except Exception as e:
         logger.error(f"Error initiating call: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.websocket("/media-stream")
 async def websocket_endpoint(websocket: WebSocket) -> None:
+    """WebSocket endpoint for streaming media between Twilio and OpenAI."""
     openai_ws = None
-    tasks = []
-    
     try:
-        await websocket.accept()
-        logger.info("WebSocket connected")
-
-        try:
-            async with websockets.connect(
-                'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17',
-                additional_headers={
-                    "Authorization": f"Bearer {settings.openai_api_key}",
-                    "OpenAI-Beta": "realtime=v1"
-                }
-            ) as openai_ws:
-                logger.info("OpenAI WebSocket connected")
-                print("Current invoice:", call_state.current_invoice)
-
-                if not call_state.current_invoice:
-                    call_state.current_invoice = {
-                        "id": 1,
-                        "customer_id": "508942PDL",
-                        "salutation": "Mr",
-                        "file_number": "X644453",
-                        "mobile_number": "1 904 572 4405",
-                        "first_name": "John",
-                        "last_name": "Doe",
-                        "invoice_amount": "£ 2,153.59",
-                        "outstanding_amount": "£ 1,000.00",
-                        "fsp_name": "Moneybarn",
-                        "invoice_number": "INV-QB-72004",
-                        "email": "richardlloydmarshall@outlook.com",
-                        "mailing_postcode": "L402QQ"
-                    }
-
-                await initialize_session(openai_ws, call_state.current_invoice)
-
-                print("Openai socket initialized")
-                
-                # Set a timeout for receiving the initial message
-                try:
-                    stream_sid = await handle_twilio_connection(websocket)
-                    print(f"Incoming stream has started {stream_sid}")
-                    
-                    # Wait for both tasks to complete
-                    await asyncio.gather(
-                        process_twilio_messages(websocket, openai_ws),
-                        process_openai_messages(websocket, openai_ws, stream_sid)
-                    )
-                except asyncio.TimeoutError:
-                    logger.warning("Timeout waiting for initial message")
-                    raise WebSocketDisconnect("Timeout waiting for initial message")
-        except websockets.exceptions.WebSocketException as e:
-            logger.error(f"OpenAI WebSocket error: {e}")
-            # Send error message to client
-            try:
-                await websocket.send_json({"event": "error", "message": "OpenAI connection failed"})
-            except Exception:
-                pass
-            raise WebSocketDisconnect(f"OpenAI WebSocket error: {e}")
-            
+        await manager.connect(websocket)
+        stream_sid = await handle_twilio_connection(websocket)
+        if not stream_sid:
+            return
+        async with websockets.connect(settings.openai_ws_url, extra_headers={"Authorization": f"Bearer {settings.openai_api_key}"}) as openai_ws:
+            await initialize_session(openai_ws, call_state.current_invoice or {})
+            await send_initial_greeting(openai_ws)
+            await asyncio.gather(
+                process_twilio_messages(websocket, openai_ws),
+                process_openai_messages(websocket, openai_ws, stream_sid),
+                monitor_speech(websocket, openai_ws)
+            )
     except (WebSocketDisconnect, ValueError) as e:
         logger.warning(f"WebSocket disconnected: {e}")
+    except asyncio.CancelledError:
+        return
     except Exception as e:
         logger.error(f"Error in websocket_endpoint: {e}", exc_info=True)
     finally:
-        # Cancel any running tasks
-        for task in tasks:
-            if not task.done():
-                task.cancel()
-        
-        # Wait for tasks to be cancelled
-        for task in tasks:
-            try:
-                if not task.done():
-                    await asyncio.wait_for(task, timeout=2.0)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
-                pass
-            except Exception as e:
-                logger.error(f"Error cancelling task: {e}")
-        
-        # Disconnect the WebSocket
         await manager.disconnect(websocket)
 
 class ControlCallRequest(BaseModel):

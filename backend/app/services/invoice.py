@@ -209,14 +209,20 @@ class InvoiceService:
                     except Exception as e:
                         print(f"Error creating invoice from row: {e}")
                         raise
+
+                    temp = await self.get_invoice(invoice.invoice_number)
                     
-                    # Create the invoice
-                    response = await self.create_invoice(invoice)
-                    if response.success:
-                        successful_records += 1
+                    print(temp)
+                    if not temp:
+                        # Create the invoice
+                        response = await self.create_invoice(invoice)
+                        if response.success:
+                            successful_records += 1
+                        else:
+                            failed_records += 1
+                            errors.append(f"Row {total_records}: {response.message}")
                     else:
-                        failed_records += 1
-                        errors.append(f"Row {total_records}: {response.message}")
+                        print("Existed invoice", temp)
                 except Exception as e:
                     failed_records += 1
                     errors.append(f"Row {total_records}: {str(e)}")
