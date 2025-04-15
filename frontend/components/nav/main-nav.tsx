@@ -9,16 +9,16 @@ const navItems = [
     href: "/overview",
   },
   {
-    title: "Agent",
-    href: "/agent",
-  },
-  {
     title: "Call Recordings",
     href: "/call-recordings",
   },
   {
     title: "Invoices",
     href: "/invoices",
+  },
+  {
+    title: "Agent",
+    href: "/agent",
   },
   {
     title: "Settings",
