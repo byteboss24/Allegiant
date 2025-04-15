@@ -7,6 +7,19 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Spinner } from "@/components/ui/spinner"
+import { useToast } from "@/components/ui/use-toast"
+import { Play, Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const username = process.env.NEXT_PUBLIC_USERNAME
 const password = process.env.NEXT_PUBLIC_PASSWORD
@@ -20,6 +33,11 @@ export function CallRecordings() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [totalItems, setTotalItems] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedRecording, setSelectedRecording] = useState<any | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     return () => {
@@ -39,6 +57,7 @@ export function CallRecordings() {
     }
     fetchRecords().then(records => {
       setData(records)
+      setLoading(false)
     })
   },[currentPage, itemsPerPage])
 
@@ -65,6 +84,42 @@ export function CallRecordings() {
       }
     } catch (error) {
       console.error('Error playing audio:', error)
+    }
+  }
+
+  const handleDelete = async (recording: any) => {
+    setSelectedRecording(recording)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedRecording) return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/record/${selectedRecording.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete recording')
+      }
+
+      // Remove the deleted recording from the state
+      setData(callRecordings.filter(r => r.id !== selectedRecording.id))
+      toast({
+        title: "Success",
+        description: "Recording deleted successfully",
+      })
+    } catch (error) {
+      console.error('Error deleting recording:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete recording",
+        variant: "destructive",
+      })
+    } finally {
+      setShowDeleteDialog(false)
+      setSelectedRecording(null)
     }
   }
 
@@ -100,50 +155,79 @@ export function CallRecordings() {
               <CardDescription>Recent calls made by your AI voice agent</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice Number</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {callRecordings?.map((call) => (
-                    <TableRow
-                      key={call.id}
-                      className={selectedCall?.id === call.id ? "bg-muted/50" : ""}
-                      onClick={() => handleSelectCall(call)}
-                    >
-                      <TableCell className="font-medium">{call.invoice_number}</TableCell>
-                      <TableCell>{call.created_at}</TableCell>
-                      <TableCell>{call.duration}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            call.status === "transferred"
-                              ? "default"
-                              : call.status === "sms"
-                                ? "outline"
-                                : (call.status === "no-answer" || call.status === "failed" || call.status === "busy")
-                                  ? "destructive"
-                                  : "secondary"
-                          }
-                        >
-                          {call.status?.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleSelectCall(call)}>
-                          Play
-                        </Button>
-                      </TableCell>
+              {loading ? (
+                <div className="flex justify-center items-center h-32">
+                  <Spinner />
+                </div>
+              ) : error ? (
+                <div className="text-red-500 text-center">{error}</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice Number</TableHead>
+                      <TableHead>Date & Time</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {callRecordings?.map((call) => (
+                      <TableRow
+                        key={call.id}
+                        className={selectedCall?.id === call.id ? "bg-muted/50" : ""}
+                        onClick={() => handleSelectCall(call)}
+                      >
+                        <TableCell className="font-medium">{call.invoice_number}</TableCell>
+                        <TableCell>{call.created_at}</TableCell>
+                        <TableCell>{call.duration}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              call.status === "transferred"
+                                ? "default"
+                                : call.status === "sms"
+                                  ? "outline"
+                                  : (call.status === "no-answer" || call.status === "failed" || call.status === "busy")
+                                    ? "destructive"
+                                    : "secondary"
+                            }
+                          >
+                            {call.status?.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="flex justify-end">
+                          <div className="flex gap-2">
+                            {call.audio_url && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleSelectCall(call)
+                                }}
+                              >
+                                <Play className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(call)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
           <div className="flex items-center justify-between space-x-2 py-4">
@@ -210,7 +294,12 @@ export function CallRecordings() {
 
                   <div className="pt-4">
                     <h4 className="font-medium mb-2">Transcript</h4>
-                    <textarea className="max-h-64 overflow-y-auto rounded-md border p-4 text-sm w-full" id="transcript" value={selectedCall.transcript} readOnly minRows={10}/>
+                    <textarea
+                      className="w-full h-32 p-2 border rounded"
+                      id="transcript"
+                      value={selectedCall?.transcript || ''}
+                      readOnly
+                    />
                   </div>
 
                   <div className="flex justify-between pt-4">
@@ -242,6 +331,21 @@ export function CallRecordings() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the call recording.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
