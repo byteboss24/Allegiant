@@ -38,7 +38,6 @@ async def outbound(request: OutboundRequest) -> str:
             raise HTTPException(status_code=404, detail="Invoice not found")
         if not invoice.mobile_number:
             raise HTTPException(status_code=400, detail="No mobile number provided")
-        call_state.current_invoice = invoice.model_dump()
 
         twiml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
@@ -52,7 +51,10 @@ async def outbound(request: OutboundRequest) -> str:
             twiml=twiml
         )
         logger.info(f"Now calling to {invoice.mobile_number} with SID {call.sid}")
+        print("invoice", invoice)
         invoice.status = "calling"
+
+        call_state.invoices[call.sid] = invoice.model_dump()
         await invoice_service.update_invoice(invoice.invoice_number, invoice)
         settings.call_count += 1
         # Poll for call status (could be optimized with webhook)
@@ -74,18 +76,21 @@ async def outbound(request: OutboundRequest) -> str:
                     status=data.status
                 ))
                 invoice.status = data.status
+                invoice = invoice.model_dump()
                 await invoice_service.update_invoice(invoice.invoice_number, invoice)
                 break
             if data.status == 'completed':
                 logger.info(f"Call completed successfully: {recording}")
+                print("call_state.invoices[call.sid]", call_state.invoices[call.sid])
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
-                    transcript="",
+                    transcript=call_state.invoices[call.sid]['script'],
                     audio_url=f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Recordings/{recording.sid}" if recording else "",
                     status=data.status
                 ))
                 invoice.status = data.status
+                invoice = invoice.model_dump()
                 await invoice_service.update_invoice(invoice.invoice_number, invoice)
                 break
             await asyncio.sleep(2)
@@ -104,17 +109,23 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     openai_ws = None
     try:
         await manager.connect(websocket)
-        stream_sid = await handle_twilio_connection(websocket)
-        if not stream_sid:
+        data = await handle_twilio_connection(websocket)
+        print("data", data)
+        if not data:
             return
-        async with websockets.connect(settings.openai_ws_url, extra_headers={"Authorization": f"Bearer {settings.openai_api_key}"}) as openai_ws:
-            await initialize_session(openai_ws, call_state.current_invoice or {})
-            await send_initial_greeting(openai_ws)
+        async with websockets.connect('wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17', additional_headers={
+            "Authorization": f"Bearer {settings.openai_api_key}",
+            "OpenAI-Beta": "realtime=v1"
+        }) as openai_ws:
+            if call_state.invoices[data['callSid']].get('script') is None:
+                call_state.invoices[data['callSid']]['script'] = ""
+            await initialize_session(openai_ws, call_state.invoices.get(data['callSid'], {}))
+            await send_initial_greeting(openai_ws, data['callSid'])
             await asyncio.gather(
                 process_twilio_messages(websocket, openai_ws),
-                process_openai_messages(websocket, openai_ws, stream_sid),
-                monitor_speech(websocket, openai_ws)
+                process_openai_messages(websocket, openai_ws, data)
             )
+            # monitor_speech(websocket, openai_ws)
     except (WebSocketDisconnect, ValueError) as e:
         logger.warning(f"WebSocket disconnected: {e}")
     except asyncio.CancelledError:
