@@ -6,6 +6,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { Overview } from "@/components/dashboard/overview"
 import { RecentCalls } from "@/components/dashboard/recent-calls"
 import { CampaignStats } from "@/components/dashboard/campaign-stats"
+import { Spinner } from "@/components/ui/spinner"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -16,16 +17,24 @@ interface TodayStatus {
 }
 
 export default function OverviewPage() {
-  const [todayStatus, setTodayStatus] = useState<null | TodayStatus>(null);
+  const [todayStatus, setTodayStatus] = useState<null | TodayStatus>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function fetchTodayStatus() {
-      const response = await fetch(`${API_BASE_URL}/api/v1/records/today`);
-      const data = await response.json();
-      setTodayStatus(data);
+      try {
+        setIsLoading(true)
+        const response = await fetch(`${API_BASE_URL}/api/v1/records/today`)
+        const data = await response.json()
+        setTodayStatus(data)
+      } catch (error) {
+        console.error("Error fetching today's status:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
-    fetchTodayStatus();
-  }, []);
+    fetchTodayStatus()
+  }, [])
 
   return (
     <>
@@ -39,8 +48,16 @@ export default function OverviewPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{todayStatus?.total_calls || 0}</div>
-                <p className="text-xs text-muted-foreground">+{((todayStatus?.total_calls || 0) - (todayStatus?.total_calls || 0))}% from yesterday</p>
+                {isLoading ? (
+                  <div className="flex justify-center py-2">
+                    <Spinner size="md" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{todayStatus?.total_calls || 0}</div>
+                    <p className="text-xs text-muted-foreground">+{((todayStatus?.total_calls || 0) - (todayStatus?.total_calls || 0))}% from yesterday</p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -49,8 +66,16 @@ export default function OverviewPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{(((todayStatus?.completed_calls || 0) / (todayStatus?.total_calls || 0)) * 100)?.toFixed(2)}%</div>
-                <p className="text-xs text-muted-foreground">+2.1% from last week</p>
+                {isLoading ? (
+                  <div className="flex justify-center py-2">
+                    <Spinner size="md" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{(((todayStatus?.completed_calls || 0) / (todayStatus?.total_calls || 0)) * 100)?.toFixed(2)}%</div>
+                    <p className="text-xs text-muted-foreground">+2.1% from last week</p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -59,8 +84,16 @@ export default function OverviewPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><rect width="20" height="14" x="2" y="5" rx="2" /><path d="M2 10h20" /></svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">32.9%</div>
-                <p className="text-xs text-muted-foreground">+4.3% from last month</p>
+                {isLoading ? (
+                  <div className="flex justify-center py-2">
+                    <Spinner size="md" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">32.9%</div>
+                    <p className="text-xs text-muted-foreground">+4.3% from last month</p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -70,7 +103,13 @@ export default function OverviewPage() {
                 <CardTitle>Overview</CardTitle>
               </CardHeader>
               <CardContent className="pl-2">
-                <Overview />
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner size="lg" />
+                  </div>
+                ) : (
+                  <Overview />
+                )}
               </CardContent>
             </Card>
             <Card className="col-span-3">
@@ -79,7 +118,13 @@ export default function OverviewPage() {
                 <CardDescription>You made {todayStatus?.total_calls || 0} calls today</CardDescription>
               </CardHeader>
               <CardContent>
-                <RecentCalls />
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner size="lg" />
+                  </div>
+                ) : (
+                  <RecentCalls />
+                )}
               </CardContent>
             </Card>
           </div>
@@ -90,12 +135,18 @@ export default function OverviewPage() {
                 <CardDescription>Active campaign statistics</CardDescription>
               </CardHeader>
               <CardContent>
-                <CampaignStats />
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner size="lg" />
+                  </div>
+                ) : (
+                  <CampaignStats />
+                )}
               </CardContent>
             </Card>
           </div>
         </DashboardShell>
       </div>
     </>
-  );
+  )
 }

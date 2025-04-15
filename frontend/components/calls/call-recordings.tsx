@@ -210,7 +210,7 @@ export function CallRecordings() {
 
                   <div className="pt-4">
                     <h4 className="font-medium mb-2">Transcript</h4>
-                    <textarea className="max-h-64 overflow-y-auto rounded-md border p-4 text-sm w-full" id="transcript" value={selectedCall.transcript} readOnly/>
+                    <textarea className="max-h-64 overflow-y-auto rounded-md border p-4 text-sm w-full" id="transcript" value={selectedCall.transcript} readOnly minRows={10}/>
                   </div>
 
                   <div className="flex justify-between pt-4">
