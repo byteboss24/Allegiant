@@ -36,4 +36,5 @@ async def create_record(request: RecordCreate):
 
 @router.delete("/record/{id}")
 async def delete_record(id: int):
+    print("Deleting record with id:", id)
     return await record_service.delete_record(id)

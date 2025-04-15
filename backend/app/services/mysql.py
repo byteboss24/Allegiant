@@ -514,7 +514,7 @@ class MySQLService:
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM calls WHERE id = %d", (id,))
+                cursor.execute("DELETE FROM calls WHERE id = %s", (id,))
                 connection.commit()
                 return cursor.rowcount > 0
         finally:

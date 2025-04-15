@@ -94,7 +94,7 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
             "voice": settings.voice_type,
             "instructions": system_message,
             "modalities": ["text", "audio"],
-            "temperature": 0.8,
+            "temperature": 0.8
         }
     }
     await openai_ws.send(json.dumps(session_config))
