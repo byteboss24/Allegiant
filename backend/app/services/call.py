@@ -148,8 +148,8 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
         async for message in openai_ws:
             response = json.loads(message)
             if response['type'] == 'conversation.item.input_audio_transcription.completed':
-                logger.info(f"response: {response.get('transcript')}")
-                call_state.invoices[data['callSid']]['script'] = call_state.invoices[data['callSid']]['script'] + "\nHuman:" + response.get('transcript')
+                logger.info(f"Human : {response.get('transcript')}")
+                call_state.invoices[data['callSid']]['script'] = call_state.invoices[data['callSid']]['script'] + "Human: " + response.get('transcript') + "\n\n"
             if response['type'] == 'input_audio_buffer.speech_started':
                 logger.info("Human started speaking")
                 call_state.is_speaking = True
@@ -161,9 +161,8 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                 try:
                     transcript = response['response']['output']
                     if transcript:
-                        logger.info(f"AI Transcript: {transcript[0]['content'][0]['transcript']}, {data['callSid']}")
-                        call_state.invoices[data['callSid']]['script'] = call_state.invoices[data['callSid']]['script'] + "\nAI Agent:" + transcript[0]['content'][0]['transcript']
-                        logger.info(f"Result: {call_state.invoices[data['callSid']]}")
+                        logger.info(f"AI Agent: {transcript[0]['content'][0]['transcript']}, {data['callSid']}")
+                        call_state.invoices[data['callSid']]['script'] = call_state.invoices[data['callSid']]['script'] + "AI Agent: " + transcript[0]['content'][0]['transcript'] + "\n\n"
                 except Exception as e:
                     logger.error(f"Error getting transcript: {e}")
             elif response['type'] == 'response.audio.delta' and response.get('delta'):
