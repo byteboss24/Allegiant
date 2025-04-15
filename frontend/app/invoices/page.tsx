@@ -1,5 +1,5 @@
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { CustomersList } from "@/components/customers/customers-list";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { CustomersList } from "@/components/customers/customers-list"
 
 export default function CustomersPage() {
   return (
@@ -11,5 +11,5 @@ export default function CustomersPage() {
         </DashboardShell>
       </div>
     </>
-  );
+  )
 }

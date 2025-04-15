@@ -1,5 +1,5 @@
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 
 export default function SettingsPage() {
   return (
@@ -19,5 +19,5 @@ export default function SettingsPage() {
         </DashboardShell>
       </div>
     </>
-  );
+  )
 }

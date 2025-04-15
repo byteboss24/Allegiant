@@ -1,18 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { Overview } from "@/components/dashboard/overview";
-import { RecentCalls } from "@/components/dashboard/recent-calls";
-import { CampaignStats } from "@/components/dashboard/campaign-stats";
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { Overview } from "@/components/dashboard/overview"
+import { RecentCalls } from "@/components/dashboard/recent-calls"
+import { CampaignStats } from "@/components/dashboard/campaign-stats"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 interface TodayStatus {
-  total_calls: number;
-  completed_calls: number;
-  other_calls: number;
+  total_calls: number
+  completed_calls: number
+  other_calls: number
 }
 
 export default function OverviewPage() {

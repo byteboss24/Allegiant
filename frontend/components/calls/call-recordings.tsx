@@ -210,15 +210,10 @@ export function CallRecordings() {
 
                   <div className="pt-4">
                     <h4 className="font-medium mb-2">Transcript</h4>
-                    <div className="max-h-64 overflow-y-auto rounded-md border p-4 text-sm">
-                      {selectedCall.transcript}
-                    </div>
+                    <textarea className="max-h-64 overflow-y-auto rounded-md border p-4 text-sm w-full" id="transcript" value={selectedCall.transcript} readOnly/>
                   </div>
 
                   <div className="flex justify-between pt-4">
-                    <Button variant="outline" size="sm">
-                      Download
-                    </Button>
                     <Button variant="outline" size="sm">
                       Share
                     </Button>

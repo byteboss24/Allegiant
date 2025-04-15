@@ -1,5 +1,5 @@
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { AgentConfig } from "@/components/agent/agent-config";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { AgentConfig } from "@/components/agent/agent-config"
 
 export default function AgentPage() {
   return (
@@ -11,5 +11,5 @@ export default function AgentPage() {
         </DashboardShell>
       </div>
     </>
-  );
+  )
 }
