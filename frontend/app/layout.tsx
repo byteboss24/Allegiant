@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { MainNav } from '@/components/nav/main-nav'
 import Link from 'next/link'
+import { Toaster } from '@/components/ui/toaster'
 
 export const metadata: Metadata = {
   title: 'Allegiant Voice AI Dashboard',
@@ -32,6 +33,7 @@ export default function RootLayout({
         <main className="container mx-auto py-6 mt-20 flex-1">
           {children}
         </main>
+        <Toaster />
       </body>
     </html>
   )

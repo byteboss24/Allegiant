@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Pencil } from "lucide-react"
 import { CallDialog } from "./call-dialog"
+import { useToast } from "@/components/ui/use-toast"
 
 interface Agent {
   id: number
@@ -33,6 +34,7 @@ export function AgentConfig() {
   const [isEditingSystemPrompt, setIsEditingSystemPrompt] = useState(false)
   const [isCallDialogOpen, setIsCallDialogOpen] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -62,18 +64,44 @@ export function AgentConfig() {
   }, [])
 
   const handleAgentSelect = async (agentId: number) => {
-    await fetch(`${API_BASE_URL}/api/v1/select-agent/${agentId}`, { method: 'POST' })
-    setSelectedAgentId(agentId)
-    const selectedAgent = agents?.find((agent: Agent) => agent.id === agentId)
-    setSystemPrompt(selectedAgent?.system_prompt || "")
-    setName(selectedAgent?.name || "")
-    setVoice(selectedAgent?.voice || "")
-    setIsActive(selectedAgent?.status === "active")
-    router.refresh()
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/select-agent/${agentId}`, { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to select agent')
+      }
+      
+      setSelectedAgentId(agentId)
+      const selectedAgent = agents?.find((agent: Agent) => agent.id === agentId)
+      setSystemPrompt(selectedAgent?.system_prompt || "")
+      setName(selectedAgent?.name || "")
+      setVoice(selectedAgent?.voice || "")
+      setIsActive(selectedAgent?.status === "active")
+      
+      toast({
+        title: "Success",
+        description: "Agent selected successfully",
+        variant: "default",
+      })
+    } catch (error) {
+      console.error('Error selecting agent:', error)
+      toast({
+        title: "Error",
+        description: "Failed to select agent. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleSaveName = async () => {
-    if (selectedAgentId) {
+    if (!selectedAgentId || !name) return
+
+    try {
       const agent = {
         id: selectedAgentId,
         name,
@@ -81,20 +109,98 @@ export function AgentConfig() {
         system_prompt: systemPrompt,
         status: isActive ? 'active' : 'inactive'
       }
-      await fetch(`${API_BASE_URL}/api/v1/agents`, {
-        method: 'put',
+      const response = await fetch(`${API_BASE_URL}/api/v1/agents`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(agent),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to update agent name')
+      }
+
+      // Update the agent name in the state
+      setAgents(agents?.map(agent => 
+        agent.id === selectedAgentId ? { ...agent, name } : agent
+      ))
       setIsEditingName(false)
-      router.refresh()
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Agent name updated successfully",
+        variant: "default",
+      })
+    } catch (error) {
+      console.error('Error updating agent name:', error)
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "Failed to update agent name. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
   const handleSaveSystemPrompt = async () => {
+    if (!selectedAgentId || !systemPrompt) return
+
     if (isEditingSystemPrompt) {
+      try {
+        const agent = {
+          id: selectedAgentId,
+          name,
+          voice,
+          system_prompt: systemPrompt,
+          status: isActive ? 'active' : 'inactive'
+        }
+        const response = await fetch(`${API_BASE_URL}/api/v1/agents`, {
+          method: 'put',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(agent),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update system prompt')
+        }
+
+        // Update the system prompt in the state
+        setAgents(agents?.map(agent => 
+          agent.id === selectedAgentId ? { ...agent, system_prompt: systemPrompt } : agent
+        ))
+        setIsEditingSystemPrompt(false)
+        
+        // Show success toast
+        toast({
+          title: "Success",
+          description: "System prompt updated successfully",
+          variant: "default",
+        })
+
+        router.refresh()
+      } catch (error) {
+        console.error('Error updating system prompt:', error)
+        // Show error toast
+        toast({
+          title: "Error",
+          description: "Failed to update system prompt. Please try again.",
+          variant: "destructive",
+        })
+      }
+    }
+    else {
+      setIsEditingSystemPrompt(true)
+    }
+  }
+
+  const handleStatusChange = async () => {
+    if (!selectedAgentId) return
+
+    try {
       const agent = {
         id: selectedAgentId,
         name,
@@ -102,52 +208,38 @@ export function AgentConfig() {
         system_prompt: systemPrompt,
         status: isActive ? 'active' : 'inactive'
       }
-      await fetch(`${API_BASE_URL}/api/v1/agents`, {
-        method: 'put',
+      const response = await fetch(`${API_BASE_URL}/api/v1/agents`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(agent),
       })
-      router.refresh()
-    }
-    setIsEditingSystemPrompt(!isEditingSystemPrompt)
-  }
 
-  const handleStatusChange = async () => {
-    setIsActive(!isActive)
-    if (selectedAgentId) {
-      const agent = {
-        id: selectedAgentId,
-        name,
-        voice,
-        system_prompt: systemPrompt,
-        status: isActive ? 'inactive' : 'active'
+      if (!response.ok) {
+        throw new Error('Failed to update agent status')
       }
-      await fetch(`${API_BASE_URL}/api/v1/agents`, {
-        method: 'put',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(agent),
+
+      // Update the status in the state
+      setIsActive(!isActive)
+      setAgents(agents?.map(agent => 
+        agent.id === selectedAgentId ? { ...agent, status: !isActive ? 'active' : 'inactive' } : agent
+      ))
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `Agent ${!isActive ? 'activated' : 'deactivated'} successfully`,
+        variant: "default",
       })
-      if (!isActive) {
-        await fetch(`${API_BASE_URL}/twilio/control_call`, {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ control_type: 'start_call' }),
-        })
-      } else {
-        await fetch(`${API_BASE_URL}/twilio/control_call`, {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ control_type: 'stop_call' }),
-        })
-      }
+    } catch (error) {
+      console.error('Error updating agent status:', error)
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "Failed to update agent status. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 

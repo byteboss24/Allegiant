@@ -84,6 +84,11 @@ export function CallRecordings() {
       }
     } catch (error) {
       console.error('Error playing audio:', error)
+      toast({
+        title: "Error",
+        description: "Failed to play audio recording. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -98,6 +103,10 @@ export function CallRecordings() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/record/${selectedRecording.id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${btoa(`${username}:${password}`)}`
+        }
       })
 
       if (!response.ok) {
@@ -105,21 +114,24 @@ export function CallRecordings() {
       }
 
       // Remove the deleted recording from the state
-      setData(callRecordings.filter(r => r.id !== selectedRecording.id))
+      setData(callRecordings.filter(recording => recording.id !== selectedRecording.id))
+      setShowDeleteDialog(false)
+      setSelectedRecording(null)
+      
+      // Show success toast
       toast({
         title: "Success",
-        description: "Recording deleted successfully",
+        description: "Call recording deleted successfully",
+        variant: "default",
       })
     } catch (error) {
       console.error('Error deleting recording:', error)
+      // Show error toast
       toast({
         title: "Error",
-        description: "Failed to delete recording",
+        description: "Failed to delete call recording. Please try again.",
         variant: "destructive",
       })
-    } finally {
-      setShowDeleteDialog(false)
-      setSelectedRecording(null)
     }
   }
 
