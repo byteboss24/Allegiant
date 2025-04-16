@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { UploadCloud, Download, Search, ChevronDown, Filter, MoreHorizontal, ExternalLink } from "lucide-react"
+import { UploadCloud, Download, Search, ChevronDown, Filter, MoreHorizontal, ExternalLink, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +53,8 @@ export function CustomersList() {
   const [isUploading, setIsUploading] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -250,6 +252,75 @@ export function CustomersList() {
     return matchesSearch && invoice.status === statusFilter
   })
 
+  // Handle invoice selection
+  const handleSelectInvoice = (invoiceNumber: string) => {
+    setSelectedInvoices(prev => {
+      if (prev.includes(invoiceNumber)) {
+        return prev.filter(id => id !== invoiceNumber)
+      } else {
+        return [...prev, invoiceNumber]
+      }
+    })
+  }
+  
+  // Handle select all invoices
+  const handleSelectAll = () => {
+    if (selectedInvoices.length === filteredInvoices.length) {
+      setSelectedInvoices([])
+    } else {
+      setSelectedInvoices(filteredInvoices.map(invoice => invoice.invoice_number))
+    }
+  }
+  
+  // Handle delete invoices
+  const handleDeleteInvoices = async () => {
+    if (selectedInvoices.length === 0) {
+      toast({
+        title: "No invoices selected",
+        description: "Please select at least one invoice to delete",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    setIsDeleting(true)
+    try {
+      console.log(selectedInvoices)
+      const response = await fetch(`${API_BASE_URL}/api/v1/invoices/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          invoice_numbers: selectedInvoices
+        }),
+      })
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || 'Failed to delete invoices')
+      }
+  
+      // Update the local state to remove deleted invoices
+      setInvoices(invoices.filter(invoice => !selectedInvoices.includes(invoice.invoice_number)))
+      setSelectedInvoices([])
+  
+      toast({
+        title: "Invoices deleted",
+        description: `Successfully deleted ${selectedInvoices.length} invoice(s)`,
+      })
+    } catch (error) {
+      console.error('Error deleting invoices:', error)
+      toast({
+        title: "Delete failed",
+        description: error instanceof Error ? error.message : "Failed to delete invoices",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Card>
@@ -259,6 +330,27 @@ export function CustomersList() {
             <CardDescription>Manage customer invoices and payment status</CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            {selectedInvoices.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 gap-1"
+                onClick={handleDeleteInvoices}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete ({selectedInvoices.length})</span>
+                  </>
+                )}
+              </Button>
+            )}
             <div className="relative">
               <input
                 type="file"
@@ -344,6 +436,14 @@ export function CustomersList() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[30px]">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300"
+                      checked={selectedInvoices.length === filteredInvoices.length && filteredInvoices.length > 0}
+                      onChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Mobile Number</TableHead>
                   <TableHead>Phone Number</TableHead>
@@ -359,7 +459,7 @@ export function CustomersList() {
               <TableBody key={uuidv4()}>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={11} className="text-center py-8">
                       <div className="flex items-center justify-center">
                         <Loader2 className="h-6 w-6 animate-spin" />
                       </div>
@@ -367,13 +467,21 @@ export function CustomersList() {
                   </TableRow>
                 ) : filteredInvoices?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={11} className="text-center py-8">
                       No invoices found
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredInvoices?.map((invoice) => (
                     <TableRow key={uuidv4()}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300"
+                          checked={selectedInvoices.includes(invoice.invoice_number)}
+                          onChange={() => handleSelectInvoice(invoice.invoice_number)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{`${invoice.first_name} ${invoice.last_name}`}</TableCell>
                       <TableCell>{invoice.mobile_number}</TableCell>
                       <TableCell>{invoice.phone_number}</TableCell>
@@ -426,6 +534,16 @@ export function CustomersList() {
                                 {invoice.status === 'completed' ? 'Already completed' : 'Mark as completed'}
                               </DropdownMenuItem>
                               <DropdownMenuItem>Schedule call</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setSelectedInvoices([invoice.invoice_number]);
+                                  handleDeleteInvoices();
+                                }}
+                                className="text-red-600"
+                              >
+                                Delete invoice
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -440,6 +558,11 @@ export function CustomersList() {
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-muted-foreground">
               Showing <strong>{filteredInvoices?.length}</strong> of <strong>{invoices.length}</strong> customers
+              {selectedInvoices.length > 0 && (
+                <span className="ml-2">
+                  (<strong>{selectedInvoices.length}</strong> selected)
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" disabled>
