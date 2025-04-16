@@ -25,6 +25,7 @@ class InvoiceBase(BaseModel):
 
 class InvoiceCreate(InvoiceBase):
     created_at: datetime
+    status: Optional[str] = 'pending'
     campaign_name: Optional[str] = None
     pass
 
@@ -33,7 +34,7 @@ class InvoiceUpdate(BaseModel):
     call_recording_url: Optional[str] = None
 
 class Invoice(InvoiceBase):
-    status: Optional[str] = None
+    status: Optional[str] = 'pending'
     campaign_name: Optional[str] = None
     script: Optional[str] = None
     phone_strategy: Optional[str] = None
@@ -41,7 +42,7 @@ class Invoice(InvoiceBase):
 
 class InvoiceResponseData(BaseModel):
     created_at: datetime
-    status: Optional[str] = None
+    status: Optional[str] = 'pending'
     campaign_name: Optional[str] = None
     script: Optional[str] = None
     phone_strategy: Optional[str] = None

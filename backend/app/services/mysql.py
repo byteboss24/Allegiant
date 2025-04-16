@@ -196,9 +196,10 @@ class MySQLService:
                         outstanding_amount,
                         email,
                         mailing_postcode,
-                        payment_link
+                        payment_link,
+                        status
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
 
                 cursor.execute(sql, (
@@ -217,7 +218,8 @@ class MySQLService:
                     invoice.outstanding_amount,
                     invoice.email,
                     invoice.mailing_postcode,
-                    invoice.payment_link
+                    invoice.payment_link,
+                    invoice.status
                 ))
                 connection.commit()
                 return cursor.lastrowid

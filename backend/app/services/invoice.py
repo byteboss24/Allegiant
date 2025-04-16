@@ -29,6 +29,7 @@ class InvoiceService:
                 fsp_name=request.fsp_name,
                 outstanding_amount=request.outstanding_amount,
                 email=request.email,
+                status=request.status,
                 mailing_postcode=request.mailing_postcode
             )
 
@@ -202,6 +203,7 @@ class InvoiceService:
                             'mailing_postcode': row.get('Mailing Postal Code', ''),
                             'payment_link': row.get('Payment link', ''),
                             'created_at': datetime.now(timezone.utc),
+                            'status': 'pending',
                             'campaign_name': campaign_name
                         }
                         
