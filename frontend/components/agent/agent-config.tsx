@@ -262,7 +262,8 @@ export function AgentConfig() {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={() => setIsCallDialogOpen(true)}>Test Agent</Button>
+        {/* <Button variant="outline" onClick={() => setIsCallDialogOpen(true)}>Test Agent</Button> */}
+        <div></div>
         <Button>Save Changes</Button>
       </CardFooter>
       

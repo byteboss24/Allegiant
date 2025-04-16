@@ -76,7 +76,7 @@ async def process_twilio_messages(websocket: WebSocket, openai_ws: websockets.We
 
 async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invoice: Dict) -> None:
     """Initialize OpenAI session with invoice data."""
-    print("invoice", invoice)
+
     system_message = main_prompt.format(**invoice, percentage="10%")
     session_config = {
         "type": "session.update",
@@ -94,7 +94,29 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
             "voice": settings.voice_type,
             "instructions": system_message,
             "modalities": ["text", "audio"],
-            "temperature": 0.8
+            "temperature": 0.8,
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "stop_call",
+                    "function": {
+                        "name": "stop_call",
+                        "description": "Stop the call after conversation is ended. after human and agent saying bye then close the call.",
+                        "parameters": {}
+                    }
+                },
+                {
+                    "type": "function",
+                    "name": "say_hello",
+                    "function": {
+                        "type": "function",
+                        "name": "say_hello",
+                        "description": "If the person doesn't speak after 5 seconds of the ​​Agent speaking, say 'Hello' or 'Are you there?'",
+                        "parameters": {}
+                    }
+                }
+            ],
+            "tool_choice": "auto"
         }
     }
     await openai_ws.send(json.dumps(session_config))
@@ -156,6 +178,31 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
             elif response['type'] == 'input_audio_buffer.speech_stopped':
                 logger.info("Human stopped speaking")
                 call_state.is_speaking = False
+            elif response['type'] == 'response.output_item.done':
+                print("Response output item done", response)
+                event = response['item']
+                if(event['type'] == 'function_call'):
+                    if(event['name'] == 'stop_call'):
+                        await openai_ws.send(json.dumps({
+                            "type": "function_call_output",
+                            "function_call": {
+                                "name": "stop_call",
+                                "call_id": data['callId']
+                            },
+                            "output": "bye"
+                        }))
+                        openai_ws.close()
+                        websocket.close()
+                        print("Call ended")
+                    elif(event['name'] == 'say_hello'):
+                        await openai_ws.send(json.dumps({
+                            "type": "function_call_output",
+                            "function_call": {
+                                "name": "say_hello",
+                                "call_id": data['callId']
+                            },
+                            "output": "'Hello' or 'Are you there?'",
+                        }))
             elif response['type'] == 'response.done':
                 call_state.is_speaking = False
                 try:
