@@ -20,52 +20,6 @@ export interface RecentRecord {
   audio_url: string | null;
 }
 
-const data = [
-  {
-    name: "Mon",
-    total: 143,
-    connected: 98,
-    converted: 32,
-  },
-  {
-    name: "Tue",
-    total: 176,
-    connected: 121,
-    converted: 41,
-  },
-  {
-    name: "Wed",
-    total: 198,
-    connected: 132,
-    converted: 45,
-  },
-  {
-    name: "Thu",
-    total: 167,
-    connected: 112,
-    converted: 38,
-  },
-  {
-    name: "Fri",
-    total: 210,
-    connected: 145,
-    converted: 52,
-  },
-  {
-    name: "Sat",
-    total: 89,
-    connected: 56,
-    converted: 18,
-  },
-  {
-    name: "Sun",
-    total: 52,
-    connected: 31,
-    converted: 9,
-  },
-]
-
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 export function Overview() {

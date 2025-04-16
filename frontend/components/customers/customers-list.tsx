@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +19,16 @@ import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from "next/navigation"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface Invoice {
   id: string,
@@ -55,6 +64,8 @@ export function CustomersList() {
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -318,263 +329,284 @@ export function CustomersList() {
       })
     } finally {
       setIsDeleting(false)
+      setShowDeleteConfirm(false)
+      setInvoiceToDelete(null)
     }
+  }
+  
+  // Handle single invoice delete
+  const handleSingleInvoiceDelete = (invoiceNumber: string) => {
+    setInvoiceToDelete(invoiceNumber)
+    setSelectedInvoices([invoiceNumber])
+    setShowDeleteConfirm(true)
   }
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-2xl font-bold">Customers</CardTitle>
-            <CardDescription>Manage customer invoices and payment status</CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            {selectedInvoices.length > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                className="h-8 gap-1"
-                onClick={handleDeleteInvoices}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4" />
-                    <span>Delete ({selectedInvoices.length})</span>
-                  </>
-                )}
-              </Button>
-            )}
-            <div className="relative">
-              <input
-                type="file"
-                accept=".csv"
-                className="hidden"
-                id="csv-upload"
-                onChange={handleUpload}
-                disabled={isUploading}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1"
-                onClick={() => document.getElementById('csv-upload')?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud className="h-4 w-4" />
-                    <span>Upload CSV</span>
-                  </>
-                )}
-              </Button>
-            </div>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedInvoices.length > 1 
+                ? `You are about to delete ${selectedInvoices.length} invoices. This action cannot be undone.`
+                : "You are about to delete this invoice. This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteInvoices}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <div className="flex items-center justify-between mb-4">
+        <div className="relative w-64">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search customers..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Select defaultValue="all" onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px] h-9">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" className="gap-1 h-9">
+            <Filter className="h-4 w-4" />
+            <span>Filters</span>
+            <ChevronDown className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end mb-4 ">
+        <div className="flex items-center gap-2">
+          {selectedInvoices.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-8 gap-1"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  <span>Delete ({selectedInvoices.length})</span>
+                </>
+              )}
+            </Button>
+          )}
+          <div className="relative">
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              id="csv-upload"
+              onChange={handleUpload}
+              disabled={isUploading}
+            />
             <Button
               variant="outline"
               size="sm"
               className="h-8 gap-1"
-              onClick={handleExport}
-              disabled={isExporting}
+              onClick={() => document.getElementById('csv-upload')?.click()}
+              disabled={isUploading}
             >
-              {isExporting ? (
+              {isUploading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Exporting...</span>
+                  <span>Uploading...</span>
                 </>
               ) : (
                 <>
-                  <Download className="h-4 w-4" />
-                  <span>Export</span>
+                  <UploadCloud className="h-4 w-4" />
+                  <span>Upload CSV</span>
                 </>
               )}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-4">
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search customers..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Select defaultValue="all" onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px] h-9">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" className="gap-1 h-9">
-                <Filter className="h-4 w-4" />
-                <span>Filters</span>
-                <ChevronDown className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Exporting...</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                <span>Export</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30px]">
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[30px]">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300"
+                  checked={selectedInvoices.length === filteredInvoices.length && filteredInvoices.length > 0}
+                  onChange={handleSelectAll}
+                />
+              </TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Mobile Number</TableHead>
+              <TableHead>Phone Number</TableHead>
+              <TableHead>Invoice Number</TableHead>
+              <TableHead>Invoice Date</TableHead>
+              <TableHead>Invoice Amount</TableHead>
+              <TableHead>FSP Name</TableHead>
+              <TableHead>Outstanding Amount</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody key={uuidv4()}>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={11} className="text-center py-8">
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredInvoices?.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={11} className="text-center py-8">
+                  No invoices found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredInvoices?.map((invoice) => (
+                <TableRow key={uuidv4()}>
+                  <TableCell>
                     <input
                       type="checkbox"
                       className="h-4 w-4 rounded border-gray-300"
-                      checked={selectedInvoices.length === filteredInvoices.length && filteredInvoices.length > 0}
-                      onChange={handleSelectAll}
+                      checked={selectedInvoices.includes(invoice.invoice_number)}
+                      onChange={() => handleSelectInvoice(invoice.invoice_number)}
                     />
-                  </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Mobile Number</TableHead>
-                  <TableHead>Phone Number</TableHead>
-                  <TableHead>Invoice Number</TableHead>
-                  <TableHead>Invoice Date</TableHead>
-                  <TableHead>Invoice Amount</TableHead>
-                  <TableHead>FSP Name</TableHead>
-                  <TableHead>Outstanding Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody key={uuidv4()}>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={11} className="text-center py-8">
-                      <div className="flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredInvoices?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={11} className="text-center py-8">
-                      No invoices found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredInvoices?.map((invoice) => (
-                    <TableRow key={uuidv4()}>
-                      <TableCell>
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-gray-300"
-                          checked={selectedInvoices.includes(invoice.invoice_number)}
-                          onChange={() => handleSelectInvoice(invoice.invoice_number)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{`${invoice.first_name} ${invoice.last_name}`}</TableCell>
-                      <TableCell>{invoice.mobile_number}</TableCell>
-                      <TableCell>{invoice.phone_number}</TableCell>
-                      <TableCell>{invoice.invoice_number}</TableCell>
-                      <TableCell>{invoice.invoice_date}</TableCell>
-                      <TableCell>{invoice.invoice_amount}</TableCell>
-                      <TableCell>{invoice.fsp_name}</TableCell>
-                      <TableCell>{invoice.outstanding_amount}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            invoice.status === "completed"
-                              ? "default"
-                              : invoice.status === "pending"
-                                ? "outline"
-                                : "destructive"
-                          }
-                        >
-                          {invoice.status?.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title="View Details"
-                            onClick={() => router.push(`/invoices/${invoice.invoice_number}`)}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="sr-only">View Details</span>
+                  </TableCell>
+                  <TableCell className="font-medium">{`${invoice.first_name} ${invoice.last_name}`}</TableCell>
+                  <TableCell>{invoice.mobile_number}</TableCell>
+                  <TableCell>{invoice.phone_number}</TableCell>
+                  <TableCell>{invoice.invoice_number}</TableCell>
+                  <TableCell>{invoice.invoice_date}</TableCell>
+                  <TableCell>{invoice.invoice_amount}</TableCell>
+                  <TableCell>{invoice.fsp_name}</TableCell>
+                  <TableCell>{invoice.outstanding_amount}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        invoice.status === "completed"
+                          ? "default"
+                          : invoice.status === "pending"
+                            ? "outline"
+                            : "destructive"
+                      }
+                    >
+                      {invoice.status?.toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="View Details"
+                        onClick={() => router.push(`/invoices/${invoice.invoice_number}`)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        <span className="sr-only">View Details</span>
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
                           </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => router.push(`/invoices/${invoice.invoice_number}`)}>View details</DropdownMenuItem>
-                              <DropdownMenuItem>Send reminder</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleStatusUpdate(invoice.invoice_number, 'completed')}
-                                disabled={invoice.status === 'completed'}
-                              >
-                                {invoice.status === 'completed' ? 'Already completed' : 'Mark as completed'}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>Schedule call</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => {
-                                  setSelectedInvoices([invoice.invoice_number]);
-                                  handleDeleteInvoices();
-                                }}
-                                className="text-red-600"
-                              >
-                                Delete invoice
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => router.push(`/invoices/${invoice.invoice_number}`)}>View details</DropdownMenuItem>
+                          <DropdownMenuItem>Send reminder</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusUpdate(invoice.invoice_number, 'completed')}
+                            disabled={invoice.status === 'completed'}
+                          >
+                            {invoice.status === 'completed' ? 'Already completed' : 'Mark as completed'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>Schedule call</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleSingleInvoiceDelete(invoice.invoice_number)}
+                            className="text-red-600"
+                          >
+                            Delete invoice
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">
-              Showing <strong>{filteredInvoices?.length}</strong> of <strong>{invoices.length}</strong> customers
-              {selectedInvoices.length > 0 && (
-                <span className="ml-2">
-                  (<strong>{selectedInvoices.length}</strong> selected)
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-muted-foreground">
+          Showing <strong>{filteredInvoices?.length}</strong> of <strong>{invoices.length}</strong> customers
+          {selectedInvoices.length > 0 && (
+            <span className="ml-2">
+              (<strong>{selectedInvoices.length}</strong> selected)
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" disabled>
+            Previous
+          </Button>
+          <Button variant="outline" size="sm">
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

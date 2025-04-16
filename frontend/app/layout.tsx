@@ -16,8 +16,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <header className="border-b bg-white shadow-sm">
+      <body className="flex flex-col min-h-screen">
+        <header className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
           <div className="container flex h-20 items-center px-4">
             <Link href="/overview" className="flex items-center">
               <img
@@ -29,7 +29,7 @@ export default function RootLayout({
             <MainNav />
           </div>
         </header>
-        <main className="container mx-auto py-6">
+        <main className="container mx-auto py-6 mt-20 flex-1">
           {children}
         </main>
       </body>
