@@ -14,11 +14,16 @@ from app.model.invoice import (
     CSVUploadResponse,
     MonthlyInvoiceStats
 )
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/api/v1",
     tags=["invoices"]
 )
+
+# Request model for delete by body
+class InvoiceDeleteRequest(BaseModel):
+    invoice_numbers: List[str]
 
 @router.post("/invoices", response_model=InvoiceResponse)
 async def create_invoice(request: InvoiceCreate):
@@ -77,14 +82,18 @@ async def update_invoice(invoice_number: str, update_data: InvoiceUpdate):
         )
     return updated
 
-@router.delete("/invoices/{invoice_number}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_invoice(invoice_number: str):
-    """Delete an invoice"""
-    success = await invoice_service.delete_invoice(invoice_number)
-    if not success:
+@router.delete("/invoices/delete", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_invoice_by_body(request: InvoiceDeleteRequest):
+    """Delete invoices by a list of invoice_numbers in request body"""
+    failed = []
+    for invoice_number in request.invoice_numbers:
+        success = await invoice_service.delete_invoice(invoice_number)
+        if not success:
+            failed.append(invoice_number)
+    if failed:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invoice not found"
+            detail=f"Invoices not found: {failed}"
         )
 
 @router.post("/invoices/upload-csv", response_model=CSVUploadResponse)
