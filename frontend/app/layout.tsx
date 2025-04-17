@@ -18,13 +18,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex flex-col min-h-screen">
-        <header className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
-          <div className="container flex h-20 items-center px-4">
+        <header className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-50 flex justify-center">
+          <div className="container flex h-20 items-center justify-between">
             <Link href="/overview" className="flex items-center">
               <img
                 src="/mark.png"
                 alt="Allegiant Finance Services Logo"
-                className="h-10 w-auto mr-6"
+                className="h-14 w-auto mr-6"
               />
             </Link>
             <MainNav />

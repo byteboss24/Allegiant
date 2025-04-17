@@ -219,9 +219,27 @@ export function AgentConfig() {
       if (!response.ok) {
         throw new Error('Failed to update agent status')
       }
+      setIsActive(!isActive)
+      
+      if (!isActive) {
+        await fetch(`${API_BASE_URL}/twilio/control_call`, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ control_type: 'start_call' }),
+        })
+      } else {
+        await fetch(`${API_BASE_URL}/twilio/control_call`, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ control_type: 'stop_call' }),
+        })
+      }
 
       // Update the status in the state
-      setIsActive(!isActive)
       setAgents(agents?.map(agent => 
         agent.id === selectedAgentId ? { ...agent, status: !isActive ? 'active' : 'inactive' } : agent
       ))
