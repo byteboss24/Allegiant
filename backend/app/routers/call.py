@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, HTTPException
 from fastapi.websockets import WebSocketDisconnect
 from app.core.config import settings
-from twilio.rest import Client
+from app.utils.twilio import TWILIO_CLIENT
 from app.core.logger import logger
 from app.services.call import (
     call_state,
@@ -23,7 +23,6 @@ import asyncio
 
 router = APIRouter(prefix="/twilio", tags=["call"])
 
-TWILIO_CLIENT = Client(settings.twilio_account_sid, settings.twilio_auth_token)
 OPENAI_CLIENT = OpenAI(api_key=settings.openai_api_key)
 
 class OutboundRequest(BaseModel):
@@ -46,7 +45,7 @@ async def outbound(request: OutboundRequest) -> str:
             '</Connect></Response>'
         )
         call = TWILIO_CLIENT.calls.create(
-            from_="+441925596272",
+            from_="+447366532747",
             to=invoice.mobile_number,
             twiml=twiml
         )
@@ -55,7 +54,7 @@ async def outbound(request: OutboundRequest) -> str:
         invoice.status = "calling"
 
         call_state.invoices[call.sid] = invoice.model_dump()
-        await invoice_service.update_invoice(invoice.invoice_number, invoice)
+        await invoice_service.update_invoice_status(invoice.invoice_number, invoice.status)
         settings.call_count += 1
         # Poll for call status (could be optimized with webhook)
         isrecording = False
@@ -75,23 +74,19 @@ async def outbound(request: OutboundRequest) -> str:
                     audio_url="",
                     status=data.status
                 ))
-                invoice.status = data.status
-                invoice = invoice.model_dump()
-                await invoice_service.update_invoice(invoice.invoice_number, invoice)
+                await invoice_service.update_invoice_status(invoice.invoice_number, data.status)
                 break
             if data.status == 'completed':
                 logger.info(f"Call completed successfully: {recording}")
-                print("call_state.invoices[call.sid]", call_state.invoices[call.sid])
+                print("Call is completed", call_state.invoices[call.sid])
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
-                    transcript=call_state.invoices[call.sid]['script'],
+                    transcript=call_state.invoices.get(call.sid, {}).get('script', "") or "",
                     audio_url=f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Recordings/{recording.sid}" if recording else "",
                     status=data.status
                 ))
-                invoice.status = data.status
-                invoice = invoice.model_dump()
-                await invoice_service.update_invoice(invoice.invoice_number, invoice)
+                await invoice_service.update_invoice_status(invoice.invoice_number, data.status)
                 break
             await asyncio.sleep(2)
         settings.call_count -= 1

@@ -30,8 +30,11 @@ class InvoiceService:
                 outstanding_amount=request.outstanding_amount,
                 email=request.email,
                 status=request.status,
+                payment_link=request.payment_link,
                 mailing_postcode=request.mailing_postcode
             )
+
+            print("Create invoice", invoice)
 
             # Insert into database
             invoice_id = await mysql_service.insert_invoice(invoice)
@@ -214,7 +217,6 @@ class InvoiceService:
 
                     temp = await self.get_invoice(invoice.invoice_number)
                     
-                    print(temp)
                     if not temp:
                         # Create the invoice
                         response = await self.create_invoice(invoice)
@@ -224,6 +226,7 @@ class InvoiceService:
                             failed_records += 1
                             errors.append(f"Row {total_records}: {response.message}")
                     else:
+                        failed_records += 1
                         print("Existed invoice", temp)
                 except Exception as e:
                     failed_records += 1

@@ -177,6 +177,7 @@ class MySQLService:
     async def insert_invoice(self, invoice):
         """Insert a new invoice into the database"""
         connection = self._get_connection()
+        print("Inserting invoice", invoice)
         try:
             with connection.cursor() as cursor:
                 sql = """
