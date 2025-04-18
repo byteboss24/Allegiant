@@ -3,10 +3,8 @@ from fastapi.websockets import WebSocketDisconnect
 from app.core.config import settings
 from app.core.logger import logger
 from app.core.prompt_templates.prompt import main_prompt
-import json
 import websockets
 import asyncio
-import base64
 from typing import Optional, Dict
 from app.utils.twilio import TWILIO_CLIENT
 import time
