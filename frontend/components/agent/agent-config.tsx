@@ -3,23 +3,17 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Pencil } from "lucide-react"
 import { CallDialog } from "./call-dialog"
 import { useToast } from "@/components/ui/use-toast"
-
-interface Agent {
-  id: number
-  name: string
-  voice: string
-  status: string
-  system_prompt: string
-}
+import { Agent } from "@/lib/props"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { WordPronunciationDialog } from "./WordPronunciationDialog"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -33,6 +27,7 @@ export function AgentConfig() {
   const [isEditingName, setIsEditingName] = useState(false)
   const [isEditingSystemPrompt, setIsEditingSystemPrompt] = useState(false)
   const [isCallDialogOpen, setIsCallDialogOpen] = useState(false)
+  const [isWordDialogOpen, setIsWordDialogOpen] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -353,8 +348,8 @@ export function AgentConfig() {
                 <Pencil className="h-4 w-4" />
                 {isEditingSystemPrompt ? "Done" : "Edit"}
               </Button>
-              <Button variant="outline" size="sm">
-                Import
+              <Button variant="outline" size="sm" onClick={() => setIsWordDialogOpen(true)}>
+                Words & Pronunciations
               </Button>
             </div>
           </div>
@@ -380,6 +375,11 @@ export function AgentConfig() {
       <CallDialog
         open={isCallDialogOpen}
         onOpenChange={setIsCallDialogOpen}
+        agentId={selectedAgentId || undefined}
+      />
+      <WordPronunciationDialog
+        open={isWordDialogOpen}
+        onOpenChange={setIsWordDialogOpen}
         agentId={selectedAgentId || undefined}
       />
     </Card>

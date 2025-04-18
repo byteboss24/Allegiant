@@ -7,6 +7,7 @@ from app.routers.invoice import router as invoice_router
 from app.routers.call import router as call_router
 from app.routers.agent import router as agent_router
 from app.routers.record import router as record_router
+from app.routers.word_pronunciation import router as word_pronunciation_router
 from app.services.mysql import mysql_service
 
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.include_router(invoice_router)
 app.include_router(call_router)
 app.include_router(agent_router)
 app.include_router(record_router)
+app.include_router(word_pronunciation_router)
 
 @app.get("/")
 async def health_check():
