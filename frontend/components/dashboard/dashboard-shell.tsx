@@ -1,7 +1,6 @@
 import type React from "react"
-interface DashboardShellProps {
-  children: React.ReactNode
-}
+import type { DashboardShellProps } from "@/lib/props"
+
 
 export function DashboardShell({ children }: DashboardShellProps) {
   return (

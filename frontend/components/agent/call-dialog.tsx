@@ -5,12 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX } from "lucide-react"
-
-interface CallDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  agentId?: number
-}
+import type { CallDialogProps } from "@/lib/props"
 
 export function CallDialog({
   open,

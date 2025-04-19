@@ -9,9 +9,7 @@ import { useCustomers } from "./hooks/useCustomers"
 export function CustomersList() {
   const {
     searchTerm,
-    setSearchTerm,
     statusFilter,
-    setStatusFilter,
     invoices,
     totalInvoices,
     isLoading,
@@ -20,6 +18,8 @@ export function CustomersList() {
     selectedInvoices,
     isDeleting,
     showDeleteConfirm,
+    setSearchTerm,
+    setStatusFilter,
     setShowDeleteConfirm,
     handleUpload,
     handleExport,

@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import React, { RefObject } from "react";
-import type { CallPlayerProps } from "@props";
+import type { CallPlayerProps } from "@/lib/props";
 
 export const CallPlayer: React.FC<CallPlayerProps> = ({
   selectedCall,

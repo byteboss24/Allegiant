@@ -9,13 +9,18 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Pencil } from "lucide-react"
 import { CallDialog } from "./call-dialog"
-import { useToast } from "@/components/ui/use-toast"
-import { Agent } from "@/lib/props"
+import { useToast } from "@/hooks/use-toast"
+import type { Agent } from "@/lib/props"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { WordPronunciationDialog } from "./WordPronunciationDialog"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+import {
+  fetchAgents as apiFetchAgents,
+  fetchSelectedAgent as apiFetchSelectedAgent,
+  selectAgent as apiSelectAgent,
+  updateAgent as apiUpdateAgent,
+  controlTwilioCall,
+} from "@/lib/apis"
 
 export function AgentConfig() {
   const [agents, setAgents] = useState<Agent[]>()
@@ -32,52 +37,32 @@ export function AgentConfig() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const fetchAgents = async () => {
-      const response = await fetch(`${API_BASE_URL}/api/v1/agents`)
-      const data = await response.json()
-      return data
-    }
-
-    fetchAgents().then(agents => {
+    const fetchAgentsData = async () => {
+      const agents = await apiFetchAgents()
       setAgents(agents)
       // Fetch selected agent from backend
-      const fetchSelectedAgent = async () => {
-        const response = await fetch(`${API_BASE_URL}/api/v1/selected-agent`)
-        const data = await response.json()
-        if (data.selected_agent_id) {
-          setSelectedAgentId(data.selected_agent_id)
-        }
-        const selectedAgent = agents?.find((agent: Agent) => agent.id === data.selected_agent_id)
-        setSystemPrompt(selectedAgent?.system_prompt || "")
-        setName(selectedAgent?.name || "")
-        setVoice(selectedAgent?.voice || "")
-        setIsActive(selectedAgent?.status === "active")
+      const data = await apiFetchSelectedAgent()
+      if (data.selected_agent_id) {
+        setSelectedAgentId(data.selected_agent_id)
       }
-      fetchSelectedAgent()
-    })
-
+      const selectedAgent = agents?.find((agent: Agent) => agent.id === data.selected_agent_id)
+      setSystemPrompt(selectedAgent?.system_prompt || "")
+      setName(selectedAgent?.name || "")
+      setVoice(selectedAgent?.voice || "")
+      setIsActive(selectedAgent?.status === "active")
+    }
+    fetchAgentsData()
   }, [])
 
   const handleAgentSelect = async (agentId: number) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/select-agent/${agentId}`, { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to select agent')
-      }
-      
+      await apiSelectAgent(agentId)
       setSelectedAgentId(agentId)
       const selectedAgent = agents?.find((agent: Agent) => agent.id === agentId)
       setSystemPrompt(selectedAgent?.system_prompt || "")
       setName(selectedAgent?.name || "")
       setVoice(selectedAgent?.voice || "")
       setIsActive(selectedAgent?.status === "active")
-      
       toast({
         title: "Success",
         description: "Agent selected successfully",
@@ -95,7 +80,6 @@ export function AgentConfig() {
 
   const handleSaveName = async () => {
     if (!selectedAgentId || !name) return
-
     try {
       const agent = {
         id: selectedAgentId,
@@ -104,25 +88,11 @@ export function AgentConfig() {
         system_prompt: systemPrompt,
         status: isActive ? 'active' : 'inactive'
       }
-      const response = await fetch(`${API_BASE_URL}/api/v1/agents`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(agent),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update agent name')
-      }
-
-      // Update the agent name in the state
+      await apiUpdateAgent(agent)
       setAgents(agents?.map(agent => 
         agent.id === selectedAgentId ? { ...agent, name } : agent
       ))
       setIsEditingName(false)
-      
-      // Show success toast
       toast({
         title: "Success",
         description: "Agent name updated successfully",
@@ -130,7 +100,6 @@ export function AgentConfig() {
       })
     } catch (error) {
       console.error('Error updating agent name:', error)
-      // Show error toast
       toast({
         title: "Error",
         description: "Failed to update agent name. Please try again.",
@@ -141,7 +110,6 @@ export function AgentConfig() {
 
   const handleSaveSystemPrompt = async () => {
     if (!selectedAgentId || !systemPrompt) return
-
     if (isEditingSystemPrompt) {
       try {
         const agent = {
@@ -151,35 +119,19 @@ export function AgentConfig() {
           system_prompt: systemPrompt,
           status: isActive ? 'active' : 'inactive'
         }
-        const response = await fetch(`${API_BASE_URL}/api/v1/agents`, {
-          method: 'put',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(agent),
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to update system prompt')
-        }
-
-        // Update the system prompt in the state
+        await apiUpdateAgent(agent)
         setAgents(agents?.map(agent => 
           agent.id === selectedAgentId ? { ...agent, system_prompt: systemPrompt } : agent
         ))
         setIsEditingSystemPrompt(false)
-        
-        // Show success toast
         toast({
           title: "Success",
           description: "System prompt updated successfully",
           variant: "default",
         })
-
         router.refresh()
       } catch (error) {
         console.error('Error updating system prompt:', error)
-        // Show error toast
         toast({
           title: "Error",
           description: "Failed to update system prompt. Please try again.",
@@ -194,7 +146,6 @@ export function AgentConfig() {
 
   const handleStatusChange = async () => {
     if (!selectedAgentId) return
-
     try {
       const agent = {
         id: selectedAgentId,
@@ -203,43 +154,16 @@ export function AgentConfig() {
         system_prompt: systemPrompt,
         status: isActive ? 'active' : 'inactive'
       }
-      const response = await fetch(`${API_BASE_URL}/api/v1/agents`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(agent),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update agent status')
-      }
+      await apiUpdateAgent(agent)
       setIsActive(!isActive)
-      
       if (!isActive) {
-        await fetch(`${API_BASE_URL}/twilio/control_call`, {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ control_type: 'start_call' }),
-        })
+        await controlTwilioCall('start_call')
       } else {
-        await fetch(`${API_BASE_URL}/twilio/control_call`, {
-          method: 'post',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ control_type: 'stop_call' }),
-        })
+        await controlTwilioCall('stop_call')
       }
-
-      // Update the status in the state
       setAgents(agents?.map(agent => 
         agent.id === selectedAgentId ? { ...agent, status: !isActive ? 'active' : 'inactive' } : agent
       ))
-      
-      // Show success toast
       toast({
         title: "Success",
         description: `Agent ${!isActive ? 'activated' : 'deactivated'} successfully`,
@@ -247,7 +171,6 @@ export function AgentConfig() {
       })
     } catch (error) {
       console.error('Error updating agent status:', error)
-      // Show error toast
       toast({
         title: "Error",
         description: "Failed to update agent status. Please try again.",

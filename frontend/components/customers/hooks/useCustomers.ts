@@ -1,68 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-import type { Invoice, ApiError } from "@/lib/props"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-
-// API service functions
-const invoiceService = {
-  async fetchInvoices() {
-    const response = await fetch(`${API_BASE_URL}/api/v1/invoices`)
-    if (!response.ok) {
-      const errorData: ApiError = await response.json().catch(() => ({}))
-      throw new Error(errorData.detail || 'Failed to fetch invoices')
-    }
-    return response.json()
-  },
-
-  async uploadCsv(formData: FormData) {
-    const response = await fetch(`${API_BASE_URL}/api/v1/invoices/upload-csv`, {
-      method: 'POST',
-      body: formData,
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data.detail || data.message || 'Upload failed')
-    }
-    return data
-  },
-
-  async updateStatus(invoiceNumber: string, status: string) {
-    const response = await fetch(`${API_BASE_URL}/api/v1/invoices/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invoice_number: invoiceNumber, status }),
-    })
-    if (!response.ok) {
-      const errorData: ApiError = await response.json().catch(() => ({}))
-      throw new Error(errorData.detail || 'Failed to update status')
-    }
-    return response.json()
-  },
-
-  async deleteInvoices(invoiceNumbers: string[]) {
-    const response = await fetch(`${API_BASE_URL}/api/v1/invoices/delete`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invoice_numbers: invoiceNumbers }),
-    })
-    if (!response.ok) {
-      const errorData: ApiError = await response.json().catch(() => ({}))
-      throw new Error(errorData.detail || 'Failed to delete invoices')
-    }
-    return response.json()
-  },
-
-  async exportCsv() {
-    const response = await fetch(`${API_BASE_URL}/api/v1/invoices/export/csv`)
-    if (!response.ok) {
-      const errorData: ApiError = await response.json().catch(() => ({}))
-      throw new Error(errorData.detail || 'Export failed')
-    }
-    return response
-  }
-}
+import type { Invoice } from "@/lib/props"
+import { fetchInvoices, uploadCsv, updateInvoiceStatus, deleteInvoices, exportInvoicesCsv } from "@/lib/apis"
 
 export const useCustomers = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -79,9 +19,9 @@ export const useCustomers = () => {
   const router = useRouter()
 
   // Fetch invoices
-  const fetchInvoices = useCallback(async () => {
+  const fetchInvoicesCallback = useCallback(async () => {
     try {
-      const data = await invoiceService.fetchInvoices()
+      const data = await fetchInvoices()
       setInvoices(data)
     } catch (error) {
       console.error('Error fetching invoices:', error)
@@ -96,8 +36,8 @@ export const useCustomers = () => {
   }, [toast])
 
   useEffect(() => {
-    fetchInvoices()
-  }, [fetchInvoices])
+    fetchInvoicesCallback()
+  }, [fetchInvoicesCallback])
 
   // Handle file upload
   const handleUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,12 +70,12 @@ export const useCustomers = () => {
     formData.append('phone_strategy', 'random')
 
     try {
-      const data = await invoiceService.uploadCsv(formData)
+      const data = await uploadCsv(formData)
       toast({
         title: "Upload successful",
         description: `Processed ${data.total_records} records. ${data.successful_records} successful, ${data.failed_records} failed.`,
       })
-      await fetchInvoices()
+      await fetchInvoicesCallback()
     } catch (error) {
       console.error('Upload error:', error)
       toast({
@@ -147,13 +87,13 @@ export const useCustomers = () => {
       setIsUploading(false)
       event.target.value = ''
     }
-  }, [toast, fetchInvoices])
+  }, [toast, fetchInvoicesCallback])
 
   // Handle export
   const handleExport = useCallback(async () => {
     setIsExporting(true)
     try {
-      const response = await invoiceService.exportCsv()
+      const response = await exportInvoicesCsv()
       const contentDisposition = response.headers.get('Content-Disposition')
       const filename = contentDisposition ? 
         contentDisposition.split('filename=')[1].replace(/"/g, '') : 
@@ -188,7 +128,7 @@ export const useCustomers = () => {
   // Handle status update
   const handleStatusUpdate = useCallback(async (invoiceNumber: string, status: string) => {
     try {
-      await invoiceService.updateStatus(invoiceNumber, status)
+      await updateInvoiceStatus(invoiceNumber, status)
       setInvoices(prevInvoices => 
         prevInvoices.map(invoice => 
           invoice.invoice_number === invoiceNumber 
@@ -240,7 +180,7 @@ export const useCustomers = () => {
     
     setIsDeleting(true)
     try {
-      await invoiceService.deleteInvoices(selectedInvoices)
+      await deleteInvoices(selectedInvoices)
       setInvoices(prevInvoices => 
         prevInvoices.filter(invoice => !selectedInvoices.includes(invoice.invoice_number))
       )

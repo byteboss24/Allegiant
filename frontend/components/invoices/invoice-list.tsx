@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { FileText, Trash2 } from "lucide-react"
 import {
   AlertDialog,
@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Checkbox as CheckboxComponent } from "@/components/ui/checkbox"
+import { deleteInvoice, bulkDeleteInvoices } from "@/lib/apis"
 
 interface Invoice {
   id: string
@@ -52,14 +53,7 @@ export function InvoiceList() {
     if (!selectedInvoice) return
 
     try {
-      const response = await fetch(`/api/v1/invoice/${selectedInvoice.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete invoice')
-      }
-
+      await deleteInvoice(selectedInvoice.id)
       // Remove the deleted invoice from the state
       setInvoices(invoices.filter(i => i.id !== selectedInvoice.id))
       toast({
@@ -81,18 +75,7 @@ export function InvoiceList() {
 
   const confirmBulkDelete = async () => {
     try {
-      const response = await fetch(`/api/v1/invoices/bulk-delete`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ids: selectedInvoices }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete invoices')
-      }
-
+      await bulkDeleteInvoices(selectedInvoices)
       // Remove the deleted invoices from the state
       setInvoices(invoices.filter(i => !selectedInvoices.includes(i.id)))
       setSelectedInvoices([])

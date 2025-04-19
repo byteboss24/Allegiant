@@ -1,26 +1,9 @@
 "use client"
 
+import { fetchWeeklyStats } from "@/lib/apis";
 import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-
-export interface WeeklyStats {
-  date: string;
-  total_calls: number;
-  completed_calls: number;
-  other_calls: number;
-}
-
-export interface RecentRecord {
-  id: number;
-  invoice_number: string;
-  status: string;
-  duration: number;
-  created_at: string;
-  ended_at: string | null;
-  audio_url: string | null;
-}
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+import type { WeeklyStats } from "@/lib/props"
 
 export function Overview() {
   const [data, setData] = useState<WeeklyStats[]>([])
@@ -29,8 +12,7 @@ export function Overview() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/record/week`)
-        const weekData = await response.json()
+        const weekData = await fetchWeeklyStats()
         
         // Transform the data for the chart
         const formattedData = weekData.map((item: WeeklyStats) => ({

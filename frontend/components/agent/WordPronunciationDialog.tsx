@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { fetchWordPronunciations, addWordPronunciation, updateWordPronunciation, deleteWordPronunciation } from "@/lib/apis";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -16,30 +17,29 @@ export function WordPronunciationDialog({ open, onOpenChange, agentId }) {
   }, [open, agentId]);
 
   async function fetchList() {
-    const res = await fetch(`${API_BASE_URL}/api/v1/word-pronunciations?agent_id=${agentId || ''}`);
-    const data = await res.json();
-    setList(data);
+    try {
+      const data = await fetchWordPronunciations(agentId);
+      setList(data);
+    } catch (e) {
+      // Optionally handle error
+    }
   }
 
   async function handleSave() {
     if (!word || !pronunciation) return;
-    if (editingId) {
-      await fetch(`${API_BASE_URL}/api/v1/word-pronunciations/${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word, pronunciation, agent_id: agentId }),
-      });
-    } else {
-      await fetch(`${API_BASE_URL}/api/v1/word-pronunciations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word, pronunciation, agent_id: agentId }),
-      });
+    try {
+      if (editingId) {
+        await updateWordPronunciation(editingId, word, pronunciation, agentId);
+      } else {
+        await addWordPronunciation(word, pronunciation, agentId);
+      }
+      setWord("");
+      setPronunciation("");
+      setEditingId(null);
+      fetchList();
+    } catch (e) {
+      // Optionally handle error
     }
-    setWord("");
-    setPronunciation("");
-    setEditingId(null);
-    fetchList();
   }
 
   async function handleEdit(item) {
@@ -49,8 +49,12 @@ export function WordPronunciationDialog({ open, onOpenChange, agentId }) {
   }
 
   async function handleDelete(id) {
-    await fetch(`${API_BASE_URL}/api/v1/word-pronunciations/${id}`, { method: "DELETE" });
-    fetchList();
+    try {
+      await deleteWordPronunciation(id);
+      fetchList();
+    } catch (e) {
+      // Optionally handle error
+    }
   }
 
   function handleClose() {

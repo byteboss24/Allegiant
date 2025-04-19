@@ -34,7 +34,7 @@ export interface CallDialogsProps {
 } 
 
 export interface Invoice {
-  id: string,
+  id?: string,
   first_name: string
   last_name: string
   mobile_number: string
@@ -107,4 +107,43 @@ export interface Agent {
   voice: string
   status: string
   system_prompt: string
+}
+
+export interface TodayStatus {
+  total_calls: number
+  completed_calls: number
+  other_calls: number
+}
+
+export interface CallDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  agentId?: number
+}
+
+export interface MonthlyStats {
+  total_invoices: number
+  completed_invoices: number
+  completion_rate: number
+}
+
+export interface DashboardShellProps {
+  children: React.ReactNode
+}
+
+export interface WeeklyStats {
+  date: string;
+  total_calls: number;
+  completed_calls: number;
+  other_calls: number;
+}
+
+export interface RecentCall {
+  id: number
+  invoice_number: string
+  status: string
+  duration: number
+  created_at: string
+  first_name: string
+  last_name: string
 }

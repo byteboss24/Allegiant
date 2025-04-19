@@ -1,21 +1,10 @@
 "use client"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
 import {useState, useEffect} from "react"
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-
-interface RecentCall {
-  id: number
-  invoice_number: string
-  status: string
-  duration: number
-  created_at: string
-  first_name: string
-  last_name: string
-}
+import { fetchRecentCalls as fetchRecentCallsApi } from "@/lib/apis"
+import { RecentCall } from "@/lib/props"
 
 export function RecentCalls() {
   const [calls, setCalls] = useState<RecentCall[]>([])
@@ -24,8 +13,7 @@ export function RecentCalls() {
   useEffect(() => {
     const fetchRecentCalls = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/record/recent`)
-        const data = await response.json()
+        const data = await fetchRecentCallsApi()
         setCalls(data)
       } catch (error) {
         console.error('Failed to fetch recent calls:', error)

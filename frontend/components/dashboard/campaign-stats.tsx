@@ -3,14 +3,9 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { fetchMonthlyStats } from "@/lib/apis"
 
-interface MonthlyStats {
-  total_invoices: number
-  completed_invoices: number
-  completion_rate: number
-}
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+import type { MonthlyStats } from "@/lib/props"
 
 export function CampaignStats() {
   const [stats, setStats] = useState<MonthlyStats | null>(null)
@@ -19,8 +14,7 @@ export function CampaignStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/invoices/month`)
-        const data = await response.json()
+        const data = await fetchMonthlyStats()
         if (data) {
           setStats(data)
         }

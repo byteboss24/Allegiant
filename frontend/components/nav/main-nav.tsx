@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useAuth } from "./auth-context"
 
 const navItems = [
   {
@@ -28,6 +29,9 @@ const navItems = [
 
 export function MainNav() {
   const pathname = usePathname()
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) return null;
 
   return (
     <nav className="flex items-center space-x-8 ml-auto">

@@ -81,7 +81,7 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                 <TableCell>{invoice.invoice_amount}</TableCell>
                 <TableCell>{invoice.fsp_name}</TableCell>
                 <TableCell>{invoice.outstanding_amount}</TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                 <Badge
                     variant={
                     invoice.status === "completed"
@@ -94,7 +94,7 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                     {invoice.status?.toUpperCase()}
                 </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell>
                 <div className="flex justify-end gap-2">
                     <button
                     type="button"

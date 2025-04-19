@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { uploadCsv } from "@/lib/apis"
 
 export function CsvUpload() {
   const [file, setFile] = useState<File | null>(null)
@@ -113,16 +114,7 @@ export function CsvUpload() {
     formData.append('phone_strategy', selectedPhoneStrategy)
 
     try {
-      const response = await fetch('/api/v1/invoices/upload-csv', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || data.message || 'Upload failed')
-      }
+      const data = await uploadCsv(formData)
 
       toast({
         title: "Upload successful",
@@ -445,30 +437,6 @@ export function CsvUpload() {
     </Tabs>
   )
 }
-
-const dummyData = [
-  {
-    name: "John Smith",
-    invoice: "INV-2023-0421",
-    claim: "CLM-8765-A",
-    amount: "245.00",
-    date: "2023-03-15",
-  },
-  {
-    name: "Sarah Johnson",
-    invoice: "INV-2023-0422",
-    claim: "CLM-8766-B",
-    amount: "189.50",
-    date: "2023-03-16",
-  },
-  {
-    name: "Michael Brown",
-    invoice: "INV-2023-0423",
-    claim: "CLM-8767-C",
-    amount: "320.75",
-    date: "2023-03-16",
-  },
-]
 
 const uploadHistory = [
   {

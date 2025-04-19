@@ -7,16 +7,16 @@ import type { CustomersToolbarProps } from "@/lib/props";
 
 export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
   searchTerm,
-  onSearchChange,
   statusFilter,
-  onStatusFilterChange,
-  onDeleteClick,
   selectedCount,
   isDeleting,
-  onUpload,
   isUploading,
-  onExport,
   isExporting,
+  onSearchChange,
+  onStatusFilterChange,
+  onDeleteClick,
+  onUpload,
+  onExport,
 }) => (
   <>
     <div className="flex items-center justify-between mb-4">

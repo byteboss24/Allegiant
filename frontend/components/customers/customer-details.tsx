@@ -6,30 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
-
-interface CustomerDetails {
-  first_name: string
-  last_name: string
-  mobile_number: string
-  phone_number: string
-  claim_reference: string
-  invoice_number: string
-  invoice_date: string
-  invoice_amount: string
-  fsp_name: string
-  outstanding_amount: string
-  email: string
-  mailing_postcode: string
-  payment_link: string
-  created_at: string
-  status: string
-  campaign_name: string
-  script: string
-  phone_strategy: string
-}
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+import { useToast } from "@/hooks/use-toast"
+import { fetchCustomerDetails as fetchCustomerDetailsApi } from "@/lib/apis"
+import type { Invoice as CustomerDetails } from "@/lib/props"
 
 export function CustomerDetails() {
   const { invoice_number } = useParams()
@@ -40,13 +19,9 @@ export function CustomerDetails() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const fetchCustomerDetails = async () => {
+    const fetchDetails = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/invoices/${invoice_number}`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch customer details')
-        }
-        const data = await response.json()
+        const data = await fetchCustomerDetailsApi(invoice_number as string)
         setCustomer(data)
       } catch (error) {
         console.error('Error fetching customer details:', error)
@@ -61,7 +36,7 @@ export function CustomerDetails() {
     }
 
     if (invoice_number) {
-      fetchCustomerDetails()
+      fetchDetails()
     }
   }, [invoice_number, toast])
 

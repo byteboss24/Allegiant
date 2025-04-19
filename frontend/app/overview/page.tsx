@@ -7,14 +7,8 @@ import { Overview } from "@/components/dashboard/overview"
 import { RecentCalls } from "@/components/dashboard/recent-calls"
 import { CampaignStats } from "@/components/dashboard/campaign-stats"
 import { Spinner } from "@/components/ui/spinner"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-
-interface TodayStatus {
-  total_calls: number
-  completed_calls: number
-  other_calls: number
-}
+import { fetchTodayStatus as fetchTodayStatusApi } from "@/lib/apis"
+import type { TodayStatus } from "@/lib/props"
 
 export default function OverviewPage() {
   const [todayStatus, setTodayStatus] = useState<null | TodayStatus>(null)
@@ -24,8 +18,7 @@ export default function OverviewPage() {
     async function fetchTodayStatus() {
       try {
         setIsLoading(true)
-        const response = await fetch(`${API_BASE_URL}/api/v1/records/today`)
-        const data = await response.json()
+        const data = await fetchTodayStatusApi()
         setTodayStatus(data)
       } catch (error) {
         console.error("Error fetching today's status:", error)
@@ -72,7 +65,7 @@ export default function OverviewPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="text-2xl font-bold">{(((todayStatus?.completed_calls || 0) / (todayStatus?.total_calls || 0)) * 100)?.toFixed(2)}%</div>
+                    <div className="text-2xl font-bold">{(((todayStatus?.completed_calls || 0) / (todayStatus?.total_calls || 0.01)) * 100)?.toFixed(2)}%</div>
                     <p className="text-xs text-muted-foreground">+2.1% from last week</p>
                   </>
                 )}
