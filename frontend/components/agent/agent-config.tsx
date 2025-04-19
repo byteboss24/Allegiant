@@ -186,16 +186,6 @@ export function AgentConfig() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <select
-              value={selectedAgentId || ''}
-              onChange={(e) => handleAgentSelect(Number(e.target.value))}
-            >
-              {agents?.map(agent => (
-                <option key={agent.id} value={agent.id}>
-                  {agent.name}
-                </option>
-              ))}
-            </select>
             <CardTitle className="text-2xl flex items-center gap-2">
               {isEditingName ? (
                 <div className="flex items-center gap-2">
@@ -228,7 +218,24 @@ export function AgentConfig() {
             </CardTitle>
             <CardDescription>Configure your AI voice agent's system prompt</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <div className="min-w-[200px]">
+              <Select
+                value={selectedAgentId ? String(selectedAgentId) : ''}
+                onValueChange={(value) => handleAgentSelect(Number(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents?.map(agent => (
+                    <SelectItem key={agent.id} value={String(agent.id)}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Badge variant={isActive ? "default" : "secondary"}>
               {isActive ? "Active" : "Inactive"}
             </Badge>

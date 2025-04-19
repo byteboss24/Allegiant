@@ -1,10 +1,10 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { CustomersToolbar } from "./CustomersToolbar"
 import CustomersTable from "./CustomersTable"
 import { DeleteDialog } from "./DeleteDialog"
-import { useCustomers } from "./hooks/useCustomers"
+import { Button } from "@/components/ui/button"
+import { useCustomers } from "@/hooks/use-customers"
 
 export function CustomersList() {
   const {
@@ -35,25 +35,25 @@ export function CustomersList() {
     <div className="space-y-4">
       <DeleteDialog
         open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
         selectedCount={selectedInvoices.length}
-        onDelete={handleDeleteInvoices}
         isDeleting={isDeleting}
+        onOpenChange={setShowDeleteConfirm}
+        onDelete={handleDeleteInvoices}
         onCancel={() => setShowDeleteConfirm(false)}
       />
 
       <CustomersToolbar
         searchTerm={searchTerm}
-        onSearchChange={e => setSearchTerm(e.target.value)}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        onDeleteClick={() => setShowDeleteConfirm(true)}
         selectedCount={selectedInvoices.length}
         isDeleting={isDeleting}
-        onUpload={handleUpload}
         isUploading={isUploading}
-        onExport={handleExport}
         isExporting={isExporting}
+        onSearchChange={e => setSearchTerm(e.target.value)}
+        onStatusFilterChange={setStatusFilter}
+        onDeleteClick={() => setShowDeleteConfirm(true)}
+        onUpload={handleUpload}
+        onExport={handleExport}
       />
 
       <CustomersTable
