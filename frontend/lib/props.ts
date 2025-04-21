@@ -1,40 +1,56 @@
-import type React from "react";
+import type React from "react"
+
+export interface CallRecordingItem {
+  id: string
+  audio_url: string
+  [key: string]: any
+}
+
+export interface RecentCall {
+  id: number
+  invoice_number: string
+  status: string
+  duration: number
+  created_at: string
+  first_name: string
+  last_name: string
+}
 
 export interface CallListProps {
-  callRecordings: any[];
-  loading: boolean;
-  error: string | null;
-  selectedIds: string[];
-  selectedCall: any;
-  currentPage: number;
-  totalItems: number;
-  itemsPerPage: number;
-  onMultiDelete: () => void;
-  onSelectCall: (call: any) => void;
-  onSelectRow: (id: string) => void;
-  onSelectAll: () => void;
-  onDelete: (call: any) => void;
-  setCurrentPage: (page: number) => void;
+  callRecordings: CallRecordingItem[]
+  loading: boolean
+  error: string | null
+  selectedIds: string[]
+  selectedCall: CallRecordingItem | null
+  currentPage: number
+  totalItems: number
+  itemsPerPage: number
+  onMultiDelete: () => void
+  onSelectCall: (call: CallRecordingItem) => void
+  onSelectRow: (id: string) => void
+  onSelectAll: () => void
+  onDelete: (call: CallRecordingItem) => void
+  setCurrentPage: (page: number) => void
 }
 
 export interface CallPlayerProps {
-  selectedCall: any;
-  audioLoading: boolean;
-  audioUrl: string | null;
-  audioRef: React.RefObject<HTMLAudioElement>;
+  selectedCall: CallRecordingItem | null
+  audioLoading: boolean
+  audioUrl: string | null
+  audioRef: React.RefObject<HTMLAudioElement>
 }
 
 export interface CallDialogsProps {
-  showDeleteDialog: boolean;
-  showMultiDeleteDialog: boolean;
-  setShowDeleteDialog: (open: boolean) => void;
-  setShowMultiDeleteDialog: (open: boolean) => void;
-  confirmDelete: () => void;
-  confirmMultiDelete: () => void;
-} 
+  showDeleteDialog: boolean
+  showMultiDeleteDialog: boolean
+  setShowDeleteDialog: (open: boolean) => void
+  setShowMultiDeleteDialog: (open: boolean) => void
+  confirmDelete: () => void
+  confirmMultiDelete: () => void
+}
 
 export interface Invoice {
-  id?: string,
+  id?: string
   first_name: string
   last_name: string
   mobile_number: string
@@ -47,12 +63,12 @@ export interface Invoice {
   outstanding_amount: string
   email: string
   mailing_postcode: string
-  payment_link: string
+  payment_link?: string
   created_at: string
   status: string
-  campaign_name: string
-  script: string
-  phone_strategy: string
+  campaign_name?: string
+  script?: string
+  phone_strategy?: string
 }
 
 export interface ApiError {
@@ -61,44 +77,44 @@ export interface ApiError {
 }
 
 export interface CustomersTableProps {
-  invoices: Invoice[];
-  selectedInvoices: string[];
-  isLoading: boolean;
-  onSelectInvoice: (invoiceNumber: string) => void;
-  onSelectAll: () => void;
-  onView: (invoiceNumber: string) => void;
-  onMarkCompleted: (invoiceNumber: string) => void;
-  onDelete: (invoiceNumber: string) => void;
+  invoices: Invoice[]
+  selectedInvoices: string[]
+  isLoading: boolean
+  onSelectInvoice: (invoiceId: string) => void
+  onSelectAll: () => void
+  onView: (invoiceId: string) => void
+  onMarkCompleted: (invoiceId: string) => void
+  onDelete: (invoiceId: string) => void
 }
 
 export interface CustomersToolbarProps {
-  searchTerm: string;
-  statusFilter: string;
-  selectedCount: number;
-  isDeleting: boolean;
-  isUploading: boolean;
-  isExporting: boolean;
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onStatusFilterChange: (value: string) => void;
-  onDeleteClick: () => void;
-  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onExport: () => void;
+  searchTerm: string
+  statusFilter: string
+  selectedCount: number
+  isDeleting: boolean
+  isUploading: boolean
+  isExporting: boolean
+  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onStatusFilterChange: (value: string) => void
+  onDeleteClick: () => void
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onExport: () => void
 }
 
 export interface DeleteDialogProps {
-  open: boolean;
-  selectedCount: number;
-  isDeleting: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDelete: () => void;
-  onCancel?: () => void;
+  open: boolean
+  selectedCount: number
+  isDeleting: boolean
+  onOpenChange: (open: boolean) => void
+  onDelete: () => void
+  onCancel?: () => void
 }
 
 export interface TableRowActionsProps {
-  disableMarkCompleted: boolean;
-  onView: () => void;
-  onMarkCompleted: () => void;
-  onDelete: () => void;
+  disableMarkCompleted: boolean
+  onView: () => void
+  onMarkCompleted: () => void
+  onDelete: () => void
 }
 
 export interface Agent {
@@ -132,18 +148,54 @@ export interface DashboardShellProps {
 }
 
 export interface WeeklyStats {
-  date: string;
-  total_calls: number;
-  completed_calls: number;
-  other_calls: number;
+  date: string
+  total_calls: number
+  completed_calls: number
+  other_calls: number
 }
 
-export interface RecentCall {
-  id: number
-  invoice_number: string
-  status: string
-  duration: number
-  created_at: string
-  first_name: string
-  last_name: string
+export interface UseVoiceCallProps {
+  onTranscription?: (text: string) => void
+  onError?: (message: string) => void
+}
+
+export interface AgentConfigHeaderProps {
+  agents: Agent[]
+  selectedAgentId: number | null
+  selectedAgent: Agent | null
+  isLoading: boolean
+  handleAgentSelect: (agentId: number) => void
+  updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>
+  handleStatusChange: (newStatus: boolean) => void
+}
+
+export interface AgentSystemPromptProps {
+  selectedAgent: Agent | null
+  isLoading: boolean
+  updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>
+  onOpenWordDialog: () => void
+}
+
+export interface InvoicesTableProps {
+  invoices: Invoice[]
+  selectedInvoiceIds: string[]
+  toggleInvoiceSelection: (invoiceId: string) => void
+  toggleAllInvoices: () => void
+  handleDeleteRequest: (invoice: Invoice) => void
+}
+
+export interface InvoicePaginationProps {
+  currentPage: number
+  totalPages: number
+  setCurrentPage: (page: number) => void
+}
+
+export interface InvoiceDeletionDialogsProps {
+  showDeleteDialog: boolean
+  setShowDeleteDialog: (open: boolean) => void
+  confirmDelete: () => void
+  showBulkDeleteDialog: boolean
+  setShowBulkDeleteDialog: (open: boolean) => void
+  confirmBulkDelete: () => void
+  selectedInvoiceIdsCount: number
 }
