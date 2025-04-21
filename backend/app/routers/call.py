@@ -108,6 +108,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     """WebSocket endpoint for streaming media between Twilio and OpenAI."""
     openai_ws = None
     callSid = None
+    print("Connected")
     try:
         await manager.connect(websocket)
         data = await handle_twilio_connection(websocket)

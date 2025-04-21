@@ -2,12 +2,14 @@ from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from app.core.config import settings
 from app.core.logger import logger
-from app.core.prompt_templates.prompt import main_prompt
+from app.services.word_pronunciation import word_pronunciation_service
 import websockets
 import asyncio
 from typing import Optional, Dict
 from app.utils.twilio import TWILIO_CLIENT
 import time
+import json
+import base64
 
 LOG_EVENT_TYPES = frozenset([
     'error', 'response.content.done', 'rate_limits.updated',
@@ -90,7 +92,9 @@ async def process_twilio_messages(websocket: WebSocket, openai_ws: websockets.We
 
 async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invoice: Dict) -> None:
     """Initialize OpenAI session with invoice data."""
-    system_message = main_prompt.format(**invoice, percentage="10%")
+    word_pronunciations = await word_pronunciation_service.get_word_pronunciations(invoice["agent_id"])
+    pronunciations = "\n".join(f"{wp.word}: {wp.pronunciation}" for wp in word_pronunciations)
+    system_message = settings.system_prompt.format(**invoice, percentage="10%", pronunciations=pronunciations)
     session_config = {
         "type": "session.update",
         "session": {
@@ -201,8 +205,8 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                         call_state.invoices[callSid]['script'] + "Human: " + response.get('transcript') + "\n"
                     )
                     call_state.is_speaking[callSid] = False
-                    call_state.silence_detected[callSid] = False  # Reset silence detection on human speech
-                    call_state.last_agent_response_time[callSid] = time.time()  # Reset timer on human input
+                    call_state.silence_detected[callSid] = False
+                    call_state.last_agent_response_time[callSid] = time.time()
                 case 'input_audio_buffer.speech_started':
                     logger.info(f"Human started speaking (call {callSid})")
                     call_state.is_speaking[callSid] = True
@@ -261,9 +265,6 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                                 }))
                                 
                 case 'response.done':
-                    call_state.is_speaking[callSid] = False
-                    call_state.last_agent_response_time[callSid] = time.time()  # Update when agent finishes
-                    call_state.silence_detected[callSid] = False  # Reset silence detection
                     try:
                         transcript = response['response']['output']
                         match event.get('type'):
@@ -297,6 +298,20 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                                                 "voice": settings.voice_type
                                             }
                                         }))
+                                    case 'stop_call':
+                                        await openai_ws.send(json.dumps({
+                                            "type": "response.create",
+                                            "response": {
+                                                "modalities": ["text", "audio"],
+                                                "temperature": 0.8,
+                                                "instructions": "Stop the call.",
+                                                "voice": settings.voice_type
+                                            }
+                                        }))
+                                        await openai_ws.close()
+                                        TWILIO_CLIENT.calls(callSid).update(status="completed")
+                                        call_state.cleanup_call(callSid)
+                                        break
                     except Exception as e:
                         logger.error(f"Error getting transcript for call {callSid}: {e}")
                 case 'response.audio.delta' if response.get('delta'):
@@ -306,13 +321,17 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                         "streamSid": data['streamSid'],
                         "media": {"payload": audio_payload}
                     })
+                case 'response.audio.done':
+                    call_state.is_speaking[callSid] = False
+                    call_state.last_agent_response_time[callSid] = time.time()
+                    call_state.silence_detected[callSid] = False
     except websockets.exceptions.ConnectionClosed as e:
         logger.warning(f"OpenAI WebSocket closed for call {callSid}: {e}")
-        call_state.cleanup_call(callSid)  # Clean up on disconnect
+        call_state.cleanup_call(callSid)
     except asyncio.CancelledError:
         logger.info(f"OpenAI message processing cancelled for call {callSid}")
-        call_state.cleanup_call(callSid)  # Clean up on cancellation
+        call_state.cleanup_call(callSid)
     except Exception as e:
         logger.error(f"Error in process_openai_messages for call {callSid}: {e}", exc_info=True)
-        call_state.cleanup_call(callSid)  # Clean up on error
+        call_state.cleanup_call(callSid)
         raise

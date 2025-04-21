@@ -342,7 +342,11 @@ class MySQLService:
         
         # Get paginated records
         query = f"""
-            SELECT * FROM calls 
+            SELECT
+                c.*,
+                CONCAT(i.first_name, ' ', i.last_name) AS name
+            FROM calls c
+            JOIN invoices i ON c.invoice_number = i.invoice_number
             ORDER BY created_at DESC 
             LIMIT {per_page} OFFSET {offset}
         """
