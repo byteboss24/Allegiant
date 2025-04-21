@@ -27,7 +27,7 @@ const uploadHistory = [
     campaign: "February Follow-ups",
     records: 350,
     status: "Completed",
-  },
+  },3
   {
     id: "4",
     date: "2023-04-01",

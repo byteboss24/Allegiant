@@ -7,12 +7,14 @@ import { Overview } from "@/components/dashboard/overview"
 import { RecentCalls } from "@/components/dashboard/recent-calls"
 import { CampaignStats } from "@/components/dashboard/campaign-stats"
 import { Spinner } from "@/components/ui/spinner"
-import { fetchTodayStatus as fetchTodayStatusApi } from "@/lib/apis"
-import type { TodayStatus } from "@/lib/props"
+import { fetchTodayStatus as fetchTodayStatusApi, fetchWeeklyStats } from "@/lib/apis"
+import type { TodayStatus, WeeklyStats } from "@/lib/props"
 
 export default function OverviewPage() {
   const [todayStatus, setTodayStatus] = useState<null | TodayStatus>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyStats[] | null>(null)
+  const [isWeeklyLoading, setIsWeeklyLoading] = useState(true)
 
   useEffect(() => {
     async function fetchTodayStatus() {
@@ -28,6 +30,31 @@ export default function OverviewPage() {
     }
     fetchTodayStatus()
   }, [])
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        setIsWeeklyLoading(true)
+        const data = await fetchWeeklyStats()
+        setWeeklyStats(data)
+      } catch (error) {
+        console.error("Error fetching weekly stats:", error)
+      } finally {
+        setIsWeeklyLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  // Calculate last week's average completed call count
+  const lastWeekAvgCompleted = weeklyStats && weeklyStats.length > 0
+    ? weeklyStats.reduce((sum, stat) => sum + (stat.completed_calls || 0), 0) / weeklyStats.length
+    : 0
+
+  // Calculate today's completed calls over last week's average (as percentage)
+  const completedOverAvg = lastWeekAvgCompleted > 0 && todayStatus
+    ? ((todayStatus.completed_calls / lastWeekAvgCompleted) * 100).toFixed(2)
+    : "0.00"
 
   return (
     <>
@@ -59,14 +86,14 @@ export default function OverviewPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-4 w-4 text-muted-foreground"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {(isLoading || isWeeklyLoading) ? (
                   <div className="flex justify-center py-2">
                     <Spinner size="md" />
                   </div>
                 ) : (
                   <>
                     <div className="text-2xl font-bold">{(((todayStatus?.completed_calls || 0) / (todayStatus?.total_calls || 0.01)) * 100)?.toFixed(2)}%</div>
-                    <p className="text-xs text-muted-foreground">+2.1% from last week</p>
+                    <p className="text-xs text-muted-foreground">{completedOverAvg}% of last week's avg completed calls</p>
                   </>
                 )}
               </CardContent>

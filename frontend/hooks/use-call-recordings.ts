@@ -23,8 +23,8 @@ export function useCallRecordings(initialItemsPerPage = 10) {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [selectedRecordingForDelete, setSelectedRecordingForDelete] = useState<CallRecordingItem | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedIdsForMultiDelete, setSelectedIdsForMultiDelete] = useState<string[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMultiDeleteDialog, setShowMultiDeleteDialog] = useState(false);
 
   const { toast } = useToast();
@@ -61,7 +61,7 @@ export function useCallRecordings(initialItemsPerPage = 10) {
       if (audioRef.current) audioRef.current.play();
       return;
     }
-    
+
     setSelectedCall(call);
     setAudioLoading(true);
     if (audioUrl) {

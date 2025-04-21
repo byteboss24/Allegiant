@@ -1,5 +1,6 @@
 // API functions for all resources in the frontend
 import type { ApiError, Invoice, Agent } from "@/lib/props";
+import { CloudCog } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const username = process.env.NEXT_PUBLIC_USERNAME;
@@ -108,10 +109,22 @@ export async function deleteInvoices(invoiceNumbers: string[]) {
     body: JSON.stringify({ invoice_numbers: invoiceNumbers }),
   });
   if (!response.ok) {
-    const errorData: ApiError = await response.json().catch(() => ({}));
+    let errorData: ApiError = {};
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      // Ignore JSON parse error, use generic message
+    }
     throw new Error(errorData.detail || 'Failed to delete invoices');
   }
-  return response.json();
+  if (response.status !== 204) {
+    try {
+      return await response.json();
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 export async function exportInvoicesCsv() {
@@ -214,16 +227,6 @@ export async function deleteInvoice(id: string) {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Failed to delete invoice');
-  return response;
-}
-
-export async function bulkDeleteInvoices(ids: string[]) {
-  const response = await fetch(`/api/v1/invoices/bulk-delete`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids }),
-  });
-  if (!response.ok) throw new Error('Failed to delete invoices');
   return response;
 }
 
