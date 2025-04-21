@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Pencil } from "lucide-react"
-import type { Agent } from "@/lib/props"
-
-interface AgentSystemPromptProps {
-  selectedAgent: Agent | null;
-  isLoading: boolean;
-  updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>;
-  onOpenWordDialog: () => void;
-}
+import type { AgentSystemPromptProps } from "@/lib/props"
 
 export function AgentSystemPrompt({
   selectedAgent,
@@ -37,14 +30,13 @@ export function AgentSystemPrompt({
           if (updated) {
               setIsEditingSystemPrompt(false);
           } else {
-              // Handle error - revert local state?
               setSystemPrompt(selectedAgent?.system_prompt || "");
           }
       } else {
-          setIsEditingSystemPrompt(false); // Exit edit mode if no changes
+          setIsEditingSystemPrompt(false);
       }
     } else {
-      setIsEditingSystemPrompt(true) // Enter edit mode
+      setIsEditingSystemPrompt(true)
     }
   }
 
@@ -60,7 +52,7 @@ export function AgentSystemPrompt({
             size="sm" 
             className="flex items-center gap-1"
             onClick={handleSaveSystemPrompt}
-            disabled={isLoading || !selectedAgent} // Disable if loading or no agent selected
+            disabled={isLoading || !selectedAgent}
           >
             <Pencil className="h-4 w-4" />
             {isEditingSystemPrompt ? "Done" : "Edit"}
@@ -69,7 +61,7 @@ export function AgentSystemPrompt({
             variant="outline" 
             size="sm" 
             onClick={onOpenWordDialog}
-            disabled={isLoading || !selectedAgent} // Disable if loading or no agent selected
+            disabled={isLoading || !selectedAgent}
            >
             Words & Pronunciations
           </Button>
@@ -80,7 +72,7 @@ export function AgentSystemPrompt({
         className="min-h-[500px] font-mono text-sm leading-relaxed"
         value={systemPrompt}
         onChange={(e) => setSystemPrompt(e.target.value)}
-        readOnly={!isEditingSystemPrompt || isLoading} // Readonly if not editing or loading
+        readOnly={!isEditingSystemPrompt || isLoading}
         placeholder={!selectedAgent ? "Select an agent to view or edit the system prompt." : "Enter system prompt..."}
       />
       <p className="text-sm text-muted-foreground">

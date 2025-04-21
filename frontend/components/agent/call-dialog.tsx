@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge"
 import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX } from "lucide-react"
 import type { CallDialogProps } from "@/lib/props"
-import { useVoiceCall } from "@/hooks/useVoiceCall"
+import { useVoiceCall } from "@/hooks/use-voice-call"
 import { useToast } from "@/hooks/use-toast"
 
 export function CallDialog({

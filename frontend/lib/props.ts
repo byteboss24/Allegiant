@@ -154,11 +154,6 @@ export interface WeeklyStats {
   other_calls: number
 }
 
-export interface UseVoiceCallProps {
-  onTranscription?: (text: string) => void
-  onError?: (message: string) => void
-}
-
 export interface AgentConfigHeaderProps {
   agents: Agent[]
   selectedAgentId: number | null
@@ -174,28 +169,4 @@ export interface AgentSystemPromptProps {
   isLoading: boolean
   updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>
   onOpenWordDialog: () => void
-}
-
-export interface InvoicesTableProps {
-  invoices: Invoice[]
-  selectedInvoiceIds: string[]
-  toggleInvoiceSelection: (invoiceId: string) => void
-  toggleAllInvoices: () => void
-  handleDeleteRequest: (invoice: Invoice) => void
-}
-
-export interface InvoicePaginationProps {
-  currentPage: number
-  totalPages: number
-  setCurrentPage: (page: number) => void
-}
-
-export interface InvoiceDeletionDialogsProps {
-  showDeleteDialog: boolean
-  setShowDeleteDialog: (open: boolean) => void
-  confirmDelete: () => void
-  showBulkDeleteDialog: boolean
-  setShowBulkDeleteDialog: (open: boolean) => void
-  confirmBulkDelete: () => void
-  selectedInvoiceIdsCount: number
 }

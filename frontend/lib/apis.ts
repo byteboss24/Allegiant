@@ -6,9 +6,7 @@ const username = process.env.NEXT_PUBLIC_USERNAME;
 const password = process.env.NEXT_PUBLIC_PASSWORD;
 const credentials = username && password ? btoa(`${username}:${password}`) : undefined;
 
-// =====================
 // Calls APIs
-// =====================
 export async function fetchRecords(page: number, perPage: number) {
   const response = await fetch(`${API_BASE_URL}/api/v1/records?page=${page}&per_page=${perPage}`);
   if (!response.ok) throw new Error('Failed to fetch records');
@@ -62,9 +60,7 @@ export async function fetchTodayStatus() {
   return response.json();
 }
 
-// =====================
 // Invoices APIs
-// =====================
 export async function fetchInvoices(): Promise<Invoice[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/invoices`);
   if (!response.ok) {
@@ -133,9 +129,7 @@ export async function fetchMonthlyStats() {
   return response.json();
 }
 
-// =====================
 // Agent APIs
-// =====================
 export async function fetchAgents(): Promise<Agent[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/agents`);
   if (!response.ok) throw new Error('Failed to fetch agents');
@@ -167,9 +161,7 @@ export async function updateAgent(agent: Agent) {
   return response.json();
 }
 
-// =====================
 // Word Pronunciation APIs
-// =====================
 export async function fetchWordPronunciations(agentId?: number) {
   const res = await fetch(`${API_BASE_URL}/api/v1/word-pronunciations?agent_id=${agentId || ''}`);
   if (!res.ok) throw new Error('Failed to fetch word pronunciations');
@@ -202,9 +194,7 @@ export async function deleteWordPronunciation(id: number) {
   return res.json();
 }
 
-// =====================
 // Auth APIs
-// =====================
 export async function login(email: string, password: string) {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
     method: 'POST',
@@ -218,9 +208,7 @@ export async function login(email: string, password: string) {
   return data;
 }
 
-// =====================
 // Miscellaneous APIs (for local endpoints)
-// =====================
 export async function deleteInvoice(id: string) {
   const response = await fetch(`/api/v1/invoice/${id}`, {
     method: 'DELETE',

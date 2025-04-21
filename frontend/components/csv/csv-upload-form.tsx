@@ -13,10 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import { uploadCsv } from "@/lib/apis"
 
-// Define prop types if needed, e.g., if state is lifted up
-// interface CsvUploadFormProps {}
-
-export function CsvUploadForm(/* props: CsvUploadFormProps */) {
+export function CsvUploadForm() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<any[] | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -54,7 +51,7 @@ export function CsvUploadForm(/* props: CsvUploadFormProps */) {
       // Preview CSV data
       try {
         const text = await selectedFile.text()
-        const rows = text.split('\n').filter(row => row.trim()) // Remove empty rows
+        const rows = text.split('\n').filter(row => row.trim())
         if (rows.length < 2) {
           throw new Error("CSV file must contain at least a header row and one data row")
         }

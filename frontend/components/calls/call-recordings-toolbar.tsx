@@ -5,8 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // TODO: Implement search and filter logic
 interface CallRecordingsToolbarProps {
-  onSearchChange?: (query: string) => void; // Optional: Callback for search input
-  onFilterChange?: (filterValue: string) => void; // Optional: Callback for filter change
+  onSearchChange?: (query: string) => void;
+  onFilterChange?: (filterValue: string) => void;
 }
 
 export function CallRecordingsToolbar({ onSearchChange, onFilterChange }: CallRecordingsToolbarProps) {
@@ -20,7 +20,7 @@ export function CallRecordingsToolbar({ onSearchChange, onFilterChange }: CallRe
         <Input 
           placeholder="Search recordings..." 
           className="w-[250px]" 
-          onChange={(e) => onSearchChange?.(e.target.value)} // Pass value to handler if provided
+          onChange={(e) => onSearchChange?.(e.target.value)}
          />
         <Select defaultValue="all" onValueChange={(value) => onFilterChange?.(value)}>
           <SelectTrigger className="w-[180px] h-9">

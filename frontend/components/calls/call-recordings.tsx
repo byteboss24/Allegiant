@@ -3,7 +3,7 @@
 import { CallList } from "./call-list"
 import { CallPlayer } from "./call-player"
 import { CallDialogs } from "./call-dialogs"
-import { useCallRecordings } from "@/hooks/useCallRecordings"
+import { useCallRecordings } from "@/hooks/use-call-recordings"
 import { CallRecordingsToolbar } from "./call-recordings-toolbar"
 
 export function CallRecordings() {
@@ -36,12 +36,10 @@ export function CallRecordings() {
   // TODO: Implement search and filter handlers
   const handleSearch = (query: string) => {
       console.log("Search query:", query); 
-      // Add logic to filter recordings or refetch with query
   }
 
   const handleFilter = (filterValue: string) => {
       console.log("Filter value:", filterValue); 
-      // Add logic to filter recordings or refetch with filter
   }
 
   return (
@@ -64,8 +62,8 @@ export function CallRecordings() {
             onSelectCall={handleSelectCall}
             onSelectRow={handleSelectRow}
             onSelectAll={handleSelectAll}
-            onDelete={handleDeleteRequest} // Use the request handler from hook
-            onMultiDelete={handleMultiDeleteRequest} // Use the request handler from hook
+            onDelete={handleDeleteRequest}
+            onMultiDelete={handleMultiDeleteRequest}
             setCurrentPage={setCurrentPage}
           />
         </div>

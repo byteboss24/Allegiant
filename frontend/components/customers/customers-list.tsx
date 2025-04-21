@@ -8,71 +8,55 @@ import { useCustomers } from "@/hooks/use-customers"
 
 export function CustomersList() {
   const {
-    searchTerm,
-    statusFilter,
-    invoices,
-    totalInvoices,
-    isLoading,
-    isUploading,
-    isExporting,
-    selectedInvoices,
-    isDeleting,
-    showDeleteConfirm,
-    setSearchTerm,
-    setStatusFilter,
-    setShowDeleteConfirm,
-    handleUpload,
-    handleExport,
-    handleStatusUpdate,
-    handleSelectInvoice,
-    handleSelectAll,
-    handleDeleteInvoices,
-    handleSingleInvoiceDelete,
-    navigateToInvoice,
+    filters,
+    selection,
+    dialogs,
+    actions,
+    data,
   } = useCustomers()
 
   return (
     <div className="space-y-4">
       <DeleteDialog
-        open={showDeleteConfirm}
-        selectedCount={selectedInvoices.length}
-        isDeleting={isDeleting}
-        onOpenChange={setShowDeleteConfirm}
-        onDelete={handleDeleteInvoices}
-        onCancel={() => setShowDeleteConfirm(false)}
+        open={dialogs.showDeleteConfirm}
+        selectedCount={selection.selectedInvoices.length}
+        isDeleting={data.isDeleting}
+        onOpenChange={dialogs.setShowDeleteConfirm}
+        onDelete={actions.handleDeleteInvoices}
+        onCancel={() => dialogs.setShowDeleteConfirm(false)}
       />
 
       <CustomersToolbar
-        searchTerm={searchTerm}
-        statusFilter={statusFilter}
-        selectedCount={selectedInvoices.length}
-        isDeleting={isDeleting}
-        isUploading={isUploading}
-        isExporting={isExporting}
-        onSearchChange={e => setSearchTerm(e.target.value)}
-        onStatusFilterChange={setStatusFilter}
-        onDeleteClick={() => setShowDeleteConfirm(true)}
-        onUpload={handleUpload}
-        onExport={handleExport}
+        searchTerm={filters.searchTerm}
+        statusFilter={filters.statusFilter}
+        selectedCount={selection.selectedInvoices.length}
+        isDeleting={data.isDeleting}
+        isUploading={data.isUploading}
+        isExporting={data.isExporting}
+        onSearchChange={e => filters.setSearchTerm(e.target.value)}
+        onStatusFilterChange={filters.setStatusFilter}
+        onDeleteClick={() => dialogs.setShowDeleteConfirm(true)}
+        onUpload={actions.handleUpload}
+        onExport={actions.handleExport}
       />
 
       <CustomersTable
-        invoices={invoices}
-        selectedInvoices={selectedInvoices}
-        isLoading={isLoading}
-        onMarkCompleted={invoiceNumber => handleStatusUpdate(invoiceNumber, 'completed')}
-        onSelectInvoice={handleSelectInvoice}
-        onSelectAll={handleSelectAll}
-        onView={navigateToInvoice}
-        onDelete={handleSingleInvoiceDelete}
+        invoices={data.invoices}
+        selectedInvoices={selection.selectedInvoices}
+        isLoading={data.isLoading}
+        onMarkCompleted={invoiceNumber => actions.handleStatusUpdate(invoiceNumber, 'completed')}
+        onSelectInvoice={selection.handleSelectInvoice}
+        onSelectAll={selection.handleSelectAll}
+        onView={actions.navigateToInvoice}
+        onDelete={actions.handleSingleInvoiceDelete}
       />
 
       <div className="flex items-center justify-between mt-4">
         <div className="text-sm text-muted-foreground">
-          Showing <strong>{invoices?.length}</strong> of <strong>{totalInvoices}</strong> customers
-          {selectedInvoices.length > 0 && (
+          Showing <strong>{data.invoices?.length}</strong> of <strong>{data.totalInvoices}</strong> customers
+          {selection.selectedInvoices.length > 0 && (
             <span className="ml-2">
-              (<strong>{selectedInvoices.length}</strong> selected)
+              (<strong>{selection.selectedInvoices.length}</strong> selected)
             </span>
           )}
         </div>

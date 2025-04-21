@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { CallDialog } from "./call-dialog"
 import { WordPronunciationDialog } from "./wordpronunciation-dialog"
-import { useAgentConfig } from "@/hooks/useAgentConfig"
+import { useAgentConfig } from "@/hooks/use-agent-config"
 import { AgentConfigHeader } from "./agent-config-header"
 import { AgentSystemPrompt } from "./agent-system-prompt"
 import { Skeleton } from "@/components/ui/skeleton"

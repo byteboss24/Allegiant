@@ -7,17 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CardDescription, CardTitle } from "@/components/ui/card"
 import { Pencil } from "lucide-react"
-import type { Agent } from "@/lib/props"
-
-interface AgentConfigHeaderProps {
-  agents: Agent[];
-  selectedAgentId: number | null;
-  selectedAgent: Agent | null;
-  isLoading: boolean;
-  handleAgentSelect: (agentId: number) => void;
-  updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>;
-  handleStatusChange: (newStatus: boolean) => void;
-}
+import type { AgentConfigHeaderProps } from "@/lib/props"
 
 export function AgentConfigHeader({
   agents,

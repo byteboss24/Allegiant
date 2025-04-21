@@ -88,6 +88,27 @@ export const useCustomers = () => {
       event.target.value = ''
     }
   }, [toast, fetchInvoicesCallback])
+  
+    // Memoize filtered invoices
+    const filteredInvoices = useMemo(() => {
+      const searchTermLower = searchTerm.toLowerCase()
+      return invoices.filter((invoice) => {
+        const matchesSearch =
+          `${invoice.first_name} ${invoice.last_name}`.toLowerCase().includes(searchTermLower) ||
+          invoice.mobile_number.toLowerCase().includes(searchTermLower) ||
+          invoice.phone_number.toLowerCase().includes(searchTermLower) ||
+          invoice.invoice_number.toLowerCase().includes(searchTermLower) ||
+          invoice.fsp_name.toLowerCase().includes(searchTermLower)
+  
+        if (statusFilter === "all") return matchesSearch
+        return matchesSearch && invoice.status === statusFilter
+      })
+    }, [invoices, searchTerm, statusFilter])
+  
+    // Memoize navigation callback
+    const navigateToInvoice = useCallback((invoiceNumber: string) => {
+      router.push(`/invoices/${invoiceNumber}`)
+    }, [router])
 
   // Handle export
   const handleExport = useCallback(async () => {
@@ -162,10 +183,11 @@ export const useCustomers = () => {
 
   // Handle select all invoices
   const handleSelectAll = useCallback(() => {
-    setSelectedInvoices(prev => 
-      prev.length === filteredInvoices.length ? [] : filteredInvoices.map(invoice => invoice.invoice_number)
-    )
-  }, [])
+    setSelectedInvoices(prev => {
+      const allSelected = prev.length === filteredInvoices.length;
+      return allSelected ? [] : filteredInvoices.map(invoice => invoice.invoice_number);
+    });
+  }, [filteredInvoices]);
 
   // Handle delete invoices
   const handleDeleteInvoices = useCallback(async () => {
@@ -210,49 +232,37 @@ export const useCustomers = () => {
     setShowDeleteConfirm(true)
   }, [])
 
-  // Memoize filtered invoices
-  const filteredInvoices = useMemo(() => {
-    const searchTermLower = searchTerm.toLowerCase()
-    return invoices.filter((invoice) => {
-      const matchesSearch =
-        `${invoice.first_name} ${invoice.last_name}`.toLowerCase().includes(searchTermLower) ||
-        invoice.mobile_number.toLowerCase().includes(searchTermLower) ||
-        invoice.phone_number.toLowerCase().includes(searchTermLower) ||
-        invoice.invoice_number.toLowerCase().includes(searchTermLower) ||
-        invoice.fsp_name.toLowerCase().includes(searchTermLower)
-
-      if (statusFilter === "all") return matchesSearch
-      return matchesSearch && invoice.status === statusFilter
-    })
-  }, [invoices, searchTerm, statusFilter])
-
-  // Memoize navigation callback
-  const navigateToInvoice = useCallback((invoiceNumber: string) => {
-    router.push(`/invoices/${invoiceNumber}`)
-  }, [router])
-
   return {
-    searchTerm,
-    statusFilter,
-    invoices: filteredInvoices,
-    totalInvoices: invoices.length,
-    isLoading,
-    isUploading,
-    isExporting,
-    selectedInvoices,
-    isDeleting,
-    showDeleteConfirm,
-    invoiceToDelete,
-    setSearchTerm,
-    setStatusFilter,
-    setShowDeleteConfirm,
-    handleUpload,
-    handleExport,
-    handleStatusUpdate,
-    handleSelectInvoice,
-    handleSelectAll,
-    handleDeleteInvoices,
-    handleSingleInvoiceDelete,
-    navigateToInvoice,
+    filters: {
+      searchTerm,
+      statusFilter,
+      setSearchTerm,
+      setStatusFilter,
+    },
+    selection: {
+      selectedInvoices,
+      handleSelectInvoice,
+      handleSelectAll,
+    },
+    dialogs: {
+      showDeleteConfirm,
+      setShowDeleteConfirm,
+    },
+    actions: {
+      handleUpload,
+      handleExport,
+      handleStatusUpdate,
+      handleDeleteInvoices,
+      handleSingleInvoiceDelete,
+      navigateToInvoice,
+    },
+    data: {
+      invoices: filteredInvoices,
+      totalInvoices: invoices.length,
+      isLoading,
+      isUploading,
+      isExporting,
+      isDeleting,
+    },
   }
 } 

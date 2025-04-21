@@ -59,6 +59,7 @@ export const CallList: React.FC<CallListProps> = ({
                     aria-label="Select all calls"
                   />
                 </TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Invoice Number</TableHead>
                 <TableHead>Date & Time</TableHead>
                 <TableHead>Duration</TableHead>
@@ -80,6 +81,7 @@ export const CallList: React.FC<CallListProps> = ({
                       aria-label={`Select call ${call.invoice_number}`}
                     />
                   </TableCell>
+                  <TableCell className="font-medium">{call.name}</TableCell>
                   <TableCell className="font-medium">{call.invoice_number}</TableCell>
                   <TableCell>{call.created_at}</TableCell>
                   <TableCell>{call.duration}</TableCell>
