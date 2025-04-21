@@ -65,8 +65,6 @@ class CSVUploadRequest(BaseModel):
     script: str
     phone_strategy: str
 
-# ...existing code...
-
 class MonthlyInvoiceStats(BaseModel):
     total_invoices: int
     completed_invoices: int

@@ -34,23 +34,22 @@ class InvoiceService:
                 mailing_postcode=request.mailing_postcode
             )
 
-            print("Create invoice", invoice)
-
             # Insert into database
             invoice_id = await mysql_service.insert_invoice(invoice)
             if not invoice_id:
                 raise Exception("Failed to insert invoice into database")
-            
-            # Get the created invoice from database
-            created_invoice = await mysql_service.get_invoice(invoice_id)
-            if not created_invoice:
-                raise Exception("Failed to retrieve created invoice")
-            
-            print("Created invoice:", created_invoice)
+            print("Created invoice id:", invoice_id)
 
             return InvoiceResponse(
                 success=True,
-                message="Invoice created successfully"
+                message="Invoice created successfully",
+                data={
+                    "created_at": request.created_at,
+                    "status": request.status,
+                    "campaign_name": request.campaign_name,
+                    "script": getattr(request, "script", None),
+                    "phone_strategy": getattr(request, "phone_strategy", None)
+                }
             )
         except Exception as e:
             logger.error(f"Error creating invoice: {e}")
@@ -209,14 +208,14 @@ class InvoiceService:
                             'status': 'pending',
                             'campaign_name': campaign_name
                         }
-                        
+
                         invoice = InvoiceCreate(**invoice_data)
                     except Exception as e:
                         print(f"Error creating invoice from row: {e}")
                         raise
 
                     temp = await self.get_invoice(invoice.invoice_number)
-                    
+
                     if not temp:
                         # Create the invoice
                         response = await self.create_invoice(invoice)

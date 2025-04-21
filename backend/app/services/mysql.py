@@ -218,10 +218,13 @@ class MySQLService:
             connection.close()
 
     async def delete_invoice(self, invoice_number):
-        """Delete an invoice"""
+        """Delete an invoice and all associated records"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
+                # Delete all records with this invoice_number
+                cursor.execute("DELETE FROM calls WHERE invoice_number = %s", (invoice_number,))
+                # Delete the invoice itself
                 cursor.execute("DELETE FROM invoices WHERE invoice_number = %s", (invoice_number,))
                 connection.commit()
                 return cursor.rowcount > 0

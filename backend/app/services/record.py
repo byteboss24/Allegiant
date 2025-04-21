@@ -32,7 +32,14 @@ class RecordService:
         return formatted_data
     
     async def get_record_recent(self, limit: int = 5) -> List[RecentStats]:
-        return await mysql_service.get_record_recent(limit)
+        records = await mysql_service.get_record_recent(limit)
+        # Patch: Replace None with empty string for required fields
+        for record in records:
+            if record.get('first_name') is None:
+                record['first_name'] = ''
+            if record.get('last_name') is None:
+                record['last_name'] = ''
+        return records
 
     async def update_record(self, record_id: int, record: Record) -> Optional[Record]:
         return await mysql_service.update_record(record_id, record)
