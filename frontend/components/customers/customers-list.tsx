@@ -1,8 +1,8 @@
 "use client"
 
-import { CustomersToolbar } from "./CustomersToolbar"
-import CustomersTable from "./CustomersTable"
-import { DeleteDialog } from "./DeleteDialog"
+import { CustomersToolbar } from "./customers-toolbar"
+import CustomersTable from "./customers-table"
+import { DeleteDialog } from "./delete-dialog"
 import { Button } from "@/components/ui/button"
 import { useCustomers } from "@/hooks/use-customers"
 
@@ -60,10 +60,10 @@ export function CustomersList() {
         invoices={invoices}
         selectedInvoices={selectedInvoices}
         isLoading={isLoading}
+        onMarkCompleted={invoiceNumber => handleStatusUpdate(invoiceNumber, 'completed')}
         onSelectInvoice={handleSelectInvoice}
         onSelectAll={handleSelectAll}
         onView={navigateToInvoice}
-        onMarkCompleted={invoiceNumber => handleStatusUpdate(invoiceNumber, 'completed')}
         onDelete={handleSingleInvoiceDelete}
       />
 

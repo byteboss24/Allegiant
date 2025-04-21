@@ -1,9 +1,9 @@
+import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ExternalLink } from "lucide-react";
-import { TableRowActions } from "./TableRowActions";
+import { TableRowActions } from "./table-row-actions";
 import { v4 as uuidv4 } from 'uuid';
-import React from "react";
 import type { CustomersTableProps } from "@/lib/props";
 import { Checkbox } from "@/components/ui/checkbox";
 
