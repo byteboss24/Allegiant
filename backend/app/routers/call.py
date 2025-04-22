@@ -20,6 +20,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 import websockets
 import asyncio
+import datetime
 
 router = APIRouter(prefix="/twilio", tags=["call"])
 
@@ -31,6 +32,7 @@ class OutboundRequest(BaseModel):
 @router.post("/outbound")
 async def outbound(request: OutboundRequest) -> str:
     """Initiate an outbound call to the invoice's mobile number."""
+    call = None
     try:
         invoice = await invoice_service.get_invoice(request.invoice_number)
         if not invoice:
@@ -76,11 +78,11 @@ async def outbound(request: OutboundRequest) -> str:
                     status=data.status
                 ))
                 await invoice_service.update_invoice_status(invoice.invoice_number, data.status)
-                call_state.cleanup_call(call.sid)  # Clean up call state
+                call_state.cleanup_call(call.sid)
                 break
             if data.status == 'completed':
                 logger.info(f"Call completed successfully: {recording}")
-                print("Call is completed", call_state.invoices.get(call.sid, {}))
+                print("Call is completed", call_state.invoices.get(call.sid, {}), call_state.invoices)
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
@@ -89,18 +91,20 @@ async def outbound(request: OutboundRequest) -> str:
                     status=data.status
                 ))
                 await invoice_service.update_invoice_status(invoice.invoice_number, data.status)
-                call_state.cleanup_call(call.sid)  # Clean up call state
+                call_state.cleanup_call(call.sid)
                 break
             await asyncio.sleep(2)
         settings.call_count -= 1
         logger.info(f"Call initiated - SID: {call.sid}")
         return call.sid
     except asyncio.CancelledError:
-        call_state.cleanup_call(call.sid)  # Clean up on cancellation
+        if call:
+            call_state.cleanup_call(call.sid)  # Clean up on cancellation
         return
     except Exception as e:
         logger.error(f"Error initiating call: {e}")
-        call_state.cleanup_call(call.sid)  # Clean up on error
+        if call:
+            call_state.cleanup_call(call.sid)  # Clean up on error
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.websocket("/media-stream")
@@ -116,6 +120,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         if not data:
             return
         callSid = data['callSid']
+        print("callsid", callSid, call_state.invoices.get(callSid, {}))
         async with websockets.connect('wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17', additional_headers={
             "Authorization": f"Bearer {settings.openai_api_key}",
             "OpenAI-Beta": "realtime=v1"
@@ -131,8 +136,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             )
     except (WebSocketDisconnect, ValueError) as e:
         logger.warning(f"WebSocket disconnected for call {callSid}: {e}")
-        if callSid:
-            call_state.cleanup_call(callSid)  # Clean up on disconnect
     except asyncio.CancelledError:
         if callSid:
             call_state.cleanup_call(callSid)  # Clean up on cancellation
@@ -151,41 +154,27 @@ class ControlCallRequest(BaseModel):
 async def control_call(request: ControlCallRequest):
     if request.control_type == "start_call":
         settings.active = True
+        semaphore = asyncio.Semaphore(10)
+        async def process_invoice(invoice):
+            async with semaphore:
+                try:
+                    request_obj = OutboundRequest(invoice_number=invoice.invoice_number)
+                    await outbound(request_obj)
+                except Exception as e:
+                    logger.error(f"Error initiating call for invoice {invoice.invoice_number}: {e}")
+
         while settings.active:
-            print(settings.active)
             invoices = await invoice_service.get_invoices_to_process()
-            print("invoices", invoices)
             if not invoices:
                 settings.active = False
                 return {"status": "no_invoices", "message": "No invoices to process"}
-            
-            # Wait until we have available slots
-            while settings.call_count >= 10:
-                await asyncio.sleep(1)
-
-            tasks = []
-            # Process up to 10 invoices at a time
-            for invoice in invoices:
-                if settings.call_count >= 10:
-                    break
-                    
-                try:
-                    print("start_call", invoice)
-                    # Create outbound request for each invoice
-                    request = OutboundRequest(invoice_number=invoice.invoice_number)
-                    task = outbound(request)
-                    tasks.append(task)
-                except Exception as e:
-                    logger.error(f"Error initiating call for invoice {invoice.invoice_number}: {e}")
-                    continue
-            
+            tasks = [process_invoice(invoice) for invoice in invoices]
             await asyncio.gather(*tasks)
+            # Optionally, add a sleep or wait for new invoices
+            # await asyncio.sleep(1)
 
     elif request.control_type == "stop_call":
-        print("stop_call")
-        # Reset call count and return current state
         settings.active = False
         return {"status": "stopped", "message": f"Stopped {settings.call_count} active calls"}
-    
     else:
         raise HTTPException(status_code=400, detail="Invalid control_type. Use 'start_call' or 'stop_call'")

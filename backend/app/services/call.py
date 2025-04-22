@@ -86,13 +86,18 @@ async def process_twilio_messages(websocket: WebSocket, openai_ws: websockets.We
                     "type": "input_audio_buffer.append",
                     "audio": data['media']['payload']
                 }
-                await openai_ws.send(json.dumps(audio_append))
+                try:
+                    await openai_ws.send(json.dumps(audio_append))
+                except (websockets.exceptions.ConnectionClosed, websockets.exceptions.ConnectionClosedOK) as e:
+                    logger.warning(f"OpenAI WebSocket closed while sending audio: {e}")
+                    break
     except WebSocketDisconnect:
         logger.info("Twilio client disconnected.")
 
 async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invoice: Dict) -> None:
     """Initialize OpenAI session with invoice data."""
-    word_pronunciations = await word_pronunciation_service.get_word_pronunciations(invoice["agent_id"])
+    print("initialize_session",invoice)
+    word_pronunciations = await word_pronunciation_service.get_word_pronunciations(settings.agent_id)
     pronunciations = "\n".join(f"{wp.word}: {wp.pronunciation}" for wp in word_pronunciations)
     system_message = settings.system_prompt.format(**invoice, percentage="10%", pronunciations=pronunciations)
     session_config = {
@@ -117,13 +122,13 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
                 {
                     "type": "function",
                     "name": "stop_call",
-                    "description": "When you are finished with your conversation, end the call. End the call after the agent and customer say goodbye.",
+                    "description": "When you are finished with your conversation, end the call. End the call after the agent and customer say 'Bye', 'Goodbye', 'Nice talking to you.', 'Have a good day', 'Bye bye' or etc.",
                     "parameters": {}
                 },
                 {
                     "type": "function",
                     "name": "send_payment_link",
-                    "description": "If person requests a payment link, send to person that link via sms.",
+                    "description": "If person requests a payment link, send to person that link via sms. Human saying examples are 'Please send me a link.', 'Could you please send me a link.', 'I need a link.', 'Could you send me a payment link?', 'Please send me a sms message.' or etc",
                     "parameters": {}
                 },
                 {
@@ -137,13 +142,13 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
         }
     }
     await openai_ws.send(json.dumps(session_config))
-    await send_initial_greeting(openai_ws)
 
 async def send_initial_greeting(openai_ws: websockets.WebSocketClientProtocol, callSid: str = None) -> None:
     """Send a welcome message to the user via OpenAI."""
     invoice = {}
     if callSid is not None:
         invoice = call_state.invoices.get(callSid, {})
+        print("Initial Greeting", invoice)
     else:
         invoice = next(iter(call_state.invoices.values()), {})
     welcome_message = {
@@ -176,15 +181,15 @@ async def monitor_silence(openai_ws: websockets.WebSocketClientProtocol, callSid
             ):
                 call_state.silence_detected[callSid] = True
                 logger.info(f"Detected 5 seconds of silence for call {callSid}, triggering say_hello")
-                await openai_ws.send(json.dumps({
-                    "type": "response.create",
-                    "response": {
-                        "modalities": ["text", "audio"],
-                        "temperature": 0.8,
-                        "instructions": "Say 'Are you still there?' in a polite and professional tone.",
-                        "voice": settings.voice_type
-                    }
-                }))
+                # await openai_ws.send(json.dumps({
+                #     "type": "response.create",
+                #     "response": {
+                #         "modalities": ["text", "audio"],
+                #         "temperature": 0.8,
+                #         "instructions": "Say 'Are you still there?' in a polite and professional tone.",
+                #         "voice": settings.voice_type
+                #     }
+                # }))
                 # Reset the timer to prevent repeated prompts
                 call_state.last_agent_response_time[callSid] = time.time()
             await asyncio.sleep(1)
@@ -204,9 +209,6 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                     call_state.invoices[callSid]['script'] = (
                         call_state.invoices[callSid]['script'] + "Human: " + response.get('transcript') + "\n"
                     )
-                    call_state.is_speaking[callSid] = False
-                    call_state.silence_detected[callSid] = False
-                    call_state.last_agent_response_time[callSid] = time.time()
                 case 'input_audio_buffer.speech_started':
                     logger.info(f"Human started speaking (call {callSid})")
                     call_state.is_speaking[callSid] = True
@@ -226,17 +228,8 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                         match event.get('name'):
                             case 'stop_call':
                                 logger.info(f"Function call: stop_call (call {callSid})")
-                                await openai_ws.send(json.dumps({
-                                    "type": "conversation.item.create",
-                                    "item": {
-                                        "type": "function_call_output",
-                                        "call_id": event['call_id'],
-                                        "output": "bye"
-                                    }
-                                }))
                                 await openai_ws.close()
                                 TWILIO_CLIENT.calls(callSid).update(status="completed")
-                                call_state.cleanup_call(callSid)  # Clean up call state
                             case 'send_payment_link':
                                 logger.info(f"Function call: send_payment_link (call {callSid})")
                                 message = TWILIO_CLIENT.messages.create(
@@ -267,51 +260,50 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                 case 'response.done':
                     try:
                         transcript = response['response']['output']
-                        match event.get('type'):
-                            case 'message':
-                                if transcript:
+                        if transcript:
+                            match transcript[0]['type']:
+                                case 'message':
                                     logger.info(f"AI Agent: {transcript[0]['content'][0]['transcript']}, {callSid}")
                                     call_state.invoices[callSid]['script'] = call_state.invoices[callSid]['script'] + "AI Agent: " + transcript[0]['content'][0]['transcript'] + "\n"
-                            case 'function_call':
-                                print("Function output:", transcript)
-                                match transcript[0]['name']:
-                                    case 'send_payment_link':
-                                        welcome_message = {
-                                            "type": "response.create",
-                                            "response": {
-                                                "modalities": ["text", "audio"],
-                                                "temperature": 0.8,
-                                                "instructions": (
-                                                    "I sent payment link, please check that."
-                                                ),
-                                                "voice": settings.voice_type
+                                case 'function_call':
+                                    print("Function output:", transcript)
+                                    match transcript[0]['name']:
+                                        case 'send_payment_link':
+                                            welcome_message = {
+                                                "type": "response.create",
+                                                "response": {
+                                                    "modalities": ["text", "audio"],
+                                                    "temperature": 0.8,
+                                                    "instructions": (
+                                                        "I sent payment link, please check that."
+                                                    ),
+                                                    "voice": settings.voice_type
+                                                }
                                             }
-                                        }
-                                        await openai_ws.send(json.dumps(welcome_message))
-                                    case 'say_hello':
-                                        await openai_ws.send(json.dumps({
-                                            "type": "response.create",
-                                            "response": {
-                                                "modalities": ["text", "audio"],
-                                                "temperature": 0.8,
-                                                "instructions": "Say 'Are you still there?' in a polite and professional tone.",
-                                                "voice": settings.voice_type
-                                            }
-                                        }))
-                                    case 'stop_call':
-                                        await openai_ws.send(json.dumps({
-                                            "type": "response.create",
-                                            "response": {
-                                                "modalities": ["text", "audio"],
-                                                "temperature": 0.8,
-                                                "instructions": "Stop the call.",
-                                                "voice": settings.voice_type
-                                            }
-                                        }))
-                                        await openai_ws.close()
-                                        TWILIO_CLIENT.calls(callSid).update(status="completed")
-                                        call_state.cleanup_call(callSid)
-                                        break
+                                            await openai_ws.send(json.dumps(welcome_message))
+                                        case 'say_hello':
+                                            await openai_ws.send(json.dumps({
+                                                "type": "response.create",
+                                                "response": {
+                                                    "modalities": ["text", "audio"],
+                                                    "temperature": 0.8,
+                                                    "instructions": "Say 'Are you still there?' in a polite and professional tone.",
+                                                    "voice": settings.voice_type
+                                                }
+                                            }))
+                                        case 'stop_call':
+                                            await openai_ws.send(json.dumps({
+                                                "type": "response.create",
+                                                "response": {
+                                                    "modalities": ["text", "audio"],
+                                                    "temperature": 0.8,
+                                                    "instructions": "Stop the call.",
+                                                    "voice": settings.voice_type
+                                                }
+                                            }))
+                                            await openai_ws.close()
+                                            TWILIO_CLIENT.calls(callSid).update(status="completed")
+                                            break
                     except Exception as e:
                         logger.error(f"Error getting transcript for call {callSid}: {e}")
                 case 'response.audio.delta' if response.get('delta'):
@@ -322,6 +314,7 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                         "media": {"payload": audio_payload}
                     })
                 case 'response.audio.done':
+                    print("Response audio done")
                     call_state.is_speaking[callSid] = False
                     call_state.last_agent_response_time[callSid] = time.time()
                     call_state.silence_detected[callSid] = False
