@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-toastify";
 import { fetchRecords, fetchAudio, deleteRecording, deleteMultipleRecordings } from "@/lib/apis";
 import { CallRecordingItem } from "@/lib/props";
 
@@ -26,8 +26,6 @@ export function useCallRecordings(initialItemsPerPage = 10) {
   const [selectedIdsForMultiDelete, setSelectedIdsForMultiDelete] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMultiDeleteDialog, setShowMultiDeleteDialog] = useState(false);
-
-  const { toast } = useToast();
 
   // Effect for fetching records based on pagination
   useEffect(() => {
@@ -84,11 +82,7 @@ export function useCallRecordings(initialItemsPerPage = 10) {
     } catch (error: any) {
       setAudioLoading(false);
       console.error('Error fetching/playing audio:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load or play audio recording.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load or play audio recording.");
     }
   }, [selectedCall, audioUrl, toast]);
 
@@ -106,17 +100,10 @@ export function useCallRecordings(initialItemsPerPage = 10) {
       setTotalItems(prev => prev - 1);
       setShowDeleteDialog(false);
       setSelectedRecordingForDelete(null);
-      toast({
-        title: "Success",
-        description: "Call recording deleted.",
-      });
+      toast.success("Call recording deleted.");
     } catch (error) {
       console.error('Error deleting recording:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete call recording.",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete call recording.");
       // Optionally keep dialog open on error?
       // setShowDeleteDialog(false);
       // setSelectedRecordingForDelete(null);
@@ -153,17 +140,10 @@ export function useCallRecordings(initialItemsPerPage = 10) {
       setTotalItems(prev => prev - idsToDelete.length);
       setSelectedIdsForMultiDelete([]);
       setShowMultiDeleteDialog(false);
-      toast({
-        title: "Success",
-        description: `Deleted ${idsToDelete.length} call(s).`,
-      });
+      toast.success(`Deleted ${idsToDelete.length} call(s).`);
     } catch (error) {
       console.error('Error deleting multiple recordings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete selected calls.",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete selected calls.");
     }
   }, [selectedIdsForMultiDelete, toast]);
 

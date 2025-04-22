@@ -2,13 +2,14 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { MainNav } from '@/components/nav/main-nav'
 import Link from 'next/link'
-import { Toaster } from '@/components/ui/toaster'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import { AuthProvider } from '@/components/nav/auth-context'
 
 export const metadata: Metadata = {
   title: 'Allegiant Voice AI Dashboard',
   description: 'Manage your AI voice calling campaigns and view analytics',
-  generator: 'Next.js',
+  generator: '',
 }
 
 export default function RootLayout({
@@ -35,10 +36,10 @@ export default function RootLayout({
               <MainNav />
             </div>
           </header>
-          <main className="container mx-auto py-6 mt-20 flex-1">
+          <ToastContainer className="mt-20" />
+          <main className="container mx-auto py-6 flex-1 mt-16">
             {children}
           </main>
-          <Toaster />
         </AuthProvider>
       </body>
     </html>

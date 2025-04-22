@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "react-toastify"
 import { Loader2 } from "lucide-react"
 import { uploadCsv } from "@/lib/apis"
 
@@ -20,7 +20,6 @@ export function CsvUploadForm() {
   const [campaignName, setCampaignName] = useState("")
   const [selectedScript, setSelectedScript] = useState("default")
   const [selectedPhoneStrategy, setSelectedPhoneStrategy] = useState("random")
-  const { toast } = useToast()
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -28,21 +27,13 @@ export function CsvUploadForm() {
       
       // Validate file type
       if (!selectedFile.name.endsWith('.csv')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a CSV file",
-          variant: "destructive",
-        })
+        toast.error("Invalid file type")
         return
       }
 
       // Validate file size (10MB limit)
       if (selectedFile.size > 10 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Maximum file size is 10MB",
-          variant: "destructive",
-        })
+        toast.error("File too large")
         return
       }
 
@@ -83,11 +74,7 @@ export function CsvUploadForm() {
 
         setPreview(previewData)
       } catch (error) {
-        toast({
-          title: "Error reading file",
-          description: error instanceof Error ? error.message : "Could not read the CSV file. Please check the format.",
-          variant: "destructive",
-        })
+        toast.error("Error reading file")
         setFile(null)
         setPreview(null)
       }
@@ -96,11 +83,7 @@ export function CsvUploadForm() {
 
   const handleUpload = async () => {
     if (!file || !campaignName) {
-      toast({
-        title: "Missing information",
-        description: "Please provide both a file and campaign name",
-        variant: "destructive",
-      })
+      toast.error("Missing information")
       return
     }
 
@@ -114,10 +97,7 @@ export function CsvUploadForm() {
     try {
       const data = await uploadCsv(formData)
 
-      toast({
-        title: "Upload successful",
-        description: `Processed ${data.total_records} records. ${data.successful_records} successful, ${data.failed_records} failed.`,
-      })
+      toast.success(`Processed ${data.total_records} records. ${data.successful_records} successful, ${data.failed_records} failed.`)
 
       if (data.errors && data.errors.length > 0) {
         // Show errors in a more user-friendly way
@@ -125,11 +105,7 @@ export function CsvUploadForm() {
           ? `${data.errors.length} errors occurred. Check the console for details.`
           : data.errors.join('\n')
         
-        toast({
-          title: "Some records failed",
-          description: errorMessage,
-          variant: "destructive",
-        })
+        toast.error(errorMessage)
         console.error('Upload errors:', data.errors)
       }
 
@@ -141,11 +117,7 @@ export function CsvUploadForm() {
       setSelectedPhoneStrategy("random")
     } catch (error) {
       console.error('Upload error:', error)
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "An error occurred during upload",
-        variant: "destructive",
-      })
+      toast.error(error instanceof Error ? error.message : "An error occurred during upload")
     } finally {
       setIsUploading(false)
     }

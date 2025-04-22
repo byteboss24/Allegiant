@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import type { Invoice } from "@/lib/props"
 import { fetchInvoices, uploadCsv, updateInvoiceStatus, deleteInvoices, exportInvoicesCsv } from "@/lib/apis"
@@ -15,7 +15,6 @@ export const useCustomers = () => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null)
-  const { toast } = useToast()
   const router = useRouter()
 
   // Fetch invoices
@@ -25,11 +24,7 @@ export const useCustomers = () => {
       setInvoices(data)
     } catch (error) {
       console.error('Error fetching invoices:', error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load invoices",
-        variant: "destructive",
-      })
+      toast.error("Failed to load invoices. Please try again later.")
     } finally {
       setIsLoading(false)
     }
@@ -45,20 +40,12 @@ export const useCustomers = () => {
     if (!file) return
 
     if (!file.name.endsWith('.csv')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      })
+      toast.error("Please upload a CSV file")
       return
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Maximum file size is 10MB",
-        variant: "destructive",
-      })
+      toast.error("File too large")
       return
     }
 
@@ -71,18 +58,11 @@ export const useCustomers = () => {
 
     try {
       const data = await uploadCsv(formData)
-      toast({
-        title: "Upload successful",
-        description: `Processed ${data.total_records} records. ${data.successful_records} successful, ${data.failed_records} failed.`,
-      })
+      toast.success(`Processed ${data.total_records} records. ${data.successful_records} successful, ${data.failed_records} failed.`)
       await fetchInvoicesCallback()
     } catch (error) {
       console.error('Upload error:', error)
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "An error occurred during upload",
-        variant: "destructive",
-      })
+      toast.error("Upload failed")
     } finally {
       setIsUploading(false)
       event.target.value = ''
@@ -130,17 +110,10 @@ export const useCustomers = () => {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
 
-      toast({
-        title: "Export successful",
-        description: "Your invoice data has been exported successfully.",
-      })
+      toast.success("Your invoice data has been exported successfully.")
     } catch (error) {
       console.error('Export error:', error)
-      toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "An error occurred during export",
-        variant: "destructive",
-      })
+      toast.error("Export failed")
     } finally {
       setIsExporting(false)
     }
@@ -157,17 +130,10 @@ export const useCustomers = () => {
             : invoice
         )
       )
-      toast({
-        title: "Status updated",
-        description: "Invoice has been marked as completed",
-      })
+      toast.success("Invoice has been marked as completed")
     } catch (error) {
       console.error('Error updating status:', error)
-      toast({
-        title: "Update failed",
-        description: error instanceof Error ? error.message : "Failed to update status",
-        variant: "destructive",
-      })
+      toast.error("Update failed")
     }
   }, [toast])
 
@@ -192,11 +158,7 @@ export const useCustomers = () => {
   // Handle delete invoices
   const handleDeleteInvoices = useCallback(async () => {
     if (selectedInvoices.length === 0) {
-      toast({
-        title: "No invoices selected",
-        description: "Please select at least one invoice to delete",
-        variant: "destructive",
-      })
+      toast.error("Please select at least one invoice to delete")
       return
     }
     
@@ -207,17 +169,10 @@ export const useCustomers = () => {
         prevInvoices.filter(invoice => !selectedInvoices.includes(invoice.invoice_number))
       )
       setSelectedInvoices([])
-      toast({
-        title: "Invoices deleted",
-        description: `Successfully deleted ${selectedInvoices.length} invoice(s)`,
-      })
+      toast.success(`Successfully deleted ${selectedInvoices.length} invoice(s)`)
     } catch (error) {
       console.error('Error deleting invoices:', error)
-      toast({
-        title: "Delete failed",
-        description: error instanceof Error ? error.message : "Failed to delete invoices",
-        variant: "destructive",
-      })
+      toast.error("Delete failed")
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)

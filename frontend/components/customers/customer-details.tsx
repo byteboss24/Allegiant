@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "react-toastify"
 import { fetchCustomerDetails as fetchCustomerDetailsApi } from "@/lib/apis"
 import type { Invoice as CustomerDetails } from "@/lib/props"
 
@@ -16,7 +16,6 @@ export function CustomerDetails() {
   console.log("invoice_number", invoice_number)
   const [customer, setCustomer] = useState<CustomerDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -25,11 +24,7 @@ export function CustomerDetails() {
         setCustomer(data)
       } catch (error) {
         console.error('Error fetching customer details:', error)
-        toast({
-          title: "Error",
-          description: "Failed to load customer details. Please try again later.",
-          variant: "destructive",
-        })
+        toast.error("Failed to load customer details. Please try again later.")
       } finally {
         setIsLoading(false)
       }
@@ -38,7 +33,7 @@ export function CustomerDetails() {
     if (invoice_number) {
       fetchDetails()
     }
-  }, [invoice_number, toast])
+  }, [invoice_number])
 
   if (isLoading) {
     return (

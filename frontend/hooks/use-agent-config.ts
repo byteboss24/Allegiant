@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "react-toastify"
 import type { Agent } from "@/lib/props"
 import {
   fetchAgents as apiFetchAgents,
@@ -16,7 +16,6 @@ export function useAgentConfig() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const { toast } = useToast()
 
   const fetchAgentData = useCallback(async () => {
     setIsLoading(true);
@@ -35,15 +34,11 @@ export function useAgentConfig() {
       
     } catch (error) {
       console.error('Error fetching agent data:', error)
-      toast({
-        title: "Error",
-        description: "Failed to load agent data.",
-        variant: "destructive",
-      })
+      toast.error("Failed to load agent data.")
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchAgentData();
@@ -56,21 +51,14 @@ export function useAgentConfig() {
       setSelectedAgentId(agentId);
       const agent = agents.find((a: Agent) => a.id === agentId);
       setSelectedAgent(agent || null);
-      toast({
-        title: "Success",
-        description: "Agent selected successfully",
-      })
+      toast.success("Agent selected successfully")
     } catch (error) {
       console.error('Error selecting agent:', error)
-      toast({
-        title: "Error",
-        description: "Failed to select agent.",
-        variant: "destructive",
-      })
+      toast.error("Failed to select agent.")
     } finally {
         setIsLoading(false);
     }
-  }, [agents, toast]);
+  }, [agents]);
 
   const updateAgent = useCallback(async (updatedFields: Partial<Agent>) => {
     if (!selectedAgentId) return null;
@@ -92,26 +80,19 @@ export function useAgentConfig() {
     try {
       await apiUpdateAgent(updatedAgentData);
       
-      toast({
-        title: "Success",
-        description: "Agent updated successfully",
-      })
+      toast.success("Agent updated successfully")
       return updatedAgentData;
     } catch (error) {
       console.error('Error updating agent:', error)
       // Rollback optimistic update on failure
       setSelectedAgent(originalAgent);
       setAgents(originalAgents);
-      toast({
-        title: "Error",
-        description: "Failed to update agent.",
-        variant: "destructive",
-      })
+      toast.error("Failed to update agent.")
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [selectedAgentId, selectedAgent, agents, toast, router]);
+  }, [selectedAgentId, selectedAgent, agents]);
 
   const handleStatusChange = useCallback(async (newStatus: boolean) => {
     if (!selectedAgent) return;
@@ -127,20 +108,13 @@ export function useAgentConfig() {
     if (updatedAgent) {
         try {
             await controlTwilioCall(action); 
-            toast({ 
-                title: "Success", 
-                description: `Agent ${isActive ? 'activated' : 'deactivated'} and call process ${isActive ? 'started' : 'stopped'}.` 
-            });
+            toast.success(`Agent ${isActive ? 'activated' : 'deactivated'} and call process ${isActive ? 'started' : 'stopped'}.`);
         } catch (callError) {
             console.error(`Error trying to ${action}:`, callError);
-            toast({ 
-                title: "Warning", 
-                description: `Agent status updated, but failed to ${action}. Please check backend status.`, 
-                variant: "destructive" 
-            });
+            toast.error(`Agent status updated, but failed to ${action}. Please check backend status.`);
         }
     }
-  }, [selectedAgent, updateAgent, toast]);
+  }, [selectedAgent, updateAgent]);
 
 
   return {

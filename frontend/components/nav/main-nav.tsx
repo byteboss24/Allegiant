@@ -39,9 +39,9 @@ export function MainNav() {
         <Link
           key={item.href}
           href={item.href}
-          className={`text-base font-medium transition-colors hover:text-primary ${
+          className={`text-base font-medium transition-colors hover:text-[#2f3aa4] focus:text-[#2f3aa4] ${
             pathname === item.href
-              ? "text-foreground font-semibold"
+              ? "font-semibold text-[#2f3aa4]"
               : "text-muted-foreground"
           }`}
         >

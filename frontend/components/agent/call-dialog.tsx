@@ -7,15 +7,13 @@ import { Badge } from "@/components/ui/badge"
 import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX } from "lucide-react"
 import type { CallDialogProps } from "@/lib/props"
 import { useVoiceCall } from "@/hooks/use-voice-call"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "react-toastify"
 
 export function CallDialog({
   open,
   onOpenChange,
   agentId
 }: CallDialogProps) {
-
-  const { toast } = useToast()
 
   const handleTranscription = (text: string) => {
     console.log("Transcription received in component:", text);
@@ -24,11 +22,7 @@ export function CallDialog({
 
   const handleError = (message: string) => {
     console.error("Voice call error:", message);
-    toast({
-      title: "Call Error",
-      description: message,
-      variant: "destructive",
-    });
+    toast.error(message);
   };
 
   const {
