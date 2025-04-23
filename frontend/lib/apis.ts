@@ -1,6 +1,5 @@
 // API functions for all resources in the frontend
 import type { ApiError, Invoice, Agent } from "@/lib/props";
-import { CloudCog } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const username = process.env.NEXT_PUBLIC_USERNAME;

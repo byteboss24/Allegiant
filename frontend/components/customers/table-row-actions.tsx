@@ -20,15 +20,12 @@ export const TableRowActions: React.FC<TableRowActionsProps> = ({
     <DropdownMenuContent align="end">
       <DropdownMenuLabel>Actions</DropdownMenuLabel>
       <DropdownMenuItem onClick={onView}>View details</DropdownMenuItem>
-      <DropdownMenuItem>Send reminder</DropdownMenuItem>
-      <DropdownMenuSeparator />
       <DropdownMenuItem 
         onClick={onMarkCompleted}
         disabled={disableMarkCompleted}
       >
         {disableMarkCompleted ? 'Already completed' : 'Mark as completed'}
       </DropdownMenuItem>
-      <DropdownMenuItem>Schedule call</DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem 
         onClick={onDelete}

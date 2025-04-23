@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CardDescription, CardTitle } from "@/components/ui/card"
 import { Pencil } from "lucide-react"
 import type { AgentConfigHeaderProps } from "@/lib/props"
+import { useAtomValue } from "jotai"
+import { agentsAtom, isActiveAtom } from "@/lib/atom"
 
 export function AgentConfigHeader({
-  agents,
   selectedAgentId,
   selectedAgent,
   isLoading,
@@ -20,7 +21,8 @@ export function AgentConfigHeader({
 }: AgentConfigHeaderProps) {
   const [isEditingName, setIsEditingName] = useState(false)
   const [name, setName] = useState(selectedAgent?.name || "")
-
+  const agents = useAtomValue(agentsAtom)
+  const isActive = useAtomValue(isActiveAtom)
   // Update local name state when selected agent changes
   useEffect(() => {
     setName(selectedAgent?.name || "")
@@ -38,7 +40,7 @@ export function AgentConfigHeader({
         setIsEditingName(false);
     } else {
         // Handle error case - maybe keep editing open?
-         setName(selectedAgent?.name || ""); // Reset on error
+         setName(selectedAgent?.name || "");
     }
   }
 
@@ -52,11 +54,11 @@ export function AgentConfigHeader({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="border rounded px-2 py-1 bg-transparent" // Adjusted style
+                className="border rounded px-2 py-1 bg-transparent w-32 max-w-xs"
                 autoFocus
                 onBlur={handleSaveName}
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                disabled={isLoading} // Disable input while loading
+                disabled={isLoading || isActive}
               />
               {/* No need for Done button, uses blur/Enter */}
             </div>
@@ -68,8 +70,8 @@ export function AgentConfigHeader({
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsEditingName(true)}
-                  className="ml-2 h-6 w-6" // Smaller icon button
-                  disabled={isLoading} // Disable edit button while loading
+                  className="ml-2 h-6 w-6"
+                  disabled={isLoading || isActive}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -84,7 +86,7 @@ export function AgentConfigHeader({
           <Select
             value={selectedAgentId ? String(selectedAgentId) : ''}
             onValueChange={(value) => handleAgentSelect(Number(value))}
-            disabled={isLoading || isEditingName} // Disable select while loading or editing name
+            disabled={isLoading || isEditingName || isActive}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select an agent" />
@@ -107,7 +109,7 @@ export function AgentConfigHeader({
               checked={selectedAgent.status === 'active'}
               onCheckedChange={handleStatusChange}
               aria-label="Toggle agent status"
-              disabled={isLoading || isEditingName} // Disable switch while loading or editing name
+              disabled={isLoading || isEditingName}
             />
           </>
         )}

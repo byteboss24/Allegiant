@@ -155,13 +155,13 @@ export interface WeeklyStats {
 }
 
 export interface AgentConfigHeaderProps {
-  agents: Agent[]
   selectedAgentId: number | null
   selectedAgent: Agent | null
   isLoading: boolean
   handleAgentSelect: (agentId: number) => void
   updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>
   handleStatusChange: (newStatus: boolean) => void
+  isAgentActive?: boolean
 }
 
 export interface AgentSystemPromptProps {
@@ -169,4 +169,5 @@ export interface AgentSystemPromptProps {
   isLoading: boolean
   updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>
   onOpenWordDialog: () => void
+  isAgentActive?: boolean
 }

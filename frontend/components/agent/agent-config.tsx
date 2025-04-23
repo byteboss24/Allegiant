@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { CallDialog } from "./call-dialog"
 import { WordPronunciationDialog } from "./wordpronunciation-dialog"
 import { useAgentConfig } from "@/hooks/use-agent-config"
 import { AgentConfigHeader } from "./agent-config-header"
 import { AgentSystemPrompt } from "./agent-system-prompt"
-import { Skeleton } from "@/components/ui/skeleton"
+import { isActiveAtom } from "@/lib/atom"
+import { useAtomValue } from "jotai"
+import { Save } from "lucide-react"
 
 export function AgentConfig() {
   const {
-    agents,
     selectedAgentId,
     selectedAgent,
     isLoading,
@@ -23,8 +23,9 @@ export function AgentConfig() {
     handleStatusChange,
   } = useAgentConfig();
 
+  const isActive = useAtomValue(isActiveAtom)
+
   const [voice, setVoice] = useState(selectedAgent?.voice || "")
-  const [isCallDialogOpen, setIsCallDialogOpen] = useState(false)
   const [isWordDialogOpen, setIsWordDialogOpen] = useState(false)
 
   useEffect(() => {
@@ -47,15 +48,10 @@ export function AgentConfig() {
 
   const voices = ["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer"]
 
-  if (isLoading && !agents.length) {
-      return <AgentConfigSkeleton />; 
-  }
-
   return (
     <Card className="w-full">
       <CardHeader>
         <AgentConfigHeader
-          agents={agents}
           selectedAgentId={selectedAgentId}
           selectedAgent={selectedAgent}
           isLoading={isLoading}
@@ -93,16 +89,12 @@ export function AgentConfig() {
           />
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Button onClick={handleSaveChanges} disabled={isLoading || !selectedAgent}>
+        <Button onClick={handleSaveChanges} disabled={isLoading || !selectedAgent || isActive} className="bg-green-600 hover:bg-green-600/80">
+          <Save className="h-4 w-4 mr-2" />
           Save Changes
         </Button>
       </CardFooter>
-      
-      <CallDialog
-        open={isCallDialogOpen}
-        onOpenChange={setIsCallDialogOpen}
-        agentId={selectedAgentId || undefined}
-      />
+
       <WordPronunciationDialog
         open={isWordDialogOpen}
         onOpenChange={setIsWordDialogOpen}
@@ -110,44 +102,4 @@ export function AgentConfig() {
       />
     </Card>
   )
-}
-
-function AgentConfigSkeleton() {
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-[200px]" />
-            <Skeleton className="h-6 w-16 rounded-full" />
-            <Skeleton className="h-6 w-10 rounded-full" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-            <Skeleton className="h-4 w-16 mb-2" />
-            <Skeleton className="h-10 w-full" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-2">
-            <Skeleton className="h-6 w-32" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-8 w-40" />
-            </div>
-          </div>
-          <Skeleton className="min-h-[500px] w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-end">
-        <Skeleton className="h-10 w-32" />
-      </CardFooter>
-    </Card>
-  );
 }

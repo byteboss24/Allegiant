@@ -27,13 +27,13 @@ export function CsvUploadForm() {
       
       // Validate file type
       if (!selectedFile.name.endsWith('.csv')) {
-        toast.error("Invalid file type")
+        toast.error("Invalid file type" )
         return
       }
 
       // Validate file size (10MB limit)
       if (selectedFile.size > 10 * 1024 * 1024) {
-        toast.error("File too large")
+        toast.error("File too large" )
         return
       }
 
@@ -74,7 +74,7 @@ export function CsvUploadForm() {
 
         setPreview(previewData)
       } catch (error) {
-        toast.error("Error reading file")
+        toast.error("Error reading file" )
         setFile(null)
         setPreview(null)
       }
@@ -83,7 +83,7 @@ export function CsvUploadForm() {
 
   const handleUpload = async () => {
     if (!file || !campaignName) {
-      toast.error("Missing information")
+      toast.error("Missing information" )
       return
     }
 
@@ -97,7 +97,7 @@ export function CsvUploadForm() {
     try {
       const data = await uploadCsv(formData)
 
-      toast.success(`Processed ${data.total_records} records. ${data.successful_records} successful, ${data.failed_records} failed.`)
+      toast.success(`Processed ${data.total_records} records. ${data.successful_records} successful, ${data.failed_records} failed.` )
 
       if (data.errors && data.errors.length > 0) {
         // Show errors in a more user-friendly way
@@ -105,7 +105,7 @@ export function CsvUploadForm() {
           ? `${data.errors.length} errors occurred. Check the console for details.`
           : data.errors.join('\n')
         
-        toast.error(errorMessage)
+        toast.error(errorMessage )
         console.error('Upload errors:', data.errors)
       }
 
@@ -117,7 +117,7 @@ export function CsvUploadForm() {
       setSelectedPhoneStrategy("random")
     } catch (error) {
       console.error('Upload error:', error)
-      toast.error(error instanceof Error ? error.message : "An error occurred during upload")
+      toast.error(error instanceof Error ? error.message : "An error occurred during upload" )
     } finally {
       setIsUploading(false)
     }

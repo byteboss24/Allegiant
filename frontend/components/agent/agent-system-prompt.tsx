@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Pencil } from "lucide-react"
 import type { AgentSystemPromptProps } from "@/lib/props"
+import { useAtomValue } from "jotai"
+import { isActiveAtom } from "@/lib/atom"
 
 export function AgentSystemPrompt({
   selectedAgent,
@@ -15,6 +17,7 @@ export function AgentSystemPrompt({
 }: AgentSystemPromptProps) {
   const [isEditingSystemPrompt, setIsEditingSystemPrompt] = useState(false)
   const [systemPrompt, setSystemPrompt] = useState(selectedAgent?.system_prompt || "")
+  const isAgentActive = useAtomValue(isActiveAtom)
 
   // Update local prompt state when selected agent changes
   useEffect(() => {
@@ -52,7 +55,7 @@ export function AgentSystemPrompt({
             size="sm" 
             className="flex items-center gap-1"
             onClick={handleSaveSystemPrompt}
-            disabled={isLoading || !selectedAgent}
+            disabled={isLoading || !selectedAgent || isAgentActive}
           >
             <Pencil className="h-4 w-4" />
             {isEditingSystemPrompt ? "Done" : "Edit"}
@@ -72,7 +75,7 @@ export function AgentSystemPrompt({
         className="min-h-[500px] font-mono text-sm leading-relaxed"
         value={systemPrompt}
         onChange={(e) => setSystemPrompt(e.target.value)}
-        readOnly={!isEditingSystemPrompt || isLoading}
+        readOnly={!isEditingSystemPrompt || isLoading || isAgentActive}
         placeholder={!selectedAgent ? "Select an agent to view or edit the system prompt." : "Enter system prompt..."}
       />
       <p className="text-sm text-muted-foreground">

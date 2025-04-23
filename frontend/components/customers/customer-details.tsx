@@ -24,7 +24,7 @@ export function CustomerDetails() {
         setCustomer(data)
       } catch (error) {
         console.error('Error fetching customer details:', error)
-        toast.error("Failed to load customer details. Please try again later.")
+        toast.error("Failed to load customer details. Please try again later." )
       } finally {
         setIsLoading(false)
       }

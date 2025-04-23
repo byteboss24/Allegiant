@@ -1,8 +1,7 @@
 import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ExternalLink } from "lucide-react";
-import { TableRowActions } from "./table-row-actions";
+import { Loader2, ExternalLink, Check, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import type { CustomersTableProps } from "@/lib/props";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -105,12 +104,25 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                     <ExternalLink className="h-4 w-4" />
                     <span className="sr-only">View Details</span>
                     </button>
-                    <TableRowActions
-                    onView={() => onView(invoice.invoice_number)}
-                    onMarkCompleted={() => onMarkCompleted(invoice.invoice_number)}
-                    onDelete={() => onDelete(invoice.invoice_number)}
-                    disableMarkCompleted={invoice.status === 'completed'}
-                    />
+                    <button
+                      type="button"
+                      className="h-8 w-8 flex items-center justify-center text-green-600 disabled:opacity-50"
+                      title={invoice.status === 'completed' ? 'Already completed' : 'Mark as completed'}
+                      onClick={() => onMarkCompleted(invoice.invoice_number)}
+                      disabled={invoice.status === 'completed'}
+                    >
+                      <Check className="h-4 w-4" />
+                      <span className="sr-only">Mark as completed</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="h-8 w-8 flex items-center justify-center text-red-600"
+                      title="Delete invoice"
+                      onClick={() => onDelete(invoice.invoice_number)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete invoice</span>
+                    </button>
                 </div>
                 </TableCell>
             </TableRow>

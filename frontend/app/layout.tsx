@@ -36,7 +36,7 @@ export default function RootLayout({
               <MainNav />
             </div>
           </header>
-          <ToastContainer className="mt-20" />
+          <ToastContainer className="mt-20" hideProgressBar/>
           <main className="container mx-auto py-6 flex-1 mt-16">
             {children}
           </main>

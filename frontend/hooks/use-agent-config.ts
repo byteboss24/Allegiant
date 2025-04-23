@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "react-toastify"
 import type { Agent } from "@/lib/props"
 import {
@@ -9,13 +8,15 @@ import {
   updateAgent as apiUpdateAgent,
   controlTwilioCall,
 } from "@/lib/apis"
+import { useAtom, useAtomValue, useSetAtom } from "jotai"
+import { agentsAtom, isActiveAtom } from "@/lib/atom"
 
 export function useAgentConfig() {
-  const [agents, setAgents] = useState<Agent[]>([])
+  const [agents, setAgents] = useAtom(agentsAtom)
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
+  const setIsActive = useSetAtom(isActiveAtom)
 
   const fetchAgentData = useCallback(async () => {
     setIsLoading(true);
@@ -34,7 +35,7 @@ export function useAgentConfig() {
       
     } catch (error) {
       console.error('Error fetching agent data:', error)
-      toast.error("Failed to load agent data.")
+      toast.error("Failed to load agent data.", {hideProgressBar: true})
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +61,7 @@ export function useAgentConfig() {
     }
   }, [agents]);
 
-  const updateAgent = useCallback(async (updatedFields: Partial<Agent>) => {
+  const updateAgent = useCallback(async (updatedFields: Partial<Agent>, showToast: boolean = true) => {
     if (!selectedAgentId) return null;
     setIsLoading(true);
     
@@ -80,7 +81,9 @@ export function useAgentConfig() {
     try {
       await apiUpdateAgent(updatedAgentData);
       
-      toast.success("Agent updated successfully")
+      if (showToast) {
+        toast.success("Agent updated successfully")
+      }
       return updatedAgentData;
     } catch (error) {
       console.error('Error updating agent:', error)
@@ -96,13 +99,15 @@ export function useAgentConfig() {
 
   const handleStatusChange = useCallback(async (newStatus: boolean) => {
     if (!selectedAgent) return;
-    
+    console.log("Handling status change:", newStatus)
+    setIsActive(newStatus);
+
     const isActive = newStatus;
     const action = isActive ? 'start_call' : 'stop_call';
     const updatedAgentData = { ...selectedAgent, status: isActive ? 'active' : 'inactive' };
 
     // Update agent status first
-    const updatedAgent = await updateAgent({ status: updatedAgentData.status });
+    const updatedAgent = await updateAgent({ status: updatedAgentData.status }, false);
 
     // If agent update was successful, attempt to control Twilio call
     if (updatedAgent) {
@@ -118,7 +123,6 @@ export function useAgentConfig() {
 
 
   return {
-    agents,
     selectedAgentId,
     selectedAgent,
     isLoading,

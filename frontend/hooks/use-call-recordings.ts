@@ -82,7 +82,7 @@ export function useCallRecordings(initialItemsPerPage = 10) {
     } catch (error: any) {
       setAudioLoading(false);
       console.error('Error fetching/playing audio:', error);
-      toast.error("Failed to load or play audio recording.");
+      toast.error("Failed to load or play audio recording." );
     }
   }, [selectedCall, audioUrl, toast]);
 
@@ -100,10 +100,10 @@ export function useCallRecordings(initialItemsPerPage = 10) {
       setTotalItems(prev => prev - 1);
       setShowDeleteDialog(false);
       setSelectedRecordingForDelete(null);
-      toast.success("Call recording deleted.");
+      toast.success("Call recording deleted." );
     } catch (error) {
       console.error('Error deleting recording:', error);
-      toast.error("Failed to delete call recording.");
+      toast.error("Failed to delete call recording." );
       // Optionally keep dialog open on error?
       // setShowDeleteDialog(false);
       // setSelectedRecordingForDelete(null);
@@ -140,10 +140,10 @@ export function useCallRecordings(initialItemsPerPage = 10) {
       setTotalItems(prev => prev - idsToDelete.length);
       setSelectedIdsForMultiDelete([]);
       setShowMultiDeleteDialog(false);
-      toast.success(`Deleted ${idsToDelete.length} call(s).`);
+      toast.success(`Deleted ${idsToDelete.length} call(s).` );
     } catch (error) {
       console.error('Error deleting multiple recordings:', error);
-      toast.error("Failed to delete selected calls.");
+      toast.error("Failed to delete selected calls." );
     }
   }, [selectedIdsForMultiDelete, toast]);
 
