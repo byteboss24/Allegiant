@@ -55,4 +55,12 @@ class RecordService:
         data["other_calls"] = data["other_calls"] if data["other_calls"] is not None else 0
         return TodayStatus(**data)
 
+    async def get_yesterday_status(self) -> TodayStatus:
+        data = await mysql_service.get_yesterday_status()
+        print("Yesterday's status:", data)
+        # Ensure None values are replaced with 0 for int fields
+        data["completed_calls"] = data["completed_calls"] if data["completed_calls"] is not None else 0
+        data["other_calls"] = data["other_calls"] if data["other_calls"] is not None else 0
+        return TodayStatus(**data)
+
 record_service = RecordService()

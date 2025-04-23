@@ -13,6 +13,11 @@ async def get_today_status():
     print("Getting today's status...")
     return await record_service.get_today_status()
 
+@router.get("/records/yesterday", response_model=TodayStatus)
+async def get_yesterday_status():
+    print("Getting yesterday's status...")
+    return await record_service.get_yesterday_status()
+
 @router.get("/records")
 async def get_records(page: int = 1, per_page: int = 10) -> Dict:
     """Get paginated records"""

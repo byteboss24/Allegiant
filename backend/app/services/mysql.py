@@ -458,6 +458,23 @@ class MySQLService:
         finally:
             connection.close()
 
+    async def get_yesterday_status(self):
+        """Get yesterday's call statistics"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as total_calls,
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_calls,
+                        SUM(CASE WHEN status != 'completed' THEN 1 ELSE 0 END) as other_calls
+                    FROM calls
+                    WHERE DATE(created_at) = DATE_SUB(DATE(NOW()), INTERVAL 1 DAY)
+                """)
+                return cursor.fetchone()
+        finally:
+            connection.close()
+
     async def insert_word_pronunciation(self, agent_id, word, pronunciation):
         connection = self._get_connection()
         try:

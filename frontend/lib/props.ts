@@ -110,13 +110,6 @@ export interface DeleteDialogProps {
   onCancel?: () => void
 }
 
-export interface TableRowActionsProps {
-  disableMarkCompleted: boolean
-  onView: () => void
-  onMarkCompleted: () => void
-  onDelete: () => void
-}
-
 export interface Agent {
   id: number
   name: string

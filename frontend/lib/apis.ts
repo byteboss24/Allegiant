@@ -60,6 +60,12 @@ export async function fetchTodayStatus() {
   return response.json();
 }
 
+export async function fetchYesterdayStatus() {
+  const response = await fetch(`${API_BASE_URL}/api/v1/records/yesterday`);
+  if (!response.ok) throw new Error('Failed to fetch yesterday status');
+  return response.json();
+}
+
 // Invoices APIs
 export async function fetchInvoices(): Promise<Invoice[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/invoices`);
