@@ -72,17 +72,22 @@ export function useCallRecordings(initialItemsPerPage = 10) {
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
       setAudioLoading(false);
-      // Wait a tick for the audio element to potentially update its src
       setTimeout(() => {
-          if (audioRef.current) {
-              audioRef.current.load();
-              audioRef.current.play().catch(e => console.error("Error playing audio:", e));
-          }
+        if (audioRef.current) {
+          const audio = audioRef.current;
+          // Remove any previous event listener
+          const onCanPlay = () => {
+            audio.play().catch(e => console.error("Error playing audio:", e));
+            audio.removeEventListener('canplaythrough', onCanPlay);
+          };
+          audio.addEventListener('canplaythrough', onCanPlay);
+          audio.load();
+        }
       }, 0);
     } catch (error: any) {
       setAudioLoading(false);
       console.error('Error fetching/playing audio:', error);
-      toast.error("Failed to load or play audio recording." );
+      toast.error("Failed to load or play audio recording.");
     }
   }, [selectedCall, audioUrl, toast]);
 

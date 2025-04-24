@@ -4,7 +4,7 @@ import { CallRecordings } from "@/components/calls/call-recordings"
 export default function CallRecordingsPage() {
   return (
     <>
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto">
         <DashboardShell>
           <CallRecordings />
         </DashboardShell>

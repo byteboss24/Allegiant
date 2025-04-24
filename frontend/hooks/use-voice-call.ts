@@ -194,12 +194,14 @@ export function useVoiceCall({ onTranscription, onError }: UseVoiceCallProps = {
         isPlayingRef.current = false;
         playNextAudio();
       };
-      audio.play().catch((error: Error) => {
-        console.error('Error initiating audio playback:', error);
-        URL.revokeObjectURL(audio.src);
-        isPlayingRef.current = false;
-        playNextAudio(); // Attempt to play next item
-      });
+      if (audio) {
+        audio.load();
+        const playAudio = () => {
+          audio.play().catch(e => console.error("Error playing audio:", e));
+          audio.removeEventListener('canplay', playAudio);
+        };
+        audio.addEventListener('canplay', playAudio);
+      }
     }
   }, [isSpeakerOn]);
 

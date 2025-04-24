@@ -24,7 +24,7 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
           <>
             <div className="flex flex-col items-center gap-2">
               <Avatar className="h-16 w-16 mb-2 shadow-md">
-                <AvatarFallback>{selectedCall.first_name?.[0]?.toUpperCase() || "?"}</AvatarFallback>
+                <AvatarFallback>{selectedCall.name?.[0]?.toUpperCase() || "?"}</AvatarFallback>
               </Avatar>
               <h3 className="font-semibold text-lg">{selectedCall.first_name} {selectedCall.last_name}</h3>
               <p className="text-sm text-muted-foreground">{selectedCall.created_at}</p>
@@ -49,7 +49,7 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
             <div className="space-y-4 pt-2">
               {(audioLoading || audioUrl) && (
                 <div className="relative">
-                  <audio ref={audioRef} controls className="mt-2 w-full rounded-lg border border-gray-200 shadow-sm bg-white/80">
+                  <audio ref={audioRef} controls className="mt-2 w-full">
                     {audioUrl ? (
                       <source src={audioUrl} type="audio/wav" />
                     ) : null}
@@ -72,11 +72,6 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
                 value={selectedCall?.transcript || ''}
                 readOnly
               />
-            </div>
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" size="sm">
-                Share
-              </Button>
             </div>
           </>
         ) : (
