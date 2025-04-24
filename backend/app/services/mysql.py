@@ -159,10 +159,11 @@ class MySQLService:
             connection.close()
 
     async def get_monthly_invoice_stats(self):
-        """Get this month's invoice completion statistics"""
+        """Get this month's invoice completion statistics and call stats"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
+                # Invoice stats
                 cursor.execute("""
                     SELECT 
                         COUNT(*) as total_invoices,
@@ -172,11 +173,27 @@ class MySQLService:
                     WHERE MONTH(invoice_date) = MONTH(CURRENT_DATE())
                     AND YEAR(invoice_date) = YEAR(CURRENT_DATE())
                 """)
-                result = cursor.fetchone()
+                invoice_result = cursor.fetchone()
+
+                # Call stats
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as total_calls,
+                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_calls,
+                        SUM(CASE WHEN status = 'sms' THEN 1 ELSE 0 END) as sms_sent_calls
+                    FROM calls
+                    WHERE MONTH(created_at) = MONTH(CURRENT_DATE())
+                    AND YEAR(created_at) = YEAR(CURRENT_DATE())
+                """)
+                call_result = cursor.fetchone()
+
                 return {
-                    'total_invoices': result['total_invoices'] or 0,
-                    'completed_invoices': result['completed_invoices'] or 0,
-                    'completion_rate': result['completion_rate'] or 0.0
+                    'total_invoices': invoice_result['total_invoices'] or 0,
+                    'completed_invoices': invoice_result['completed_invoices'] or 0,
+                    'completion_rate': invoice_result['completion_rate'] or 0.0,
+                    'total_calls': call_result['total_calls'] or 0,
+                    'completed_calls': call_result['completed_calls'] or 0,
+                    'sms_sent_calls': call_result['sms_sent_calls'] or 0
                 }
         finally:
             connection.close()

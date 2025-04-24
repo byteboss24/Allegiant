@@ -73,7 +73,7 @@ export function AgentSystemPrompt({
             variant="outline"
             size="sm"
             onClick={onOpenWordDialog}
-            disabled={isLoading || !selectedAgent}
+            disabled={isLoading || !selectedAgent || isAgentActive}
             className="bg-[#1f89de] hover:bg-[#1f89de]/80 text-white hover:text-white"
           >
             Words & Pronunciations

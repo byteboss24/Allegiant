@@ -44,7 +44,6 @@ export function Overview() {
         <Tooltip />
         <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} name="Total Calls" />
         <Bar dataKey="connected" fill="#0ea5e9" radius={[4, 4, 0, 0]} name="Connected" />
-        <Bar dataKey="converted" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Converted" />
       </BarChart>
     </ResponsiveContainer>
   )

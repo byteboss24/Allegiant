@@ -69,6 +69,9 @@ class MonthlyInvoiceStats(BaseModel):
     total_invoices: int
     completed_invoices: int
     completion_rate: float
+    total_calls: int
+    completed_calls: int
+    sms_sent_calls: int
 
     class Config:
         from_attributes = True

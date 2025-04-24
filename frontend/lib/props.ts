@@ -134,6 +134,9 @@ export interface MonthlyStats {
   total_invoices: number
   completed_invoices: number
   completion_rate: number
+  total_calls: number
+  completed_calls: number
+  sms_sent_calls: number
 }
 
 export interface DashboardShellProps {

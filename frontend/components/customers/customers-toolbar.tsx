@@ -19,16 +19,7 @@ export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
   onExport,
 }) => (
   <>
-    <div className="flex items-center justify-between mb-4">
-      <div className="relative w-64">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search customers..."
-          className="pl-8"
-          value={searchTerm}
-          onChange={onSearchChange}
-        />
-      </div>
+    <div className="flex items-center justify-end mb-4">
       <div className="flex items-center gap-2">
         <Select value={statusFilter} onValueChange={onStatusFilterChange}>
           <SelectTrigger className="w-[180px] h-9">
@@ -41,14 +32,18 @@ export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" className="gap-1 h-9">
-          <Filter className="h-4 w-4" />
-          <span>Filters</span>
-          <ChevronDown className="h-4 w-4 ml-1" />
-        </Button>
       </div>
     </div>
-    <div className="flex items-center justify-end mb-4 ">
+    <div className="flex items-center justify-between mb-4 ">
+      <div className="relative w-64">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search customers..."
+          className="pl-8"
+          value={searchTerm}
+          onChange={onSearchChange}
+        />
+      </div>
       <div className="flex items-center gap-2">
         {selectedCount > 0 && (
           <Button
@@ -83,7 +78,7 @@ export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1"
+            className="h-8 gap-1 bg-[#1f89de] hover:bg-[#1f89de]/80 text-white hover:text-white"
             onClick={() => document.getElementById('csv-upload')?.click()}
             disabled={isUploading}
           >
@@ -103,7 +98,7 @@ export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1"
+          className="h-8 gap-1 bg-[#1f89de] hover:bg-[#1f89de]/80 text-white hover:text-white"
           onClick={onExport}
           disabled={isExporting}
         >

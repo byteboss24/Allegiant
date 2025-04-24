@@ -41,27 +41,24 @@ export function CampaignStats() {
                 <p className="text-sm text-muted-foreground">Outstanding invoices from April {""}</p>
               </div>
               <div className="text-right">
-                <p className="font-medium">{stats.completion_rate}%</p>
+                <p className="font-medium font-semibold">{stats.completion_rate}%</p>
                 <p className="text-xs text-muted-foreground">
                   {stats.completed_invoices}/{stats.total_invoices} calls
                 </p>
               </div>
             </div>
             <div className="mt-4">
-              <Progress value={stats.completion_rate} className="h-2" />
+              <Progress value={stats.completion_rate} className="h-2" color="#03C3EC"/>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-4 text-center text-sm">
+            <div className="mt-4 grid grid-cols-3 gap-4 text-center text-sm text-[14px]">
               <div>
-                <p className="font-medium">289</p>
-                <p className="text-xs text-muted-foreground">Connected</p>
+                <p className="text-muted-foreground text-[#7477FF]">{stats.total_calls || 0} Connected</p>
               </div>
               <div>
-                <p className="font-medium">124</p>
-                <p className="text-xs text-muted-foreground">Transferred</p>
+                <p className="text-muted-foreground text-[#70DC37]">{stats.completed_calls || 0} Transferred</p>
               </div>
               <div>
-                <p className="font-medium">165</p>
-                <p className="text-xs text-muted-foreground">SMS Sent</p>
+                <p className="text-muted-foreground text-[#ED9C39]">{stats.sms_sent_calls || 0} SMS Sent</p>
               </div>
             </div>
           </div>
@@ -70,4 +67,3 @@ export function CampaignStats() {
     </div>
   )
 }
-
