@@ -52,13 +52,13 @@ export function CampaignStats() {
             </div>
             <div className="mt-4 grid grid-cols-3 gap-4 text-center text-sm text-[14px]">
               <div>
-                <p className="text-muted-foreground text-[#7477FF]">{stats.total_calls || 0} Connected</p>
+                <p className="text-[#7477FF]">{stats.total_calls || 0} Connected</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-[#70DC37]">{stats.completed_calls || 0} Transferred</p>
+                <p className="text-[#70DC37]">{stats.completed_calls || 0} Transferred</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-[#ED9C39]">{stats.sms_sent_calls || 0} SMS Sent</p>
+                <p className="text-[#ED9C39]">{stats.sms_sent_calls || 0} SMS Sent</p>
               </div>
             </div>
           </div>

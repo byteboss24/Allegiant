@@ -85,6 +85,8 @@ export interface CustomersTableProps {
   onView: (invoiceId: string) => void
   onMarkCompleted: (invoiceId: string) => void
   onDelete: (invoiceId: string) => void
+  selectedColumns: string[]
+  onSelectColumn: (columnKey: string) => void
 }
 
 export interface CustomersToolbarProps {

@@ -5,6 +5,10 @@ import CustomersTable from "./customers-table"
 import { DeleteDialog } from "./delete-dialog"
 import { Button } from "@/components/ui/button"
 import { useCustomers } from "@/hooks/use-customers"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import React, { useState } from "react"
+import { useAtom } from "jotai"
+import { invoiceTableAllColumns, invoiceTableSelectedColumnsAtom } from "@/lib/atom"
 
 export function CustomersList() {
   const {
@@ -14,6 +18,16 @@ export function CustomersList() {
     actions,
     data,
   } = useCustomers()
+
+  const [selectedColumns, setSelectedColumns] = useAtom(invoiceTableSelectedColumnsAtom);
+  const allColumns = invoiceTableAllColumns;
+  const handleSelectColumn = (columnKey: string) => {
+    setSelectedColumns(prev =>
+      prev.includes(columnKey)
+        ? prev.filter(key => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -38,18 +52,38 @@ export function CustomersList() {
         onDeleteClick={() => dialogs.setShowDeleteConfirm(true)}
         onUpload={actions.handleUpload}
         onExport={actions.handleExport}
+        allColumns={allColumns}
+        selectedColumns={selectedColumns}
+        onSelectColumn={handleSelectColumn}
       />
 
       <CustomersTable
         invoices={data.invoices}
         selectedInvoices={selection.selectedInvoices}
         isLoading={data.isLoading}
-        onMarkCompleted={invoiceNumber => actions.handleStatusUpdate(invoiceNumber, 'completed')}
+        onMarkCompleted={actions.requestMarkCompleted}
         onSelectInvoice={selection.handleSelectInvoice}
         onSelectAll={selection.handleSelectAll}
         onView={actions.navigateToInvoice}
         onDelete={actions.handleSingleInvoiceDelete}
+        selectedColumns={selectedColumns}
+        onSelectColumn={handleSelectColumn}
       />
+
+      <AlertDialog open={dialogs.showCompleteConfirm} onOpenChange={dialogs.setShowCompleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark as Completed?</AlertDialogTitle>
+          </AlertDialogHeader>
+          <p>Are you sure you want to mark this invoice as completed?</p>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => dialogs.setShowCompleteConfirm(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={actions.confirmMarkCompleted} className="bg-green-600 hover:bg-green-700">
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex items-center justify-between mt-4">
         <div className="text-sm text-muted-foreground">

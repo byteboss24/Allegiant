@@ -5,7 +5,7 @@ import { Loader2, ExternalLink, Check, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import type { CustomersTableProps } from "@/lib/props";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import { invoiceTableAllColumns as columnDefs } from "@/lib/atom";
 
 const CustomersTable: React.FC<CustomersTableProps> = ({
   invoices,
@@ -16,6 +16,7 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
   onView,
   onMarkCompleted,
   onDelete,
+  selectedColumns,
 }) => (
     <Table>
         <TableHeader>
@@ -35,22 +36,17 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                 aria-label="Select all invoices"
             />
             </TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Mobile Number</TableHead>
-            <TableHead>Phone Number</TableHead>
-            <TableHead>Invoice Number</TableHead>
-            <TableHead>Invoice Date</TableHead>
-            <TableHead>Invoice Amount</TableHead>
-            <TableHead>FSP Name</TableHead>
-            <TableHead>Outstanding Amount</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {columnDefs.filter(col => selectedColumns.includes(col.key)).map(col => (
+              <TableHead key={col.key} className={col.key === 'actions' ? 'text-right' : 'whitespace-nowrap'}>
+                {col.label}
+              </TableHead>
+            ))}
         </TableRow>
         </TableHeader>
         <TableBody key={uuidv4()}>
         {isLoading ? (
             <TableRow>
-            <TableCell colSpan={11} className="text-center py-8">
+            <TableCell colSpan={columnDefs.length + 1} className="text-center py-8">
                 <div className="flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
@@ -58,13 +54,13 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
             </TableRow>
         ) : invoices?.length === 0 ? (
             <TableRow>
-            <TableCell colSpan={11} className="text-center py-8">
+            <TableCell colSpan={columnDefs.length + 1} className="text-center py-8">
                 No invoices found
             </TableCell>
             </TableRow>
         ) : (
             invoices?.map((invoice) => (
-            <TableRow key={uuidv4()}>
+            <TableRow key={invoice.invoice_number}>
                 <TableCell>
                 <Checkbox
                     checked={selectedInvoices.includes(invoice.invoice_number)}
@@ -72,59 +68,77 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                     aria-label={`Select invoice ${invoice.invoice_number}`}
                 />
                 </TableCell>
-                <TableCell className="font-medium">{`${invoice.first_name} ${invoice.last_name}`}</TableCell>
-                <TableCell>{invoice.mobile_number}</TableCell>
-                <TableCell>{invoice.phone_number}</TableCell>
-                <TableCell>{invoice.invoice_number}</TableCell>
-                <TableCell>{invoice.invoice_date}</TableCell>
-                <TableCell>{invoice.invoice_amount}</TableCell>
-                <TableCell>{invoice.fsp_name}</TableCell>
-                <TableCell>{invoice.outstanding_amount}</TableCell>
-                <TableCell className="text-center">
-                <Badge
-                    variant={
-                    invoice.status === "completed"
-                        ? "default"
-                        : invoice.status === "pending"
-                        ? "outline"
-                        : "destructive"
-                    }
-                >
-                    {invoice.status?.toUpperCase()}
-                </Badge>
-                </TableCell>
-                <TableCell>
-                <div className="flex justify-end gap-2">
-                    <button
-                    type="button"
-                    className="h-8 w-8 flex items-center justify-center"
-                    title="View Details"
-                    onClick={() => onView(invoice.invoice_number)}
-                    >
-                    <ExternalLink className="h-4 w-4" />
-                    <span className="sr-only">View Details</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="h-8 w-8 flex items-center justify-center text-green-600 disabled:opacity-50"
-                      title={invoice.status === 'completed' ? 'Already completed' : 'Mark as completed'}
-                      onClick={() => onMarkCompleted(invoice.invoice_number)}
-                      disabled={invoice.status === 'completed'}
-                    >
-                      <Check className="h-4 w-4" />
-                      <span className="sr-only">Mark as completed</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="h-8 w-8 flex items-center justify-center text-red-600"
-                      title="Delete invoice"
-                      onClick={() => onDelete(invoice.invoice_number)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete invoice</span>
-                    </button>
-                </div>
-                </TableCell>
+                {/* Render only selected columns */}
+                {columnDefs.map(col => {
+                  if (!selectedColumns.includes(col.key)) return null;
+                  switch (col.key) {
+                    case "name":
+                      return <TableCell key={col.key} className="font-medium">{`${invoice.first_name} ${invoice.last_name}`}</TableCell>;
+                    case "mobile_number":
+                      return <TableCell key={col.key}>{invoice.mobile_number}</TableCell>;
+                    case "phone_number":
+                      return <TableCell key={col.key}>{invoice.phone_number}</TableCell>;
+                    case "invoice_number":
+                      return <TableCell key={col.key}>{invoice.invoice_number}</TableCell>;
+                    case "invoice_date":
+                      return <TableCell key={col.key}>{invoice.invoice_date}</TableCell>;
+                    case "invoice_amount":
+                      return <TableCell key={col.key}>{invoice.invoice_amount}</TableCell>;
+                    case "fsp_name":
+                      return <TableCell key={col.key}>{invoice.fsp_name}</TableCell>;
+                    case "outstanding_amount":
+                      return <TableCell key={col.key}>{invoice.outstanding_amount}</TableCell>;
+                    case "status":
+                      return <TableCell key={col.key} className="text-center">
+                        <Badge
+                          variant={
+                            invoice.status === "completed"
+                              ? "default"
+                              : invoice.status === "pending"
+                              ? "outline"
+                              : "destructive"
+                          }
+                        >
+                          {invoice.status?.toUpperCase()}
+                        </Badge>
+                      </TableCell>;
+                    case "actions":
+                      return <TableCell key={col.key} className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            className="h-8 w-8 flex items-center justify-center"
+                            title="View Details"
+                            onClick={() => onView(invoice.invoice_number)}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            <span className="sr-only">View Details</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 w-8 flex items-center justify-center text-green-600 disabled:opacity-50"
+                            title={invoice.status === 'completed' ? 'Already completed' : 'Mark as completed'}
+                            onClick={() => onMarkCompleted(invoice.invoice_number)}
+                            disabled={invoice.status === 'completed'}
+                          >
+                            <Check className="h-4 w-4" />
+                            <span className="sr-only">Mark as completed</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 w-8 flex items-center justify-center text-red-600"
+                            title="Delete invoice"
+                            onClick={() => onDelete(invoice.invoice_number)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete invoice</span>
+                          </button>
+                        </div>
+                      </TableCell>;
+                    default:
+                      return null;
+                  }
+                })}
             </TableRow>
             ))
         )}

@@ -14,7 +14,8 @@ export const useCustomers = () => {
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null)
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
+  const [invoiceToComplete, setInvoiceToComplete] = useState<string | null>(null)
   const router = useRouter()
 
   // Fetch invoices
@@ -99,8 +100,33 @@ export const useCustomers = () => {
       const filename = contentDisposition ? 
         contentDisposition.split('filename=')[1].replace(/"/g, '') : 
         'invoices.csv'
-      
       const blob = await response.blob()
+
+      // Try File System Access API
+      if ((window as any).showSaveFilePicker) {
+        try {
+          const opts = {
+            suggestedName: filename,
+            types: [
+              {
+                description: 'CSV file',
+                accept: {'text/csv': ['.csv']},
+              },
+            ],
+          }
+          const handle = await (window as any).showSaveFilePicker(opts)
+          const writable = await handle.createWritable()
+          await writable.write(blob)
+          await writable.close()
+          toast.success('Your invoice data has been exported successfully.')
+          setIsExporting(false)
+          return
+        } catch (e) {
+          // If user cancels or error, fallback to default
+        }
+      }
+
+      // Fallback: download as before
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -109,11 +135,10 @@ export const useCustomers = () => {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-
-      toast.success("Your invoice data has been exported successfully." )
+      toast.success('Your invoice data has been exported successfully.')
     } catch (error) {
       console.error('Export error:', error)
-      toast.error("Export failed" )
+      toast.error('Export failed')
     } finally {
       setIsExporting(false)
     }
@@ -176,16 +201,28 @@ export const useCustomers = () => {
     } finally {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
-      setInvoiceToDelete(null)
     }
   }, [selectedInvoices, toast])
 
   // Handle single invoice delete
   const handleSingleInvoiceDelete = useCallback((invoiceNumber: string) => {
-    setInvoiceToDelete(invoiceNumber)
     setSelectedInvoices([invoiceNumber])
     setShowDeleteConfirm(true)
   }, [])
+
+  // Open confirm dialog for marking as completed
+  const requestMarkCompleted = useCallback((invoiceNumber: string) => {
+    setInvoiceToComplete(invoiceNumber);
+    setShowCompleteConfirm(true);
+  }, []);
+
+  // Confirm mark as completed
+  const confirmMarkCompleted = useCallback(async () => {
+    if (!invoiceToComplete) return;
+    await handleStatusUpdate(invoiceToComplete, 'completed');
+    setShowCompleteConfirm(false);
+    setInvoiceToComplete(null);
+  }, [invoiceToComplete, handleStatusUpdate]);
 
   return {
     filters: {
@@ -202,11 +239,15 @@ export const useCustomers = () => {
     dialogs: {
       showDeleteConfirm,
       setShowDeleteConfirm,
+      showCompleteConfirm,
+      setShowCompleteConfirm,
     },
     actions: {
       handleUpload,
       handleExport,
       handleStatusUpdate,
+      requestMarkCompleted,
+      confirmMarkCompleted,
       handleDeleteInvoices,
       handleSingleInvoiceDelete,
       navigateToInvoice,
@@ -218,6 +259,7 @@ export const useCustomers = () => {
       isUploading,
       isExporting,
       isDeleting,
+      invoiceToComplete,
     },
   }
 } 

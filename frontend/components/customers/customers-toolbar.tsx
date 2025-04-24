@@ -1,11 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, ChevronDown, Search, UploadCloud, Download, Loader2, Trash2 } from "lucide-react";
+import { Filter, ChevronDown, Search, UploadCloud, Download, Loader2, Trash2, Settings } from "lucide-react";
 import React from "react";
 import type { CustomersToolbarProps } from "@/lib/props";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
+interface CustomersToolbarExtendedProps extends CustomersToolbarProps {
+  allColumns: { key: string; label: string }[];
+  selectedColumns: string[];
+  onSelectColumn: (columnKey: string) => void;
+}
+
+export const CustomersToolbar: React.FC<CustomersToolbarExtendedProps> = ({
   searchTerm,
   statusFilter,
   selectedCount,
@@ -17,6 +24,9 @@ export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
   onDeleteClick,
   onUpload,
   onExport,
+  allColumns,
+  selectedColumns,
+  onSelectColumn,
 }) => (
   <>
     <div className="flex items-center justify-end mb-4">
@@ -32,6 +42,25 @@ export const CustomersToolbar: React.FC<CustomersToolbarProps> = ({
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex h-9 items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 gap-2">
+              <Settings className="w-4 h-4" />
+              Columns
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {allColumns.map(col => (
+              <DropdownMenuCheckboxItem
+                key={col.key}
+                checked={selectedColumns.includes(col.key)}
+                onCheckedChange={() => onSelectColumn(col.key)}
+              >
+                {col.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
     <div className="flex items-center justify-between mb-4 ">

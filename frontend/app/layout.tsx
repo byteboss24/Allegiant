@@ -24,7 +24,7 @@ export default function RootLayout({
       </head>
       <body className="flex flex-col h-screen">
         <AuthProvider>
-          <header className="border-b bg-white shadow-sm fixed top-0 left-0 right-0 z-50 flex justify-center">
+          <header className="border-b bg-white shadow-lg fixed top-0 left-0 right-0 z-50 flex justify-center">
             <div className="container flex h-20 items-center justify-between">
               <Link href="/overview" className="flex items-center">
                 <img
