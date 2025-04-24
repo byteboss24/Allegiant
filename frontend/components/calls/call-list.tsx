@@ -69,7 +69,7 @@ export const CallList: React.FC<CallListProps> = ({
                       <TableHead className="px-4 py-3">Invoice Number</TableHead>
                       <TableHead className="px-4 py-3">Date & Time</TableHead>
                       <TableHead className="px-4 py-3">Duration</TableHead>
-                      <TableHead className="px-4 py-3 text-right">Status</TableHead>
+                      <TableHead className="px-4 py-3 text-center">Status</TableHead>
                       <TableHead className="px-4 py-3 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>

@@ -238,6 +238,7 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                                         body=f"Hi {call_state.invoices[callSid]['first_name']}.\nHere is your payment link: {call_state.invoices[callSid]['payment_link']}\nPlease check your email for more details.\nThank you, Allegiant.",
                                         to=call_state.invoices[callSid]['mobile_number']
                                     )
+                                    call_state.invoices[callSid]['status'] = 'sms'
                                 except Exception as e:
                                     logger.error(f"Error sending payment link to {call_state.invoices[callSid]['mobile_number']} (call {callSid}): {e}")
                                 logger.info(f"Sent payment link to {call_state.invoices[callSid]['mobile_number']} (call {callSid})")

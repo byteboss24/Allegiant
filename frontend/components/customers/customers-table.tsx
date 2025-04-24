@@ -37,7 +37,7 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
             />
             </TableHead>
             {columnDefs.filter(col => selectedColumns.includes(col.key)).map(col => (
-              <TableHead key={col.key} className={col.key === 'actions' ? 'text-right' : 'whitespace-nowrap'}>
+              <TableHead key={col.key} className={col.key === 'actions' ? 'text-right' : col.key === 'status' ? 'text-center' : 'whitespace-nowrap'}>
                 {col.label}
               </TableHead>
             ))}
