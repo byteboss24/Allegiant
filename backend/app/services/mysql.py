@@ -160,9 +160,10 @@ class MySQLService:
                     where_clause = "WHERE first_name LIKE %s OR last_name LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s"
                     search_term = f"%{search}%"
                     params.extend([search_term, search_term, search_term, search_term, search_term])
-                count_sql = f"SELECT COUNT(*) FROM invoices {where_clause}"
+                count_sql = f"SELECT COUNT(*) as total FROM invoices {where_clause}"
                 cursor.execute(count_sql, params)
-                total = cursor.fetchone()[0] if cursor.rowcount else 0
+                result = cursor.fetchone()
+                total = result["total"] if result else 0
                 sql = f"SELECT * FROM invoices {where_clause} ORDER BY invoice_date DESC LIMIT %s OFFSET %s"
                 params.extend([page_size, offset])
                 cursor.execute(sql, params)
@@ -551,6 +552,16 @@ class MySQLService:
                 cursor.execute("DELETE FROM word_pronunciations WHERE id = %s", (item_id,))
                 connection.commit()
                 return cursor.rowcount > 0
+        finally:
+            connection.close()
+
+    async def get_all_invoices(self):
+        """Get all invoices from the database"""
+        connection = self._get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM invoices ORDER BY invoice_date DESC")
+                return cursor.fetchall()
         finally:
             connection.close()
 

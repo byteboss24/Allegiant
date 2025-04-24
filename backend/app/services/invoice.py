@@ -110,7 +110,6 @@ class InvoiceService:
     async def get_invoices(self, page: int = 1, page_size: int = 10, search: str = None):
         try:
             invoices, total = await mysql_service.get_invoices(page, page_size, search)
-            print(invoices)
             if not invoices:
                 return {"items": [], "total": 0}
             return {"items": [Invoice.model_validate(invoice) for invoice in invoices], "total": total}
@@ -250,5 +249,15 @@ class InvoiceService:
                 successful_records=0,
                 failed_records=0
             )
+
+    async def get_all_invoices(self) -> List[Invoice]:
+        try:
+            invoices = await mysql_service.get_all_invoices()
+            if not invoices:
+                return []
+            return [Invoice.model_validate(invoice) for invoice in invoices]
+        except Exception as e:
+            logger.error(f"Error getting all invoices: {e}")
+            raise
 
 invoice_service = InvoiceService()

@@ -44,6 +44,7 @@ async def get_invoices(
     search: str = Query(None)
 ):
     """Get paginated and searched invoices"""
+    print("getting invoices", page, page_size, search)
     return await invoice_service.get_invoices(page, page_size, search)
 
 @router.get("/invoices/month", response_model=MonthlyInvoiceStats)
@@ -122,12 +123,16 @@ async def upload_invoices_csv(
         )
     return response
 
+@router.get("/invoices/all", response_model=List[Invoice])
+async def get_all_invoices():
+    """Get all invoices (no pagination, no search)"""
+    return await invoice_service.get_all_invoices()
+
 @router.get("/invoices/export/csv")
 async def export_invoices_csv():
     """Export all invoices as a properly formatted CSV file"""
     print("exporting csv")
-    invoices = await invoice_service.get_invoices()
-    
+    invoices = await invoice_service.get_all_invoices()
     # Create a StringIO object to write CSV data
     output = io.StringIO()
     writer = csv.DictWriter(
@@ -140,18 +145,14 @@ async def export_invoices_csv():
             'call_status', 'campaign_name', 'script', 'phone_strategy', 'resend_invoice', 'status'
         ]
     )
-    
     # Write header row
     writer.writeheader()
-    
     # Write invoice data
     for invoice in invoices:
-        # Convert invoice model to dict and handle any date formatting
         invoice_dict = invoice.model_dump()
         if invoice_dict.get('invoice_date'):
             invoice_dict['invoice_date'] = invoice_dict['invoice_date'].strftime('%Y-%m-%d')
         writer.writerow(invoice_dict)
-    
     # Create a StreamingResponse with the CSV data
     output.seek(0)
     response = StreamingResponse(
@@ -159,5 +160,4 @@ async def export_invoices_csv():
         media_type="text/csv"
     )
     response.headers["Content-Disposition"] = "attachment; filename=invoices.csv"
-    
     return response
