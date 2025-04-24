@@ -16,20 +16,25 @@ export const useCustomers = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
   const [invoiceToComplete, setInvoiceToComplete] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalInvoices, setTotalInvoices] = useState(0)
   const router = useRouter()
 
-  // Fetch invoices
+  // Fetch invoices with pagination and search
   const fetchInvoicesCallback = useCallback(async () => {
+    setIsLoading(true)
     try {
-      const data = await fetchInvoices()
-      setInvoices(data)
+      const data = await fetchInvoices(page, pageSize, searchTerm)
+      setInvoices(data.items)
+      setTotalInvoices(data.total)
     } catch (error) {
       console.error('Error fetching invoices:', error)
-      toast.error("Failed to load invoices. Please try again later." )
+      toast.error("Failed to load invoices. Please try again later.")
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [toast, page, pageSize, searchTerm])
 
   useEffect(() => {
     fetchInvoicesCallback()
@@ -69,22 +74,6 @@ export const useCustomers = () => {
       event.target.value = ''
     }
   }, [toast, fetchInvoicesCallback])
-  
-    // Memoize filtered invoices
-    const filteredInvoices = useMemo(() => {
-      const searchTermLower = searchTerm.toLowerCase()
-      return invoices.filter((invoice) => {
-        const matchesSearch =
-          `${invoice.first_name} ${invoice.last_name}`.toLowerCase().includes(searchTermLower) ||
-          invoice.mobile_number.toLowerCase().includes(searchTermLower) ||
-          invoice.phone_number.toLowerCase().includes(searchTermLower) ||
-          invoice.invoice_number.toLowerCase().includes(searchTermLower) ||
-          invoice.fsp_name.toLowerCase().includes(searchTermLower)
-  
-        if (statusFilter === "all") return matchesSearch
-        return matchesSearch && invoice.status === statusFilter
-      })
-    }, [invoices, searchTerm, statusFilter])
   
     // Memoize navigation callback
     const navigateToInvoice = useCallback((invoiceNumber: string) => {
@@ -175,10 +164,10 @@ export const useCustomers = () => {
   // Handle select all invoices
   const handleSelectAll = useCallback(() => {
     setSelectedInvoices(prev => {
-      const allSelected = prev.length === filteredInvoices.length;
-      return allSelected ? [] : filteredInvoices.map(invoice => invoice.invoice_number);
+      const allSelected = prev.length === invoices.length;
+      return allSelected ? [] : invoices.map(invoice => invoice.invoice_number);
     });
-  }, [filteredInvoices]);
+  }, [invoices]);
 
   // Handle delete invoices
   const handleDeleteInvoices = useCallback(async () => {
@@ -253,13 +242,17 @@ export const useCustomers = () => {
       navigateToInvoice,
     },
     data: {
-      invoices: filteredInvoices,
-      totalInvoices: invoices.length,
+      invoices,
+      totalInvoices,
       isLoading,
       isUploading,
       isExporting,
       isDeleting,
       invoiceToComplete,
+      page,
+      setPage,
+      pageSize,
+      setPageSize,
     },
   }
 } 

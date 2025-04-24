@@ -360,34 +360,42 @@ class MySQLService:
         finally:
             connection.close()
 
-    async def get_records(self, page: int = 1, per_page: int = 10):
-        """Get all records with pagination"""
+    async def get_records(self, page: int = 1, per_page: int = 10, search: str = None, status: str = None):
+        """Get all records with pagination, search, and status filter"""
         offset = (page - 1) * per_page
-        
-        # Get total count
-        count_query = "SELECT COUNT(*) as total FROM calls"
+        params = []
+        where_clauses = []
+        if search:
+            where_clauses.append("(c.transcript LIKE %s OR c.invoice_number LIKE %s OR i.first_name LIKE %s OR i.last_name LIKE %s)")
+            search_term = f"%{search}%"
+            params.extend([search_term, search_term, search_term, search_term])
+        if status and status != "all":
+            where_clauses.append("c.status = %s")
+            params.append(status)
+        where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+        count_query = f"SELECT COUNT(*) as total FROM calls c JOIN invoices i ON c.invoice_number = i.invoice_number {where_sql}"
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(count_query)
+                cursor.execute(count_query, params)
                 total = cursor.fetchone()
         finally:
             connection.close()
-        
-        # Get paginated records
         query = f"""
             SELECT
                 c.*,
                 CONCAT(i.first_name, ' ', i.last_name) AS name
             FROM calls c
             JOIN invoices i ON c.invoice_number = i.invoice_number
-            ORDER BY created_at DESC 
-            LIMIT {per_page} OFFSET {offset}
+            {where_sql}
+            ORDER BY c.created_at DESC 
+            LIMIT %s OFFSET %s
         """
+        params_data = params + [per_page, offset]
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(query)
+                cursor.execute(query, params_data)
                 records = cursor.fetchall()
                 return {
                     "items": records,

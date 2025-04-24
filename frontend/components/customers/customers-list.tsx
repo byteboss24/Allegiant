@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import React, { useState } from "react"
 import { useAtom } from "jotai"
 import { invoiceTableAllColumns, invoiceTableSelectedColumnsAtom } from "@/lib/atom"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 export function CustomersList() {
   const {
@@ -28,6 +29,8 @@ export function CustomersList() {
         : [...prev, columnKey]
     );
   };
+
+  const totalPages = Math.ceil(data.totalInvoices / data.pageSize);
 
   return (
     <div className="space-y-4">
@@ -95,11 +98,24 @@ export function CustomersList() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
-            Previous
+          <span className="text-xs px-2">
+            Page <strong>{data.page}</strong> of <strong>{totalPages || 1}</strong>
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => data.setPage(data.page - 1)}
+            disabled={data.page === 1 || data.isLoading}
+          >
+            <ChevronLeft className="w-4 h-4" /> Previous
           </Button>
-          <Button variant="outline" size="sm">
-            Next
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => data.setPage(data.page + 1)}
+            disabled={data.page === totalPages || totalPages === 0 || data.isLoading}
+          >
+            Next <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       </div>

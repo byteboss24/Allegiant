@@ -1,5 +1,5 @@
 // API functions for all resources in the frontend
-import type { ApiError, Invoice, Agent } from "@/lib/props";
+import type { ApiError, Invoice, Agent, CallRecordingItem } from "@/lib/props";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const username = process.env.NEXT_PUBLIC_USERNAME;
@@ -7,8 +7,14 @@ const password = process.env.NEXT_PUBLIC_PASSWORD;
 const credentials = username && password ? btoa(`${username}:${password}`) : undefined;
 
 // Calls APIs
-export async function fetchRecords(page: number, perPage: number) {
-  const response = await fetch(`${API_BASE_URL}/api/v1/records?page=${page}&per_page=${perPage}`);
+export async function fetchRecords(page: number, perPage: number, search: string = "", status: string = ""): Promise<{ items: CallRecordingItem[]; total: number }> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    per_page: perPage.toString(),
+  });
+  if (search) params.append("search", search);
+  if (status && status !== "all") params.append("status", status);
+  const response = await fetch(`${API_BASE_URL}/api/v1/records?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch records');
   return response.json();
 }
@@ -67,8 +73,13 @@ export async function fetchYesterdayStatus() {
 }
 
 // Invoices APIs
-export async function fetchInvoices(): Promise<Invoice[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/invoices`);
+export async function fetchInvoices(page: number = 1, pageSize: number = 10, search: string = ""): Promise<{ items: Invoice[]; total: number }> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+  if (search) params.append("search", search);
+  const response = await fetch(`${API_BASE_URL}/api/v1/invoices?${params.toString()}`);
   if (!response.ok) {
     const errorData: ApiError = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || 'Failed to fetch invoices');

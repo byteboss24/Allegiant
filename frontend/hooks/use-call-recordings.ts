@@ -9,6 +9,15 @@ interface FetchResponse {
   total: number;
 }
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export function useCallRecordings(initialItemsPerPage = 10) {
   const [callRecordings, setCallRecordings] = useState<CallRecordingItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,11 +36,15 @@ export function useCallRecordings(initialItemsPerPage = 10) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMultiDeleteDialog, setShowMultiDeleteDialog] = useState(false);
 
-  // Effect for fetching records based on pagination
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Effect for fetching records based on pagination, search, and status
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetchRecords(currentPage, itemsPerPage)
+    fetchRecords(currentPage, itemsPerPage, debouncedSearchTerm, statusFilter)
       .then((data: FetchResponse) => {
         setTotalItems(data.total);
         setCallRecordings(data.items);
@@ -42,7 +55,7 @@ export function useCallRecordings(initialItemsPerPage = 10) {
         setError(err.message || "Failed to fetch recordings.");
         setLoading(false);
       });
-  }, [currentPage, itemsPerPage]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, statusFilter]);
 
   // Cleanup blob URL on unmount or when audioUrl changes
   useEffect(() => {
@@ -176,5 +189,9 @@ export function useCallRecordings(initialItemsPerPage = 10) {
     confirmMultiDelete,
     setShowDeleteDialog,
     setShowMultiDeleteDialog,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
   };
 } 

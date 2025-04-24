@@ -6,9 +6,9 @@ class RecordService:
     def __init__(self):
         pass
 
-    async def get_records(self, page: int = 1, per_page: int = 10) -> dict:
-        """Get paginated records"""
-        return await mysql_service.get_records(page, per_page)
+    async def get_records(self, page: int = 1, per_page: int = 10, search: str = None, status: str = None) -> dict:
+        """Get paginated, searched, and filtered records"""
+        return await mysql_service.get_records(page, per_page, search, status)
 
     async def get_record_by_id(self, record_id: int) -> Optional[Record]:
         return await mysql_service.get_record(record_id)
