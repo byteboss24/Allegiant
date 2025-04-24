@@ -122,9 +122,6 @@ export function useCallRecordings(initialItemsPerPage = 10) {
     } catch (error) {
       console.error('Error deleting recording:', error);
       toast.error("Failed to delete call recording." );
-      // Optionally keep dialog open on error?
-      // setShowDeleteDialog(false);
-      // setSelectedRecordingForDelete(null);
     }
   }, [selectedRecordingForDelete, toast]);
 
@@ -179,6 +176,8 @@ export function useCallRecordings(initialItemsPerPage = 10) {
     selectedIds: selectedIdsForMultiDelete,
     showDeleteDialog,
     showMultiDeleteDialog,
+    searchTerm,
+    statusFilter,
     setCurrentPage,
     handleSelectCall,
     handleDeleteRequest,
@@ -189,9 +188,7 @@ export function useCallRecordings(initialItemsPerPage = 10) {
     confirmMultiDelete,
     setShowDeleteDialog,
     setShowMultiDeleteDialog,
-    searchTerm,
     setSearchTerm,
-    statusFilter,
     setStatusFilter,
   };
 } 

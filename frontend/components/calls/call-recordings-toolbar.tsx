@@ -11,11 +11,15 @@ import {
 
 // TODO: Implement search and filter logic
 interface CallRecordingsToolbarProps {
+  searchTerm?: string;
+  statusFilter?: string;
   onSearchChange?: (query: string) => void;
   onFilterChange?: (filterValue: string) => void;
 }
 
 export function CallRecordingsToolbar({
+  searchTerm = "",
+  statusFilter = "all",
   onSearchChange,
   onFilterChange,
 }: CallRecordingsToolbarProps) {
@@ -24,10 +28,11 @@ export function CallRecordingsToolbar({
       <Input
         placeholder="Search recordings..."
         className="w-[250px] focus:ring-2 focus:ring-primary/40 transition-all"
+        value={searchTerm}
         onChange={(e) => onSearchChange?.(e.target.value)}
       />
       <Select
-        defaultValue="all"
+        value={statusFilter}
         onValueChange={(value) => onFilterChange?.(value)}
       >
         <SelectTrigger className="w-[180px] h-9 bg-muted/40 border border-gray-200 rounded-lg">

@@ -7,6 +7,7 @@ import { useCallRecordings } from "@/hooks/use-call-recordings";
 import { CallRecordingsToolbar } from "./call-recordings-toolbar";
 import { Sparkle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+
 export function CallRecordings() {
   const {
     callRecordings,
@@ -22,6 +23,8 @@ export function CallRecordings() {
     selectedIds,
     showDeleteDialog,
     showMultiDeleteDialog,
+    searchTerm,
+    statusFilter,
     setCurrentPage,
     handleSelectCall,
     handleDeleteRequest,
@@ -32,16 +35,9 @@ export function CallRecordings() {
     confirmMultiDelete,
     setShowDeleteDialog,
     setShowMultiDeleteDialog,
+    setSearchTerm,
+    setStatusFilter,
   } = useCallRecordings();
-
-  // TODO: Implement search and filter handlers
-  const handleSearch = (query: string) => {
-    console.log("Search query:", query);
-  };
-
-  const handleFilter = (filterValue: string) => {
-    console.log("Filter value:", filterValue);
-  };
 
   return (
     <>
@@ -64,8 +60,10 @@ export function CallRecordings() {
           <Separator className="my-2" />
           <div className="px-6 pt-2 justify-end flex">
             <CallRecordingsToolbar
-              onSearchChange={handleSearch}
-              onFilterChange={handleFilter}
+              searchTerm={searchTerm}
+              statusFilter={statusFilter}
+              onSearchChange={setSearchTerm}
+              onFilterChange={setStatusFilter}
             />
           </div>
           <div className="flex-1 p-0 sm:p-6 h-full min-h-0">
