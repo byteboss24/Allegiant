@@ -80,3 +80,7 @@ class MonthlyInvoiceStats(BaseModel):
 class InvoiceStatusUpdate(BaseModel):
     invoice_number: str
     status: str
+
+class PaginatedInvoicesResponse(BaseModel):
+    items: list[Invoice]
+    total: int

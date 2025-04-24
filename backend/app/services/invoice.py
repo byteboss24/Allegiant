@@ -107,12 +107,13 @@ class InvoiceService:
             logger.error(f"Error deleting invoice: {e}")
             raise
 
-    async def get_invoices(self) -> List[Invoice]:
+    async def get_invoices(self, page: int = 1, page_size: int = 10, search: str = None):
         try:
-            invoices = await mysql_service.get_invoices()
+            invoices, total = await mysql_service.get_invoices(page, page_size, search)
+            print(invoices)
             if not invoices:
-                return []
-            return [Invoice.model_validate(invoice) for invoice in invoices]
+                return {"items": [], "total": 0}
+            return {"items": [Invoice.model_validate(invoice) for invoice in invoices], "total": total}
         except Exception as e:
             logger.error(f"Error getting invoices: {e}")
             raise

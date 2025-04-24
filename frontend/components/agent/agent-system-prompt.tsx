@@ -82,7 +82,7 @@ export function AgentSystemPrompt({
       </div>
       <Textarea
         id="system-prompt"
-        className="min-h-[500px] font-mono text-sm leading-relaxed"
+        className="min-h-[370px] font-mono text-sm leading-relaxed"
         value={systemPrompt}
         onChange={(e) => setSystemPrompt(e.target.value)}
         readOnly={!isEditingSystemPrompt || isLoading || isAgentActive}

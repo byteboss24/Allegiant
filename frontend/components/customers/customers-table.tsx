@@ -81,7 +81,7 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                     case "invoice_number":
                       return <TableCell key={col.key}>{invoice.invoice_number}</TableCell>;
                     case "invoice_date":
-                      return <TableCell key={col.key}>{invoice.invoice_date}</TableCell>;
+                      return <TableCell key={col.key}>{invoice.invoice_date.split('T')[0]}</TableCell>;
                     case "invoice_amount":
                       return <TableCell key={col.key}>{invoice.invoice_amount}</TableCell>;
                     case "fsp_name":

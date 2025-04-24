@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form, Query
 from typing import List
 from fastapi.responses import StreamingResponse
 from app.model.invoice import InvoiceStatusUpdate
@@ -12,7 +12,8 @@ from app.model.invoice import (
     Invoice,
     InvoiceResponse,
     CSVUploadResponse,
-    MonthlyInvoiceStats
+    MonthlyInvoiceStats,
+    PaginatedInvoicesResponse
 )
 from pydantic import BaseModel
 
@@ -36,10 +37,14 @@ async def create_invoice(request: InvoiceCreate):
         )
     return response
 
-@router.get("/invoices", response_model=List[Invoice])
-async def get_invoices():
-    """Get all invoices"""
-    return await invoice_service.get_invoices()
+@router.get("/invoices", response_model=PaginatedInvoicesResponse)
+async def get_invoices(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    search: str = Query(None)
+):
+    """Get paginated and searched invoices"""
+    return await invoice_service.get_invoices(page, page_size, search)
 
 @router.get("/invoices/month", response_model=MonthlyInvoiceStats)
 async def get_monthly_stats():

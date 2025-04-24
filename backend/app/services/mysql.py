@@ -148,13 +148,26 @@ class MySQLService:
         finally:
             connection.close()
 
-    async def get_invoices(self):
-        """Get all invoices"""
+    async def get_invoices(self, page: int = 1, page_size: int = 10, search: str = None):
+        """Get paginated and optionally searched invoices"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices")
-                return cursor.fetchall()
+                offset = (page - 1) * page_size
+                params = []
+                where_clause = ""
+                if search:
+                    where_clause = "WHERE first_name LIKE %s OR last_name LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s"
+                    search_term = f"%{search}%"
+                    params.extend([search_term, search_term, search_term, search_term, search_term])
+                count_sql = f"SELECT COUNT(*) FROM invoices {where_clause}"
+                cursor.execute(count_sql, params)
+                total = cursor.fetchone()[0] if cursor.rowcount else 0
+                sql = f"SELECT * FROM invoices {where_clause} ORDER BY invoice_date DESC LIMIT %s OFFSET %s"
+                params.extend([page_size, offset])
+                cursor.execute(sql, params)
+                items = cursor.fetchall()
+                return items, total
         finally:
             connection.close()
 
