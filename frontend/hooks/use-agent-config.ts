@@ -112,8 +112,8 @@ export function useAgentConfig() {
     // If agent update was successful, attempt to control Twilio call
     if (updatedAgent) {
         try {
-            await controlTwilioCall(action); 
             toast.success(`Agent ${isActive ? 'activated' : 'deactivated'} and call process ${isActive ? 'started' : 'stopped'}.`);
+            await controlTwilioCall(action); 
         } catch (callError) {
             console.error(`Error trying to ${action}:`, callError);
             toast.error(`Agent status updated, but failed to ${action}. Please check backend status.`);

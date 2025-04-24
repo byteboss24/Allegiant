@@ -92,14 +92,14 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                       return <TableCell key={col.key} className="text-center">
                         <Badge
                           variant={
-                            invoice.status === "completed"
+                            invoice.status === "completed" || invoice.status === "sms"
                               ? "default"
                               : invoice.status === "pending"
                               ? "outline"
                               : "destructive"
                           }
                         >
-                          {invoice.status?.toUpperCase()}
+                          {invoice.status?.toUpperCase() === 'SMS' ? 'SMS Sent' : invoice.status?.toUpperCase()}
                         </Badge>
                       </TableCell>;
                     case "actions":

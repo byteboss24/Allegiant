@@ -55,7 +55,7 @@ export function CampaignStats() {
                 <p className="text-[#7477FF]">{stats.total_calls || 0} Connected</p>
               </div>
               <div>
-                <p className="text-[#70DC37]">{stats.completed_calls || 0} Transferred</p>
+                <p className="text-[#70DC37]">{(stats.completed_calls + stats.sms_sent_calls) || 0} Transferred</p>
               </div>
               <div>
                 <p className="text-[#ED9C39]">{stats.sms_sent_calls || 0} SMS Sent</p>
