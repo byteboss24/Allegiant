@@ -15,10 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { WordPronunciationDialog } from "./wordpronunciation-dialog";
+import { WordPronunciationDialog } from "../WordPronunciationDialog";
 import { useAgentConfig } from "@/hooks/use-agent-config";
-import { AgentConfigHeader } from "./agent-config-header";
-import { AgentSystemPrompt } from "./agent-system-prompt";
+import { AgentConfigHeader } from "../AgentConfigHeader";
+import { AgentSystemPrompt } from "../AgentSystemPrompt";
 import { isActiveAtom } from "@/lib/atom";
 import { useAtomValue } from "jotai";
 import { Save } from "lucide-react";

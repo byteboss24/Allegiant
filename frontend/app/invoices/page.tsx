@@ -1,4 +1,4 @@
-import { CustomersList } from "@/components/customers/customers-list";
+import { CustomersList } from "@/components/Customers/CustomersList";
 import {
   Card,
   CardContent,

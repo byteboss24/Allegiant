@@ -31,9 +31,9 @@ import { toast } from "react-toastify";
 import { fetchCustomerDetails as fetchCustomerDetailsApi } from "@/lib/apis";
 import type { Invoice as CustomerDetails } from "@/lib/props";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CallDialogs } from "@/components/calls/call-dialogs";
+import { CallDialogs } from "@/components/Calls/CallDialogs";
 import { useCallRecordings } from "@/hooks/use-call-recordings";
-import { CallHistoryTable } from "@/components/calls/call-history-table";
+import { CallHistoryTable } from "@/components/Calls/CallHistoryTable";
 
 export function CustomerDetails() {
   const router = useRouter();

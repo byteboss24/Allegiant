@@ -1,8 +1,8 @@
 "use client"
 
-import { CustomersToolbar } from "./customers-toolbar"
-import CustomersTable from "./customers-table"
-import { DeleteDialog } from "./delete-dialog"
+import { CustomersToolbar } from "../CustomersToolbar/CustomersToolbar"
+import CustomersTable from "../CustomersTable/CustomersTable"
+import { DeleteDialog } from "../DeleteDialog/DeleteDialog"
 import { Button } from "@/components/ui/button"
 import { useCustomers } from "@/hooks/use-customers"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
