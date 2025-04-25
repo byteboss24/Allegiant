@@ -131,13 +131,13 @@ export const CallList: React.FC<CallListProps> = ({
                         </TableCell>
                         <TableCell className="text-center px-4 py-3">
                           {call.status?.toUpperCase() === "SMS" ? (
-                            <Badge variant="default">CALLED</Badge>
+                            <Badge variant="secondary">CALLED</Badge>
                           ) : null}
                           <Badge
                             variant={
                               call.status === "completed" ||
                               call.status === "sms"
-                                ? "default"
+                                ? "secondary"
                                 : call.status === "no-answer" ||
                                   call.status === "failed" ||
                                   call.status === "busy"

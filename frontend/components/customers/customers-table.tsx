@@ -143,13 +143,14 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                   return (
                     <TableCell key={col.key} className="text-center">
                       {invoice.status?.toUpperCase() === "SMS" ? (
-                        <Badge variant="default">CALLED</Badge>
+                        <Badge variant="secondary">CALLED</Badge>
                       ) : null}
                       <Badge
                         variant={
                           invoice.status === "completed" ||
-                          invoice.status === "sms" ||
-                          invoice.status === "completed2"
+                          invoice.status === "sms"
+                            ? "secondary"
+                            : invoice.status === "completed2"
                             ? "default"
                             : invoice.status === "pending"
                             ? "outline"

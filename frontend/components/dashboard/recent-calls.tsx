@@ -40,12 +40,12 @@ export function RecentCalls() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             {call.status?.toUpperCase() === "SMS" ? (
-              <Badge variant="default">CALLED</Badge>
+              <Badge variant="secondary">CALLED</Badge>
             ) : null}
             <Badge
               variant={
                 call.status === "completed" || call.status === "sms"
-                  ? "default"
+                  ? "secondary"
                   : call.status === "connected"
                   ? "outline"
                   : "destructive"

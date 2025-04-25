@@ -201,7 +201,7 @@ export function CustomerDetails() {
                         customer.status === "completed2"
                           ? "default"
                           : customer.status === "pending" || customer.status === "completed" || customer.status === "sms"
-                          ? "outline"
+                          ? "secondary"
                           : "destructive"
                       }
                       className="text-base px-4 py-1 rounded-full tracking-wide"

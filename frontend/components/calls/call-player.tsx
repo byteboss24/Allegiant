@@ -42,12 +42,12 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
               </p>
               <div className="flex justify-center items-center gap-2 mt-2">
                 {selectedCall.status?.toUpperCase() === "SMS" ? (
-                  <Badge variant="default">CALLED</Badge>
+                  <Badge variant="secondary">CALLED</Badge>
                 ) : null}
                 <Badge
                   variant={
                     selectedCall.status === "completed" || selectedCall.status === "sms"
-                      ? "default"
+                      ? "secondary"
                       : selectedCall.status === "pending"
                       ? "outline"
                       : "destructive"
