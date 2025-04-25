@@ -148,23 +148,27 @@ class MySQLService:
         finally:
             connection.close()
 
-    async def get_invoices(self, page: int = 1, page_size: int = 10, search: str = None):
-        """Get paginated and optionally searched invoices"""
+    async def get_invoices(self, page: int = 1, page_size: int = 10, search: str = None, status: str = "all"):
+        """Get paginated and optionally searched and filtered invoices"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
                 offset = (page - 1) * page_size
                 params = []
-                where_clause = ""
+                where_clauses = []
                 if search:
-                    where_clause = "WHERE first_name LIKE %s OR last_name LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s"
+                    where_clauses.append("(first_name LIKE %s OR last_name LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s)")
                     search_term = f"%{search}%"
-                    params.extend([search_term, search_term, search_term, search_term, search_term])
-                count_sql = f"SELECT COUNT(*) as total FROM invoices {where_clause}"
+                    params.extend([search_term] * 5)
+                if status and status != "all":
+                    where_clauses.append("status = %s")
+                    params.append(status)
+                where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+                count_sql = f"SELECT COUNT(*) as total FROM invoices {where_sql}"
                 cursor.execute(count_sql, params)
                 result = cursor.fetchone()
                 total = result["total"] if result else 0
-                sql = f"SELECT * FROM invoices {where_clause} ORDER BY invoice_date DESC LIMIT %s OFFSET %s"
+                sql = f"SELECT * FROM invoices {where_sql} ORDER BY invoice_date DESC LIMIT %s OFFSET %s"
                 params.extend([page_size, offset])
                 cursor.execute(sql, params)
                 items = cursor.fetchall()
