@@ -70,7 +70,7 @@ async def outbound(request: OutboundRequest) -> str:
                 logger.info(f"Recording started: {recording}")
             if data.status in ['failed', 'busy', 'no-answer', 'canceled']:
                 logger.info(f"Call ended with status: {data.status}")
-                record_status = call_state.invoices[call.sid].get('status', data.status)
+                record_status = data.status
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=0,
