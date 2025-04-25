@@ -70,8 +70,6 @@ async def outbound(request: OutboundRequest) -> str:
                 logger.info(f"Recording started: {recording}")
             if data.status in ['failed', 'busy', 'no-answer', 'canceled']:
                 logger.info(f"Call ended with status: {data.status}")
-                if call_state.sms_sent.get(call.sid):
-                    call_state.invoices[call.sid]['status'] = 'sms'
                 record_status = call_state.invoices[call.sid].get('status', data.status)
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
@@ -86,9 +84,9 @@ async def outbound(request: OutboundRequest) -> str:
             if data.status == 'completed':
                 logger.info(f"Call completed successfully: {recording}")
                 print("Call is completed", call_state.invoices.get(call.sid, {}), call_state.invoices)
-                if call_state.sms_sent.get(call.sid):
-                    call_state.invoices[call.sid]['status'] = 'sms'
-                record_status = call_state.invoices[call.sid].get('status', data.status)
+                record_status = data.status
+                if call_state.invoices[call.sid]['status'] == 'sms':
+                    record_status = 'sms'
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
