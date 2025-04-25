@@ -1,4 +1,11 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +19,7 @@ import {
   PaginationItem,
   PaginationPrevious,
   PaginationNext,
-  PaginationLink
+  PaginationLink,
 } from "@/components/ui/pagination";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,7 +52,10 @@ export const CallList: React.FC<CallListProps> = ({
           <div className="text-red-500 text-center">{error}</div>
         ) : (
           <div className="h-full min-h-0">
-            <ScrollArea className="h-full min-h-0" style={{ scrollBehavior: 'smooth' }}>
+            <ScrollArea
+              className="h-full min-h-0"
+              style={{ scrollBehavior: "smooth" }}
+            >
               <div className="overflow-x-auto rounded-xl shadow-sm">
                 <Table className="min-w-full border-separate border-spacing-0">
                   <TableHeader className="sticky top-0 z-10 bg-white/80 backdrop-blur rounded-t-xl shadow-sm">
@@ -66,21 +76,36 @@ export const CallList: React.FC<CallListProps> = ({
                         />
                       </TableHead>
                       <TableHead className="px-4 py-3">Name</TableHead>
-                      <TableHead className="px-4 py-3">Invoice Number</TableHead>
+                      <TableHead className="px-4 py-3">
+                        Invoice Number
+                      </TableHead>
                       <TableHead className="px-4 py-3">Date & Time</TableHead>
                       <TableHead className="px-4 py-3">Duration</TableHead>
-                      <TableHead className="px-4 py-3 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 text-right">Actions</TableHead>
+                      <TableHead className="px-4 py-3 text-center">
+                        Status
+                      </TableHead>
+                      <TableHead className="px-4 py-3 text-right">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {callRecordings?.map((call, idx) => (
                       <TableRow
                         key={call.id}
-                        className={`transition-all duration-200 cursor-pointer ${selectedCall?.id === call.id ? "bg-blue-50/60 dark:bg-blue-900/30" : idx % 2 === 0 ? "bg-white/80 dark:bg-background/60" : "bg-muted/40 dark:bg-muted/10"} hover:bg-blue-100/60 dark:hover:bg-blue-900/40`}
+                        className={`transition-all duration-200 cursor-pointer ${
+                          selectedCall?.id === call.id
+                            ? "bg-blue-50/60 dark:bg-blue-900/30"
+                            : idx % 2 === 0
+                            ? "bg-white/80 dark:bg-background/60"
+                            : "bg-muted/40 dark:bg-muted/10"
+                        } hover:bg-blue-100/60 dark:hover:bg-blue-900/40`}
                         onClick={() => onSelectCall(call)}
                       >
-                        <TableCell className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        <TableCell
+                          className="px-4 py-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Checkbox
                             checked={selectedIds.includes(call.id)}
                             onCheckedChange={() => onSelectRow(call.id)}
@@ -89,24 +114,42 @@ export const CallList: React.FC<CallListProps> = ({
                         </TableCell>
                         <TableCell className="font-medium px-4 py-3 flex items-center gap-2">
                           <Avatar className="h-7 w-7">
-                            <AvatarFallback>{call.name?.[0]?.toUpperCase() || "?"}</AvatarFallback>
+                            <AvatarFallback>
+                              {call.name?.[0]?.toUpperCase() || "?"}
+                            </AvatarFallback>
                           </Avatar>
                           <span>{call.name}</span>
                         </TableCell>
-                        <TableCell className="font-medium px-4 py-3">{call.invoice_number}</TableCell>
-                        <TableCell className="px-4 py-3">{call.created_at}</TableCell>
-                        <TableCell className="px-4 py-3">{call.duration}</TableCell>
+                        <TableCell className="font-medium px-4 py-3">
+                          {call.invoice_number}
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          {call.created_at}
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          {call.duration}
+                        </TableCell>
                         <TableCell className="text-center px-4 py-3">
+                          {call.status?.toUpperCase() === "SMS" ? (
+                            <Badge variant="default">CALLED</Badge>
+                          ) : null}
                           <Badge
                             variant={
-                              call.status === "completed" || call.status === "sms"
+                              call.status === "completed" ||
+                              call.status === "sms"
                                 ? "default"
-                                : (call.status === "no-answer" || call.status === "failed" || call.status === "busy")
+                                : call.status === "no-answer" ||
+                                  call.status === "failed" ||
+                                  call.status === "busy"
                                 ? "destructive"
                                 : "secondary"
                             }
                           >
-                            {call.status?.toUpperCase() === 'SMS' ? 'SMS Sent' : call.status?.toUpperCase()}
+                            {call.status?.toUpperCase() === "SMS"
+                              ? "SMS Sent"
+                              : call.status?.toUpperCase() === "COMPLETED"
+                              ? "CALLED"
+                              : call.status?.toUpperCase()}
                           </Badge>
                         </TableCell>
                         <TableCell className="flex justify-end px-4 py-3">
@@ -115,7 +158,7 @@ export const CallList: React.FC<CallListProps> = ({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={e => {
+                                onClick={(e) => {
                                   e.stopPropagation();
                                   onSelectCall(call);
                                 }}
@@ -126,7 +169,7 @@ export const CallList: React.FC<CallListProps> = ({
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={e => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 onDelete(call);
                               }}
@@ -146,11 +189,7 @@ export const CallList: React.FC<CallListProps> = ({
       </div>
       <div className="flex items-center justify-between space-x-2 py-4">
         {selectedIds.length > 0 && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={onMultiDelete}
-          >
+          <Button variant="destructive" size="sm" onClick={onMultiDelete}>
             Delete Selected
           </Button>
         )}
@@ -161,26 +200,39 @@ export const CallList: React.FC<CallListProps> = ({
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 aria-disabled={currentPage === 1}
                 tabIndex={currentPage === 1 ? -1 : 0}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                className={
+                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                }
               />
             </PaginationItem>
-            {Array.from({ length: Math.ceil(totalItems / itemsPerPage) }, (_, i) => (
-              <PaginationItem key={i + 1}>
-                <PaginationLink
-                  isActive={currentPage === i + 1}
-                  onClick={() => setCurrentPage(i + 1)}
-                  href="#"
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
+            {Array.from(
+              { length: Math.ceil(totalItems / itemsPerPage) },
+              (_, i) => (
+                <PaginationItem key={i + 1}>
+                  <PaginationLink
+                    isActive={currentPage === i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    href="#"
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            )}
             <PaginationItem>
               <PaginationNext
                 onClick={() => setCurrentPage(currentPage + 1)}
-                aria-disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
-                tabIndex={currentPage >= Math.ceil(totalItems / itemsPerPage) ? -1 : 0}
-                className={currentPage >= Math.ceil(totalItems / itemsPerPage) ? 'pointer-events-none opacity-50' : ''}
+                aria-disabled={
+                  currentPage >= Math.ceil(totalItems / itemsPerPage)
+                }
+                tabIndex={
+                  currentPage >= Math.ceil(totalItems / itemsPerPage) ? -1 : 0
+                }
+                className={
+                  currentPage >= Math.ceil(totalItems / itemsPerPage)
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
               />
             </PaginationItem>
           </PaginationContent>
@@ -188,4 +240,4 @@ export const CallList: React.FC<CallListProps> = ({
       </div>
     </>
   );
-}; 
+};

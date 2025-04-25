@@ -40,7 +40,8 @@ export function CallRecordingsToolbar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Calls</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="completed">Called</SelectItem>
+          <SelectItem value="completed2">Completed</SelectItem>
           <SelectItem value="transferred">Transferred</SelectItem>
           <SelectItem value="sms">SMS Sent</SelectItem>
           <SelectItem value="failed">Failed</SelectItem>

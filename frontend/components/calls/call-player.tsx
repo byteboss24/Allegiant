@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import React, { RefObject } from "react";
@@ -24,25 +30,40 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
           <>
             <div className="flex flex-col items-center gap-2">
               <Avatar className="h-16 w-16 mb-2 shadow-md">
-                <AvatarFallback>{selectedCall.name?.[0]?.toUpperCase() || "?"}</AvatarFallback>
+                <AvatarFallback>
+                  {selectedCall.name?.[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
               </Avatar>
-              <h3 className="font-semibold text-lg">{selectedCall.first_name} {selectedCall.last_name}</h3>
-              <p className="text-sm text-muted-foreground">{selectedCall.created_at}</p>
+              <h3 className="font-semibold text-lg">
+                {selectedCall.first_name} {selectedCall.last_name}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {selectedCall.created_at}
+              </p>
               <div className="flex justify-center items-center gap-2 mt-2">
+                {selectedCall.status?.toUpperCase() === "SMS" ? (
+                  <Badge variant="default">CALLED</Badge>
+                ) : null}
                 <Badge
                   variant={
-                    selectedCall.status === "Transferred"
+                    selectedCall.status === "completed" || selectedCall.status === "sms"
                       ? "default"
-                      : selectedCall.status === "SMS Sent"
-                        ? "outline"
-                        : selectedCall.status === "No Answer"
-                          ? "destructive"
-                          : "secondary"
+                      : selectedCall.status === "pending"
+                      ? "outline"
+                      : "destructive"
                   }
                 >
-                  {selectedCall.status}
+                  {selectedCall.status?.toUpperCase() === "SMS"
+                    ? "SMS Sent"
+                    : selectedCall.status?.toUpperCase() === "COMPLETED"
+                    ? "CALLED"
+                    : selectedCall.status?.toUpperCase() === "COMPLETED2"
+                    ? "CALLED"
+                    : selectedCall.status?.toUpperCase()}
                 </Badge>
-                <span className="text-sm text-muted-foreground">{selectedCall.duration}</span>
+                <span className="text-sm text-muted-foreground">
+                  {selectedCall.duration}
+                </span>
               </div>
             </div>
             <Separator className="my-2" />
@@ -57,7 +78,9 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
                   </audio>
                   {audioLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10 rounded-lg">
-                      <span className="text-muted-foreground text-sm">Loading audio...</span>
+                      <span className="text-muted-foreground text-sm">
+                        Loading audio...
+                      </span>
                     </div>
                   )}
                 </div>
@@ -69,7 +92,7 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
               <textarea
                 className="w-full h-40 p-3 border border-gray-200 rounded-lg bg-muted/30 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
                 id="transcript"
-                value={selectedCall?.transcript || ''}
+                value={selectedCall?.transcript || ""}
                 readOnly
               />
             </div>
@@ -78,7 +101,7 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
           <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24" 
+              width="24"
               height="24"
               viewBox="0 0 24 24"
               fill="none"
@@ -96,4 +119,4 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

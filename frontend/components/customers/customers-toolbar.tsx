@@ -38,7 +38,9 @@ export const CustomersToolbar: React.FC<CustomersToolbarExtendedProps> = ({
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="completed">Called</SelectItem>
+            <SelectItem value="completed2">Completed</SelectItem>
+            <SelectItem value="sms">SMS Sent</SelectItem>
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>

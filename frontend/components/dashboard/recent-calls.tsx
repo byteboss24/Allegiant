@@ -39,12 +39,19 @@ export function RecentCalls() {
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            {call.status?.toUpperCase() === "SMS" ? (
+              <Badge variant="default">CALLED</Badge>
+            ) : null}
             <Badge
               variant={
-                call.status === "completed" ? "default" : call.status === "connected" ? "outline" : "destructive"
+                call.status === "completed" || call.status === "sms"
+                  ? "default"
+                  : call.status === "connected"
+                  ? "outline"
+                  : "destructive"
               }
             >
-              {call.status?.toUpperCase()}
+              {call.status?.toUpperCase() === "COMPLETED" ? "CALLED" : call.status?.toUpperCase() === "SMS" ? "SMS Sent" : call.status?.toUpperCase()}
             </Badge>
           </div>
         </div>
@@ -52,57 +59,3 @@ export function RecentCalls() {
     </div>
   )
 }
-
-const recentCalls = [
-  {
-    id: "1",
-    customer: {
-      name: "John Smith",
-      initials: "JS",
-    },
-    time: "10:24 AM",
-    duration: "3m 12s",
-    status: "Completed",
-  },
-  {
-    id: "2",
-    customer: {
-      name: "Sarah Johnson",
-      initials: "SJ",
-    },
-    time: "10:16 AM",
-    duration: "2m 44s",
-    status: "Connected",
-  },
-  {
-    id: "3",
-    customer: {
-      name: "Michael Brown",
-      initials: "MB",
-    },
-    time: "10:12 AM",
-    duration: "0m 32s",
-    status: "Failed",
-  },
-  {
-    id: "4",
-    customer: {
-      name: "Emma Wilson",
-      initials: "EW",
-    },
-    time: "10:08 AM",
-    duration: "4m 17s",
-    status: "Completed",
-  },
-  {
-    id: "5",
-    customer: {
-      name: "David Taylor",
-      initials: "DT",
-    },
-    time: "9:52 AM",
-    duration: "1m 08s",
-    status: "Connected",
-  },
-]
-

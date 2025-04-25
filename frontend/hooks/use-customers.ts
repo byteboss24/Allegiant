@@ -208,7 +208,7 @@ export const useCustomers = () => {
   // Confirm mark as completed
   const confirmMarkCompleted = useCallback(async () => {
     if (!invoiceToComplete) return;
-    await handleStatusUpdate(invoiceToComplete, 'completed');
+    await handleStatusUpdate(invoiceToComplete, 'completed2');
     setShowCompleteConfirm(false);
     setInvoiceToComplete(null);
   }, [invoiceToComplete, handleStatusUpdate]);

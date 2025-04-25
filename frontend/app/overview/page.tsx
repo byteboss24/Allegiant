@@ -250,7 +250,10 @@ export default function OverviewPage() {
                       %
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {completedOverAvg}% of last week's avg completed calls
+                      <span className="font-semibold text-purple-500">
+                        {completedOverAvg}%
+                      </span>{" "}
+                      of last week's avg completed calls
                     </p>
                   </>
                 )}

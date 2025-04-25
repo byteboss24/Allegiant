@@ -431,8 +431,8 @@ class MySQLService:
                         SELECT 
                             DATE(created_at) as date,
                             COUNT(*) as total_calls,
-                            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_calls,
-                            SUM(CASE WHEN status != 'completed' THEN 1 ELSE 0 END) as other_calls
+                            SUM(CASE WHEN status = 'completed' OR status = 'sms' THEN 1 ELSE 0 END) as completed_calls,
+                            SUM(CASE WHEN status != 'completed' AND status != 'sms' THEN 1 ELSE 0 END) as other_calls
                         FROM calls 
                         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
                         GROUP BY DATE(created_at)
