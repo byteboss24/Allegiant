@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -15,16 +16,34 @@ const STATIC_PASSWORD = '123456'; // Change as needed
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const storedAuth = localStorage.getItem('isAuthenticated');
-    setIsAuthenticated(storedAuth === 'true');
-  }, []);
+    const loginTime = localStorage.getItem('loginTimestamp');
+    if (storedAuth === 'true' && loginTime) {
+      const now = Date.now();
+      const loginTimestamp = parseInt(loginTime, 10);
+      // 1 hour = 3600000 ms
+      if (now - loginTimestamp < 3600000) {
+        setIsAuthenticated(true);
+      } else {
+        // Session expired
+        setIsAuthenticated(false);
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('loginTimestamp');
+        router.replace('/auth');
+      }
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, [router]);
 
   const login = async (username: string, password: string) => {
     if (username === STATIC_USERNAME && password === STATIC_PASSWORD) {
       setIsAuthenticated(true);
       localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('loginTimestamp', Date.now().toString());
       return true;
     }
     return false;
@@ -33,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('loginTimestamp');
   };
 
   return (
