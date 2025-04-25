@@ -100,12 +100,6 @@ export default function AuthPage() {
             </button>
           </div>
         </form>
-         <div className="pt-6">
-            <hr className="border-t border-gray-300" />
-            <div className="mt-6 text-center">
-                <span className="text-sm text-gray-500">⭐ Trustpilot</span>
-            </div>
-        </div>
       </div>
     </div>
   );

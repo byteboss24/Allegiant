@@ -37,8 +37,8 @@ export function CampaignStats() {
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold">{"April"}</h3>
-                <p className="text-sm text-muted-foreground">Outstanding invoices from April {""}</p>
+                <h3 className="font-semibold">{new Date().toLocaleString('default', { month: 'long' })}</h3>
+                <p className="text-sm text-muted-foreground">Outstanding invoices from {new Date().toLocaleString('default', { month: 'long' })}</p>
               </div>
               <div className="text-right">
                 <p className="font-medium font-semibold">{stats.completion_rate}%</p>

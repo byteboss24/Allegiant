@@ -81,37 +81,44 @@ export function AgentConfigHeader({
         </CardTitle>
         <CardDescription>Configure your AI voice agent's settings</CardDescription>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="min-w-[200px]">
-          <Select
-            value={selectedAgentId ? String(selectedAgentId) : ''}
-            onValueChange={(value) => handleAgentSelect(Number(value))}
-            disabled={isLoading || isEditingName || isActive}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select an agent" />
-            </SelectTrigger>
-            <SelectContent>
-              {agents?.map(agent => (
-                <SelectItem key={agent.id} value={String(agent.id)}>
-                  {agent.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col items-end">
+        <div className="flex items-center gap-4">
+          <div className="min-w-[200px]">
+            <Select
+              value={selectedAgentId ? String(selectedAgentId) : ''}
+              onValueChange={(value) => handleAgentSelect(Number(value))}
+              disabled={isLoading || isEditingName || isActive}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {agents?.map(agent => (
+                  <SelectItem key={agent.id} value={String(agent.id)}>
+                    {agent.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedAgent && (
+            <>
+              <Badge variant={selectedAgent.status === 'active' ? "default" : "destructive"}>
+                {selectedAgent.status === 'active' ? "Active" : "Inactive"}
+              </Badge>
+              <div className="flex flex-col items-center">
+                <Switch
+                  checked={selectedAgent.status === 'active'}
+                  onCheckedChange={handleStatusChange}
+                  aria-label="Toggle agent status"
+                  disabled={isLoading || isEditingName}
+                />
+              </div>
+            </>
+          )}
         </div>
         {selectedAgent && (
-          <>
-            <Badge variant={selectedAgent.status === 'active' ? "default" : "destructive"}>
-              {selectedAgent.status === 'active' ? "Active" : "Inactive"}
-            </Badge>
-            <Switch
-              checked={selectedAgent.status === 'active'}
-              onCheckedChange={handleStatusChange}
-              aria-label="Toggle agent status"
-              disabled={isLoading || isEditingName}
-            />
-          </>
+          <span className="text-xs text-muted-foreground mt-2 block">From 9:00 AM to 6:00 PM</span>
         )}
       </div>
     </div>
