@@ -73,12 +73,13 @@ export async function fetchYesterdayStatus() {
 }
 
 // Invoices APIs
-export async function fetchInvoices(page: number = 1, pageSize: number = 10, search: string = ""): Promise<{ items: Invoice[]; total: number }> {
+export async function fetchInvoices(page: number = 1, pageSize: number = 10, search: string = "", status: string = "all"): Promise<{ items: Invoice[]; total: number }> {
   const params = new URLSearchParams({
     page: page.toString(),
     page_size: pageSize.toString(),
   });
   if (search) params.append("search", search);
+  if (status && status !== "all") params.append("status", status);
   const response = await fetch(`${API_BASE_URL}/api/v1/invoices?${params.toString()}`);
   if (!response.ok) {
     const errorData: ApiError = await response.json().catch(() => ({}));

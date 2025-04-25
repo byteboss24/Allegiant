@@ -41,11 +41,12 @@ async def create_invoice(request: InvoiceCreate):
 async def get_invoices(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
-    search: str = Query(None)
+    search: str = Query(None),
+    status: str = Query("all")
 ):
-    """Get paginated and searched invoices"""
+    """Get paginated and searched invoices, optionally filtered by status"""
     print("getting invoices", page, page_size, search)
-    return await invoice_service.get_invoices(page, page_size, search)
+    return await invoice_service.get_invoices(page, page_size, search, status)
 
 @router.get("/invoices/month", response_model=MonthlyInvoiceStats)
 async def get_monthly_stats():

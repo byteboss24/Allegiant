@@ -25,7 +25,7 @@ export const useCustomers = () => {
   const fetchInvoicesCallback = useCallback(async () => {
     setIsLoading(true)
     try {
-      const data = await fetchInvoices(page, pageSize, searchTerm)
+      const data = await fetchInvoices(page, pageSize, searchTerm, statusFilter)
       setInvoices(data.items)
       setTotalInvoices(data.total)
     } catch (error) {
@@ -34,7 +34,7 @@ export const useCustomers = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [toast, page, pageSize, searchTerm])
+  }, [toast, page, pageSize, searchTerm, statusFilter])
 
   useEffect(() => {
     fetchInvoicesCallback()
