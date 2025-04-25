@@ -102,7 +102,7 @@ export function AgentConfigHeader({
         </div>
         {selectedAgent && (
           <>
-            <Badge variant={selectedAgent.status === 'active' ? "default" : "secondary"}>
+            <Badge variant={selectedAgent.status === 'active' ? "default" : "destructive"}>
               {selectedAgent.status === 'active' ? "Active" : "Inactive"}
             </Badge>
             <Switch

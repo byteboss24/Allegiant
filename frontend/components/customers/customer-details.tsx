@@ -189,7 +189,9 @@ export function CustomerDetails() {
                     <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
                       {customer.status === "completed2" ? (
                         <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      ) : customer.status === "pending" || customer.status === "completed" || customer.status === "sms" ? (
+                      ) : customer.status === "pending" ||
+                        customer.status === "completed" ||
+                        customer.status === "sms" ? (
                         <Clock className="w-4 h-4 text-yellow-500" />
                       ) : (
                         <XCircle className="w-4 h-4 text-red-500" />
@@ -200,13 +202,21 @@ export function CustomerDetails() {
                       variant={
                         customer.status === "completed2"
                           ? "default"
-                          : customer.status === "pending" || customer.status === "completed" || customer.status === "sms"
+                          : customer.status === "pending" ||
+                            customer.status === "completed" ||
+                            customer.status === "sms"
                           ? "secondary"
                           : "destructive"
                       }
                       className="text-base px-4 py-1 rounded-full tracking-wide"
                     >
-                      {customer.status?.toUpperCase()}
+                      {customer.status?.toUpperCase() === "SMS"
+                        ? "SMS Sent"
+                        : customer.status?.toUpperCase() === "COMPLETED"
+                        ? "CALLED"
+                        : customer.status?.toUpperCase() === "COMPLETED2"
+                        ? "COMPLETED"
+                        : customer.status?.toUpperCase()}
                     </Badge>
                   </div>
                 </div>
