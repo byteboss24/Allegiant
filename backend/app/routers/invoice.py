@@ -152,6 +152,17 @@ async def export_invoices_csv():
         invoice_dict = invoice.model_dump()
         if invoice_dict.get('invoice_date'):
             invoice_dict['invoice_date'] = invoice_dict['invoice_date'].strftime('%Y-%m-%d')
+        match invoice_dict.get('status'):
+            case 'completed':
+                invoice_dict['status'] = 'Called'
+            case 'pending':
+                invoice_dict['status'] = 'Pending'
+            case 'sms':
+                invoice_dict['status'] = 'SMS Sent'
+            case 'completed2':
+                invoice_dict['status'] = 'Completed'
+            case _:
+                invoice_dict['status'] = invoice_dict['status'].upper()
         writer.writerow(invoice_dict)
     # Create a StreamingResponse with the CSV data
     output.seek(0)
