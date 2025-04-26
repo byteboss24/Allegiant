@@ -1,22 +1,59 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import React from "react";
-import type { CallPlayerProps } from "@/lib/props";
+import React, { useRef, useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { fetchAudio } from "@/lib/apis";
+import { toast } from "react-toastify";
 
-export const CallPlayer: React.FC<CallPlayerProps> = ({
-  selectedCall,
-  audioLoading,
-  audioUrl,
-  audioRef,
-}) => {
+interface CallPlayerProps {
+  selectedCall: any;
+}
+
+export const CallPlayer: React.FC<CallPlayerProps> = ({ selectedCall }) => {
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (!selectedCall) return;
+    let isCancelled = false;
+    const loadAudio = async () => {
+      setAudioLoading(true);
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+        setAudioUrl(null);
+      }
+      try {
+        const blob = await fetchAudio(selectedCall.audio_url);
+        const url = URL.createObjectURL(blob);
+        if (isCancelled) return;
+        setAudioUrl(url);
+        setAudioLoading(false);
+        setTimeout(() => {
+          if (audioRef.current) {
+            const audio = audioRef.current;
+            const onCanPlay = () => {
+              audio.play().catch(e => console.error("Error playing audio:", e));
+              audio.removeEventListener('canplaythrough', onCanPlay);
+            };
+            audio.addEventListener('canplaythrough', onCanPlay);
+            audio.load();
+          }
+        }, 0);
+      } catch (error) {
+        if (isCancelled) return;
+        setAudioLoading(false);
+        console.error('Error fetching/playing audio:', error);
+        toast.error("Failed to load or play audio recording.");
+      }
+    };
+    loadAudio();
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedCall]);
+
   return (
     <Card className="h-full bg-white/80 dark:bg-background/70 shadow-lg border border-blue-100 dark:border-blue-900 rounded-2xl backdrop-blur flex flex-col">
       <CardHeader className="pb-2">

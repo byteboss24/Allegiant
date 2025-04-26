@@ -1,5 +1,12 @@
 import type React from "react"
 
+export interface IconProps {
+  id?: string
+  className?: string
+  width?: string
+  height?: string
+}
+
 export interface CallRecordingItem {
   id: string
   audio_url: string
@@ -37,7 +44,6 @@ export interface CallPlayerProps {
   selectedCall: CallRecordingItem | null
   audioLoading: boolean
   audioUrl: string | null
-  audioRef: React.RefObject<HTMLAudioElement>
 }
 
 export interface CallDialogsProps {

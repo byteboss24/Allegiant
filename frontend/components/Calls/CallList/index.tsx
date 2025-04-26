@@ -33,12 +33,12 @@ export const CallList: React.FC<CallListProps> = ({
   currentPage,
   totalItems,
   itemsPerPage,
-  onSelectCall,
   onSelectRow,
   onSelectAll,
   onDelete,
   onMultiDelete,
   setCurrentPage,
+  onSelectCall,
 }) => {
   return (
     <>
@@ -94,13 +94,10 @@ export const CallList: React.FC<CallListProps> = ({
                       <TableRow
                         key={call.id}
                         className={`transition-all duration-200 cursor-pointer ${
-                          selectedCall?.id === call.id
-                            ? "bg-blue-50/60 dark:bg-blue-900/30"
-                            : idx % 2 === 0
+                          idx % 2 === 0
                             ? "bg-white/80 dark:bg-background/60"
                             : "bg-muted/40 dark:bg-muted/10"
-                        } hover:bg-blue-100/60 dark:hover:bg-blue-900/40`}
-                        onClick={() => onSelectCall(call)}
+                        } hover:bg-blue-100/60 dark:hover:bg-blue-900/40 ${selectedCall && selectedCall.id === call.id ? 'ring-2 ring-blue-400' : ''}`}
                       >
                         <TableCell
                           className="px-4 py-3"
@@ -158,10 +155,7 @@ export const CallList: React.FC<CallListProps> = ({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectCall(call);
-                                }}
+                                onClick={() => onSelectCall(call)}
                               >
                                 <Play className="h-4 w-4" />
                               </Button>

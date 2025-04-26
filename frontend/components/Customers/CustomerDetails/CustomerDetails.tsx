@@ -28,12 +28,32 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { fetchCustomerDetails as fetchCustomerDetailsApi } from "@/lib/apis";
-import type { Invoice as CustomerDetails } from "@/lib/props";
+import { fetchCustomerDetails as fetchCustomerDetailsApi, fetchRecords } from "@/lib/apis";
+import type { Invoice as CustomerDetails, CallRecordingItem } from "@/lib/props";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CallDialogs } from "@/components/Calls/CallDialogs";
-import { useCallRecordings } from "@/hooks/use-call-recordings";
-import { CallHistoryTable } from "@/components/Calls/CallHistoryTable";
+import CallHistoryTable from "@/components/Calls/CallHistoryTable";
+
+// --- useCallRecordings minimal ---
+function useCallRecordingsMinimal() {
+  const [callRecordings, setCallRecordings] = useState<CallRecordingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // If you want to add search/pagination, add here
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetchRecords(1, 100, "", "all")
+      .then((data: { items: CallRecordingItem[] }) => {
+        setCallRecordings(data.items);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to fetch recordings.");
+        setLoading(false);
+      });
+  }, []);
+  return { callRecordings, loading, error };
+}
 
 export function CustomerDetails() {
   const router = useRouter();
@@ -44,13 +64,7 @@ export function CustomerDetails() {
     callRecordings,
     loading,
     error,
-    showDeleteDialog,
-    showMultiDeleteDialog,
-    confirmDelete,
-    confirmMultiDelete,
-    setShowDeleteDialog,
-    setShowMultiDeleteDialog,
-  } = useCallRecordings();
+  } = useCallRecordingsMinimal();
 
   const [customer, setCustomer] = useState<CustomerDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -260,14 +274,6 @@ export function CustomerDetails() {
                   callRecordings={filteredCallRecordings}
                   loading={loading}
                   error={error}
-                />
-                <CallDialogs
-                  showDeleteDialog={showDeleteDialog}
-                  showMultiDeleteDialog={showMultiDeleteDialog}
-                  setShowDeleteDialog={setShowDeleteDialog}
-                  setShowMultiDeleteDialog={setShowMultiDeleteDialog}
-                  confirmDelete={confirmDelete}
-                  confirmMultiDelete={confirmMultiDelete}
                 />
               </CardContent>
             </TabsContent>
