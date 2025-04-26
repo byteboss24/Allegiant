@@ -241,3 +241,5 @@ export const CallList: React.FC<CallListProps> = ({
     </>
   );
 };
+
+export default CallList;

@@ -6,8 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import React, { RefObject } from "react";
+import React from "react";
 import type { CallPlayerProps } from "@/lib/props";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -120,3 +119,5 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({
     </Card>
   );
 };
+
+export default CallPlayer;

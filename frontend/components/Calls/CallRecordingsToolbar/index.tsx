@@ -17,12 +17,12 @@ interface CallRecordingsToolbarProps {
   onFilterChange?: (filterValue: string) => void;
 }
 
-export function CallRecordingsToolbar({
+const CallRecordingsToolbar: React.FC<CallRecordingsToolbarProps> = ({
   searchTerm = "",
   statusFilter = "all",
   onSearchChange,
   onFilterChange,
-}: CallRecordingsToolbarProps) {
+}: CallRecordingsToolbarProps) => {
   return (
     <div className="flex items-center gap-3">
       <Input
@@ -50,3 +50,5 @@ export function CallRecordingsToolbar({
     </div>
   );
 }
+
+export default CallRecordingsToolbar;

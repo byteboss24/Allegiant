@@ -6,7 +6,7 @@ import {useState, useEffect} from "react"
 import { fetchRecentCalls as fetchRecentCallsApi } from "@/lib/apis"
 import { RecentCall } from "@/lib/props"
 
-export function RecentCalls() {
+export default function RecentCalls() {
   const [calls, setCalls] = useState<RecentCall[]>([])
   const [isLoading, setIsLoading] = useState(true)
 

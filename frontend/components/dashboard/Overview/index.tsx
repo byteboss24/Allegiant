@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import type { WeeklyStats } from "@/lib/props"
 
-export function Overview() {
+export default function Overview() {
   const [data, setData] = useState<WeeklyStats[]>([])
   const [isLoading, setIsLoading] = useState(true)
 

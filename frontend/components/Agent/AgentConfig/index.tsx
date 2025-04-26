@@ -23,7 +23,7 @@ import { isActiveAtom } from "@/lib/atom";
 import { useAtomValue } from "jotai";
 import { Save } from "lucide-react";
 
-export function AgentConfig() {
+export default function AgentConfig() {
   const {
     selectedAgentId,
     selectedAgent,

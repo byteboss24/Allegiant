@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/card";
 import { Sparkle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { AgentConfig } from "@/components/Agent/AgentConfig";
+import AgentConfig from "@/components/Agent/AgentConfig";
 
 export default function AgentPage() {
   return (

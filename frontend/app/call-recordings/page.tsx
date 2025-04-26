@@ -1,10 +1,10 @@
 "use client";
 
-import { CallList } from "@/components/Calls/CallList";
-import { CallPlayer } from "@/components/Calls/CallPlayer";
-import { CallDialogs } from "@/components/Calls/CallDialogs";
+import CallList from "@/components/Calls/CallList";
+import CallPlayer from "@/components/Calls/CallPlayer";
+import CallDialogs from "@/components/Calls/CallDialogs";
+import CallRecordingsToolbar from "@/components/Calls/CallRecordingsToolbar";
 import { useCallRecordings } from "@/hooks/use-call-recordings";
-import { CallRecordingsToolbar } from "@/components/Calls/CallRecordingsToolbar";
 import { Sparkle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 

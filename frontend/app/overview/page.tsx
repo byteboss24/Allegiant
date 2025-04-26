@@ -9,9 +9,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { Overview } from "@/components/dashboard/Overview";
-import { RecentCalls } from "@/components/dashboard/RecentCalls";
-import { CampaignStats } from "@/components/dashboard/campaign-stats";
+import Overview from "@/components/dashboard/Overview";
+import RecentCalls from "@/components/dashboard/RecentCalls";
+import CampaignStats from "@/components/dashboard/CampaignStats";
 import { Spinner } from "@/components/ui/spinner";
 import {
   fetchTodayStatus,
