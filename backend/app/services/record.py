@@ -8,7 +8,10 @@ class RecordService:
 
     async def get_records(self, page: int = 1, per_page: int = 10, search: str = None, status: str = None) -> dict:
         """Get paginated, searched, and filtered records"""
-        return await mysql_service.get_records(page, per_page, search, status)
+        print("Get Records", page, per_page, search, status)
+        data = await mysql_service.get_records(page, per_page, search, status)
+        print(data)
+        return data
 
     async def get_record_by_id(self, record_id: int) -> Optional[Record]:
         return await mysql_service.get_record(record_id)
@@ -23,7 +26,7 @@ class RecordService:
         formatted_data = []
         for item in raw_data:
             formatted_data.append({
-                "date": item["date"].isoformat(),  # Convert date to string
+                "date": item["date"].isoformat(),
                 "total_calls": int(item["total_calls"]),
                 "completed_calls": int(item["completed_calls"]),
                 "other_calls": int(item["other_calls"])
@@ -61,6 +64,7 @@ class RecordService:
         # Ensure None values are replaced with 0 for int fields
         data["completed_calls"] = data["completed_calls"] if data["completed_calls"] is not None else 0
         data["other_calls"] = data["other_calls"] if data["other_calls"] is not None else 0
+        data["total_calls"] = data["total_calls"] if data["total_calls"] is not None else 0
         return TodayStatus(**data)
 
 record_service = RecordService()

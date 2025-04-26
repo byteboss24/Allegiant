@@ -368,6 +368,7 @@ class MySQLService:
 
     async def get_records(self, page: int = 1, per_page: int = 10, search: str = None, status: str = None):
         """Get all records with pagination, search, and status filter (not deleted)"""
+        print(page, per_page, search, status)
         offset = (page - 1) * per_page
         params = []
         where_clauses = ["c.is_deleted = 0"]
@@ -470,8 +471,8 @@ class MySQLService:
                     LEFT JOIN invoices i ON c.invoice_number = i.invoice_number
                     WHERE c.is_deleted = 0
                     ORDER BY c.created_at DESC
-                    LIMIT %s
-                """, (limit,))
+                    LIMIT 5
+                """,)
                 return cursor.fetchall()
         finally:
             connection.close()
