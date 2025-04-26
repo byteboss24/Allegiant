@@ -8,9 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { Overview } from "@/components/dashboard/overview";
-import { RecentCalls } from "@/components/dashboard/recent-calls";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { Overview } from "@/components/dashboard/Overview";
+import { RecentCalls } from "@/components/dashboard/RecentCalls";
 import { CampaignStats } from "@/components/dashboard/campaign-stats";
 import { Spinner } from "@/components/ui/spinner";
 import {
