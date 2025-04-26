@@ -5,7 +5,7 @@ import CustomersTable from "../CustomersTable"
 import { DeleteDialog } from "../DeleteDialog"
 import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { useAtom } from "jotai"
 import { invoiceTableAllColumns, invoiceTableSelectedColumnsAtom } from "@/lib/atom"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -31,8 +31,8 @@ export function CustomersList() {
   const [totalInvoices, setTotalInvoices] = useState(0)
   const router = useRouter()
 
-  // Fetch invoices with pagination and search
-  async function fetchInvoicesCallback() {
+  // Memoized fetch callback
+  const fetchInvoicesCallback = useCallback(async () => {
     setIsLoading(true)
     try {
       const data = await fetchInvoices(page, pageSize, searchTerm, statusFilter)
@@ -44,15 +44,14 @@ export function CustomersList() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [page, pageSize, searchTerm, statusFilter])
 
   useEffect(() => {
     fetchInvoicesCallback()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, searchTerm, statusFilter])
+  }, [fetchInvoicesCallback])
 
-  // Handle file upload
-  async function handleUpload(event) {
+  // Memoized handlers
+  const handleUpload = useCallback(async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -84,14 +83,13 @@ export function CustomersList() {
       setIsUploading(false)
       event.target.value = ''
     }
-  }
+  }, [fetchInvoicesCallback])
 
-  function navigateToInvoice(invoiceNumber) {
+  const navigateToInvoice = useCallback((invoiceNumber) => {
     router.push(`/invoices/${invoiceNumber}`)
-  }
+  }, [router])
 
-  // Handle export
-  async function handleExport() {
+  const handleExport = useCallback(async () => {
     setIsExporting(true)
     try {
       const response = await exportInvoicesCsv()
@@ -141,10 +139,9 @@ export function CustomersList() {
     } finally {
       setIsExporting(false)
     }
-  }
+  }, [])
 
-  // Handle status update
-  async function handleStatusUpdate(invoiceNumber, status) {
+  const handleStatusUpdate = useCallback(async (invoiceNumber, status) => {
     try {
       await updateInvoiceStatus(invoiceNumber, status)
       setInvoices(prevInvoices => 
@@ -159,28 +156,25 @@ export function CustomersList() {
       console.error('Error updating status:', error)
       toast.error("Update failed" )
     }
-  }
+  }, [])
 
-  // Handle invoice selection
-  function handleSelectInvoice(invoiceNumber) {
+  const handleSelectInvoice = useCallback((invoiceNumber) => {
     setSelectedInvoices(prev => {
       if (prev.includes(invoiceNumber)) {
         return prev.filter(id => id !== invoiceNumber)
       }
       return [...prev, invoiceNumber]
     })
-  }
+  }, [])
 
-  // Handle select all invoices
-  function handleSelectAll() {
+  const handleSelectAll = useCallback(() => {
     setSelectedInvoices(prev => {
       const allSelected = prev.length === invoices.length;
       return allSelected ? [] : invoices.map(invoice => invoice.invoice_number);
     });
-  }
+  }, [invoices]);
 
-  // Handle delete invoices
-  async function handleDeleteInvoices() {
+  const handleDeleteInvoices = useCallback(async () => {
     if (selectedInvoices.length === 0) {
       toast.error("Please select at least one invoice to delete" )
       return
@@ -200,39 +194,90 @@ export function CustomersList() {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
     }
-  }
+  }, [selectedInvoices]);
 
-  // Handle single invoice delete
-  function handleSingleInvoiceDelete(invoiceNumber) {
+  const handleSingleInvoiceDelete = useCallback((invoiceNumber) => {
     setSelectedInvoices([invoiceNumber])
     setShowDeleteConfirm(true)
-  }
+  }, [])
 
-  // Open confirm dialog for marking as completed
-  function requestMarkCompleted(invoiceNumber) {
+  const requestMarkCompleted = useCallback((invoiceNumber) => {
     setInvoiceToComplete(invoiceNumber);
     setShowCompleteConfirm(true);
-  }
+  }, []);
 
-  // Confirm mark as completed
-  async function confirmMarkCompleted() {
+  const confirmMarkCompleted = useCallback(async () => {
     if (!invoiceToComplete) return;
     await handleStatusUpdate(invoiceToComplete, 'completed2');
     setShowCompleteConfirm(false);
     setInvoiceToComplete(null);
-  }
+  }, [invoiceToComplete, handleStatusUpdate]);
 
   const [selectedColumns, setSelectedColumns] = useAtom(invoiceTableSelectedColumnsAtom);
   const allColumns = invoiceTableAllColumns;
-  const handleSelectColumn = (columnKey) => {
+  const handleSelectColumn = useCallback((columnKey) => {
     setSelectedColumns(prev =>
       prev.includes(columnKey)
         ? prev.filter(key => key !== columnKey)
         : [...prev, columnKey]
     );
-  };
+  }, [setSelectedColumns]);
 
-  const totalPages = Math.ceil(totalInvoices / pageSize);
+  // Memoized derived value
+  const totalPages = useMemo(() => Math.ceil(totalInvoices / pageSize), [totalInvoices, pageSize]);
+
+  // Memoized Pagination Controls
+  const PaginationControls = React.memo(() => (
+    <div className="flex items-center justify-between mt-4">
+      <div className="text-sm text-muted-foreground">
+        Showing <strong>{invoices?.length}</strong> of <strong>{totalInvoices}</strong> customers
+        {selectedInvoices.length > 0 && (
+          <span className="ml-2">
+            (<strong>{selectedInvoices.length}</strong> selected)
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs px-2">
+          Page <strong>{page}</strong> of <strong>{totalPages || 1}</strong>
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(page - 1)}
+          disabled={page === 1 || isLoading}
+        >
+          <ChevronLeft className="w-4 h-4" /> Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(page + 1)}
+          disabled={page === totalPages || totalPages === 0 || isLoading}
+        >
+          Next <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  ));
+
+  // Memoized Complete Confirmation Dialog
+  const CompleteConfirmDialog = React.memo(() => (
+    <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Mark as Completed?</AlertDialogTitle>
+        </AlertDialogHeader>
+        <p>Are you sure you want to mark this invoice as completed?</p>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setShowCompleteConfirm(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmMarkCompleted} className="bg-green-600 hover:bg-green-700">
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ));
 
   return (
     <div className="space-y-4">
@@ -242,7 +287,7 @@ export function CustomersList() {
         isDeleting={isDeleting}
         onOpenChange={setShowDeleteConfirm}
         onDelete={handleDeleteInvoices}
-        onCancel={() => setShowDeleteConfirm(false)}
+        onCancel={useCallback(() => setShowDeleteConfirm(false), [])}
       />
 
       <CustomersToolbar
@@ -252,9 +297,9 @@ export function CustomersList() {
         isDeleting={isDeleting}
         isUploading={isUploading}
         isExporting={isExporting}
-        onSearchChange={e => setSearchTerm(e.target.value)}
+        onSearchChange={useCallback(e => setSearchTerm(e.target.value), [])}
         onStatusFilterChange={setStatusFilter}
-        onDeleteClick={() => setShowDeleteConfirm(true)}
+        onDeleteClick={useCallback(() => setShowDeleteConfirm(true), [])}
         onUpload={handleUpload}
         onExport={handleExport}
         allColumns={allColumns}
@@ -275,52 +320,8 @@ export function CustomersList() {
         onSelectColumn={handleSelectColumn}
       />
 
-      <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Mark as Completed?</AlertDialogTitle>
-          </AlertDialogHeader>
-          <p>Are you sure you want to mark this invoice as completed?</p>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowCompleteConfirm(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmMarkCompleted} className="bg-green-600 hover:bg-green-700">
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <div className="flex items-center justify-between mt-4">
-        <div className="text-sm text-muted-foreground">
-          Showing <strong>{invoices?.length}</strong> of <strong>{totalInvoices}</strong> customers
-          {selectedInvoices.length > 0 && (
-            <span className="ml-2">
-              (<strong>{selectedInvoices.length}</strong> selected)
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs px-2">
-            Page <strong>{page}</strong> of <strong>{totalPages || 1}</strong>
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1 || isLoading}
-          >
-            <ChevronLeft className="w-4 h-4" /> Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages || totalPages === 0 || isLoading}
-          >
-            Next <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      <CompleteConfirmDialog />
+      <PaginationControls />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   Card,
@@ -87,6 +87,140 @@ export function CustomerDetails() {
     }
   }, [invoice_number]);
 
+  // Memoized filtered call recordings
+  const filteredCallRecordings = useMemo(
+    () => callRecordings.filter(
+      (call) => call.invoice_number === customer?.invoice_number
+    ),
+    [callRecordings, customer?.invoice_number]
+  );
+
+  // Memoized back handler
+  const handleBack = useCallback(() => router.back(), [router]);
+
+  // Memoized Details Section
+  const DetailsSection = useCallback(() => (
+    <TabsContent value="details">
+      <CardContent className="space-y-10 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="space-y-8">
+            <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
+                <UserIcon className="w-4 h-4" /> Name
+              </h3>
+              <p className="text-xl font-semibold text-gray-800">{`${customer?.first_name} ${customer?.last_name}`}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
+                <Smartphone className="w-4 h-4" /> Contact Information
+              </h3>
+              <div className="space-y-1 text-gray-700">
+                <p className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-gray-400" /> Mobile: {customer?.mobile_number}
+                </p>
+                <p className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-gray-400" /> Phone: {customer?.phone_number}
+                </p>
+                <p className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-400" /> Email: {customer?.email}
+                </p>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
+                <MapPin className="w-4 h-4" /> Address
+              </h3>
+              <p className="text-gray-700">Postcode: {customer?.mailing_postcode}</p>
+            </div>
+          </div>
+          <div className="space-y-8">
+            <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
+                <DollarSign className="w-4 h-4" /> Invoice Information
+              </h3>
+              <div className="space-y-1 text-gray-700">
+                <p className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-gray-400" /> Invoice Number: <span className="font-medium">{customer?.invoice_number}</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" /> Invoice Date: {customer?.invoice_date}
+                </p>
+                <p className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-gray-400" /> Amount: <span className="font-medium">{customer?.invoice_amount}</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-yellow-500" /> Outstanding: <span className="font-semibold text-yellow-600">{customer?.outstanding_amount}</span>
+                </p>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
+                <Landmark className="w-4 h-4" /> FSP Information
+              </h3>
+              <div className="space-y-1 text-gray-700">
+                <p className="flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-gray-400" /> FSP Name: {customer?.fsp_name}
+                </p>
+                <p className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-gray-400" /> Claim Reference: {customer?.claim_reference}
+                </p>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-6 shadow-sm flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
+                  {customer?.status === "completed2" ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  ) : customer?.status === "pending" ||
+                    customer?.status === "completed" ||
+                    customer?.status === "sms" ? (
+                    <Clock className="w-4 h-4 text-yellow-500" />
+                  ) : (
+                    <XCircle className="w-4 h-4 text-red-500" />
+                  )} Status
+                </h3>
+                <Badge
+                  variant={
+                    customer?.status === "completed2"
+                      ? "default"
+                      : customer?.status === "pending" ||
+                        customer?.status === "completed" ||
+                        customer?.status === "sms"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                  className="text-base px-4 py-1 rounded-full tracking-wide"
+                >
+                  {customer?.status?.toUpperCase() === "SMS"
+                    ? "SMS Sent"
+                    : customer?.status?.toUpperCase() === "COMPLETED"
+                    ? "CALLED"
+                    : customer?.status?.toUpperCase() === "COMPLETED2"
+                    ? "COMPLETED"
+                    : customer?.status?.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </TabsContent>
+  ), [customer]);
+
+  // Memoized Call History Section
+  const CallHistorySection = useCallback(() => (
+    <TabsContent value="calls">
+      <CardContent className="pt-6">
+        <h3 className="text-lg font-semibold mb-4">Call History</h3>
+        <CallHistoryTable
+          callRecordings={filteredCallRecordings}
+          loading={loading}
+          error={error}
+        />
+      </CardContent>
+    </TabsContent>
+  ), [filteredCallRecordings, loading, error]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -103,11 +237,6 @@ export function CustomerDetails() {
     );
   }
 
-  // Filter call recordings for this customer
-  const filteredCallRecordings = callRecordings.filter(
-    (call) => call.invoice_number === customer.invoice_number
-  );
-
   return (
     <>
       <div className="fixed inset-0 min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-background dark:via-background dark:to-blue-950 -z-10" />
@@ -115,7 +244,7 @@ export function CustomerDetails() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="mb-4 flex items-center gap-2 text-primary hover:text-primary-700 hover:bg-primary/10 transition-colors"
           aria-label="Go back"
         >
@@ -141,142 +270,8 @@ export function CustomerDetails() {
                 </TabsList>
               </div>
             </CardHeader>
-            <TabsContent value="details">
-              <CardContent className="space-y-10 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-8">
-                    <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
-                      <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
-                        <UserIcon className="w-4 h-4" /> Name
-                      </h3>
-                      <p className="text-xl font-semibold text-gray-800">{`${customer.first_name} ${customer.last_name}`}</p>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
-                      <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
-                        <Smartphone className="w-4 h-4" /> Contact Information
-                      </h3>
-                      <div className="space-y-1 text-gray-700">
-                        <p className="flex items-center gap-2">
-                          <Smartphone className="w-4 h-4 text-gray-400" />{" "}
-                          Mobile: {customer.mobile_number}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-gray-400" /> Phone:{" "}
-                          {customer.phone_number}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-gray-400" /> Email:{" "}
-                          {customer.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
-                      <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
-                        <MapPin className="w-4 h-4" /> Address
-                      </h3>
-                      <p className="text-gray-700">
-                        Postcode: {customer.mailing_postcode}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-8">
-                    <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
-                      <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
-                        <DollarSign className="w-4 h-4" /> Invoice Information
-                      </h3>
-                      <div className="space-y-1 text-gray-700">
-                        <p className="flex items-center gap-2">
-                          <ClipboardList className="w-4 h-4 text-gray-400" />{" "}
-                          Invoice Number:{" "}
-                          <span className="font-medium">
-                            {customer.invoice_number}
-                          </span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" /> Invoice
-                          Date: {customer.invoice_date}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-gray-400" />{" "}
-                          Amount:{" "}
-                          <span className="font-medium">
-                            {customer.invoice_amount}
-                          </span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-yellow-500" />{" "}
-                          Outstanding:{" "}
-                          <span className="font-semibold text-yellow-600">
-                            {customer.outstanding_amount}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
-                      <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
-                        <Landmark className="w-4 h-4" /> FSP Information
-                      </h3>
-                      <div className="space-y-1 text-gray-700">
-                        <p className="flex items-center gap-2">
-                          <Landmark className="w-4 h-4 text-gray-400" /> FSP
-                          Name: {customer.fsp_name}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <ClipboardList className="w-4 h-4 text-gray-400" />{" "}
-                          Claim Reference: {customer.claim_reference}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-6 shadow-sm flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-500 flex items-center gap-2 mb-2">
-                          {customer.status === "completed2" ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                          ) : customer.status === "pending" ||
-                            customer.status === "completed" ||
-                            customer.status === "sms" ? (
-                            <Clock className="w-4 h-4 text-yellow-500" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-red-500" />
-                          )}{" "}
-                          Status
-                        </h3>
-                        <Badge
-                          variant={
-                            customer.status === "completed2"
-                              ? "default"
-                              : customer.status === "pending" ||
-                                customer.status === "completed" ||
-                                customer.status === "sms"
-                              ? "secondary"
-                              : "destructive"
-                          }
-                          className="text-base px-4 py-1 rounded-full tracking-wide"
-                        >
-                          {customer.status?.toUpperCase() === "SMS"
-                            ? "SMS Sent"
-                            : customer.status?.toUpperCase() === "COMPLETED"
-                            ? "CALLED"
-                            : customer.status?.toUpperCase() === "COMPLETED2"
-                            ? "COMPLETED"
-                            : customer.status?.toUpperCase()}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </TabsContent>
-            <TabsContent value="calls">
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Call History</h3>
-                <CallHistoryTable
-                  callRecordings={filteredCallRecordings}
-                  loading={loading}
-                  error={error}
-                />
-              </CardContent>
-            </TabsContent>
+            <DetailsSection />
+            <CallHistorySection />
           </Tabs>
         </Card>
       </div>
