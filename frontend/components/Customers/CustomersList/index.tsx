@@ -1,27 +1,37 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+"use client"
+
+import { CustomersToolbar } from "../CustomersToolbar"
+import CustomersTable from "../CustomersTable"
+import { DeleteDialog } from "../DeleteDialog"
+import { Button } from "@/components/ui/button"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
+import { useAtom } from "jotai"
+import { invoiceTableAllColumns, invoiceTableSelectedColumnsAtom } from "@/lib/atom"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
-import type { Invoice } from "@/lib/props"
 import { fetchInvoices, uploadCsv, updateInvoiceStatus, deleteInvoices, exportInvoicesCsv } from "@/lib/apis"
 
-export const useCustomers = () => {
+export function CustomersList() {
+  // State from useCustomers
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [invoices, setInvoices] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
-  const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
+  const [selectedInvoices, setSelectedInvoices] = useState([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
-  const [invoiceToComplete, setInvoiceToComplete] = useState<string | null>(null)
+  const [invoiceToComplete, setInvoiceToComplete] = useState(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [totalInvoices, setTotalInvoices] = useState(0)
   const router = useRouter()
 
-  // Fetch invoices with pagination and search
+  // Memoized fetch callback
   const fetchInvoicesCallback = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -34,14 +44,14 @@ export const useCustomers = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [toast, page, pageSize, searchTerm, statusFilter])
+  }, [page, pageSize, searchTerm, statusFilter])
 
   useEffect(() => {
     fetchInvoicesCallback()
   }, [fetchInvoicesCallback])
 
-  // Handle file upload
-  const handleUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Memoized handlers
+  const handleUpload = useCallback(async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -73,14 +83,12 @@ export const useCustomers = () => {
       setIsUploading(false)
       event.target.value = ''
     }
-  }, [toast, fetchInvoicesCallback])
-  
-    // Memoize navigation callback
-    const navigateToInvoice = useCallback((invoiceNumber: string) => {
-      router.push(`/invoices/${invoiceNumber}`)
-    }, [router])
+  }, [fetchInvoicesCallback])
 
-  // Handle export
+  const navigateToInvoice = useCallback((invoiceNumber) => {
+    router.push(`/invoices/${invoiceNumber}`)
+  }, [router])
+
   const handleExport = useCallback(async () => {
     setIsExporting(true)
     try {
@@ -131,10 +139,9 @@ export const useCustomers = () => {
     } finally {
       setIsExporting(false)
     }
-  }, [toast])
+  }, [])
 
-  // Handle status update
-  const handleStatusUpdate = useCallback(async (invoiceNumber: string, status: string) => {
+  const handleStatusUpdate = useCallback(async (invoiceNumber, status) => {
     try {
       await updateInvoiceStatus(invoiceNumber, status)
       setInvoices(prevInvoices => 
@@ -149,10 +156,9 @@ export const useCustomers = () => {
       console.error('Error updating status:', error)
       toast.error("Update failed" )
     }
-  }, [toast])
+  }, [])
 
-  // Handle invoice selection
-  const handleSelectInvoice = useCallback((invoiceNumber: string) => {
+  const handleSelectInvoice = useCallback((invoiceNumber) => {
     setSelectedInvoices(prev => {
       if (prev.includes(invoiceNumber)) {
         return prev.filter(id => id !== invoiceNumber)
@@ -161,7 +167,6 @@ export const useCustomers = () => {
     })
   }, [])
 
-  // Handle select all invoices
   const handleSelectAll = useCallback(() => {
     setSelectedInvoices(prev => {
       const allSelected = prev.length === invoices.length;
@@ -169,13 +174,11 @@ export const useCustomers = () => {
     });
   }, [invoices]);
 
-  // Handle delete invoices
   const handleDeleteInvoices = useCallback(async () => {
     if (selectedInvoices.length === 0) {
       toast.error("Please select at least one invoice to delete" )
       return
     }
-    
     setIsDeleting(true)
     try {
       await deleteInvoices(selectedInvoices)
@@ -191,21 +194,18 @@ export const useCustomers = () => {
       setIsDeleting(false)
       setShowDeleteConfirm(false)
     }
-  }, [selectedInvoices, toast])
+  }, [selectedInvoices]);
 
-  // Handle single invoice delete
-  const handleSingleInvoiceDelete = useCallback((invoiceNumber: string) => {
+  const handleSingleInvoiceDelete = useCallback((invoiceNumber) => {
     setSelectedInvoices([invoiceNumber])
     setShowDeleteConfirm(true)
   }, [])
 
-  // Open confirm dialog for marking as completed
-  const requestMarkCompleted = useCallback((invoiceNumber: string) => {
+  const requestMarkCompleted = useCallback((invoiceNumber) => {
     setInvoiceToComplete(invoiceNumber);
     setShowCompleteConfirm(true);
   }, []);
 
-  // Confirm mark as completed
   const confirmMarkCompleted = useCallback(async () => {
     if (!invoiceToComplete) return;
     await handleStatusUpdate(invoiceToComplete, 'completed2');
@@ -213,46 +213,115 @@ export const useCustomers = () => {
     setInvoiceToComplete(null);
   }, [invoiceToComplete, handleStatusUpdate]);
 
-  return {
-    filters: {
-      searchTerm,
-      statusFilter,
-      setSearchTerm,
-      setStatusFilter,
-    },
-    selection: {
-      selectedInvoices,
-      handleSelectInvoice,
-      handleSelectAll,
-    },
-    dialogs: {
-      showDeleteConfirm,
-      setShowDeleteConfirm,
-      showCompleteConfirm,
-      setShowCompleteConfirm,
-    },
-    actions: {
-      handleUpload,
-      handleExport,
-      handleStatusUpdate,
-      requestMarkCompleted,
-      confirmMarkCompleted,
-      handleDeleteInvoices,
-      handleSingleInvoiceDelete,
-      navigateToInvoice,
-    },
-    data: {
-      invoices,
-      totalInvoices,
-      isLoading,
-      isUploading,
-      isExporting,
-      isDeleting,
-      invoiceToComplete,
-      page,
-      setPage,
-      pageSize,
-      setPageSize,
-    },
-  }
-} 
+  const [selectedColumns, setSelectedColumns] = useAtom(invoiceTableSelectedColumnsAtom);
+  const allColumns = invoiceTableAllColumns;
+  const handleSelectColumn = useCallback((columnKey) => {
+    setSelectedColumns(prev =>
+      prev.includes(columnKey)
+        ? prev.filter(key => key !== columnKey)
+        : [...prev, columnKey]
+    );
+  }, [setSelectedColumns]);
+
+  // Memoized derived value
+  const totalPages = useMemo(() => Math.ceil(totalInvoices / pageSize), [totalInvoices, pageSize]);
+
+  // Memoized Pagination Controls
+  const PaginationControls = React.memo(() => (
+    <div className="flex items-center justify-between mt-4">
+      <div className="text-sm text-muted-foreground">
+        Showing <strong>{invoices?.length}</strong> of <strong>{totalInvoices}</strong> customers
+        {selectedInvoices.length > 0 && (
+          <span className="ml-2">
+            (<strong>{selectedInvoices.length}</strong> selected)
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs px-2">
+          Page <strong>{page}</strong> of <strong>{totalPages || 1}</strong>
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(page - 1)}
+          disabled={page === 1 || isLoading}
+        >
+          <ChevronLeft className="w-4 h-4" /> Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage(page + 1)}
+          disabled={page === totalPages || totalPages === 0 || isLoading}
+        >
+          Next <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  ));
+
+  // Memoized Complete Confirmation Dialog
+  const CompleteConfirmDialog = React.memo(() => (
+    <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Mark as Completed?</AlertDialogTitle>
+        </AlertDialogHeader>
+        <p>Are you sure you want to mark this invoice as completed?</p>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setShowCompleteConfirm(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmMarkCompleted} className="bg-green-600 hover:bg-green-700">
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ));
+
+  return (
+    <div className="space-y-4">
+      <DeleteDialog
+        open={showDeleteConfirm}
+        selectedCount={selectedInvoices.length}
+        isDeleting={isDeleting}
+        onOpenChange={setShowDeleteConfirm}
+        onDelete={handleDeleteInvoices}
+        onCancel={useCallback(() => setShowDeleteConfirm(false), [])}
+      />
+
+      <CustomersToolbar
+        searchTerm={searchTerm}
+        statusFilter={statusFilter}
+        selectedCount={selectedInvoices.length}
+        isDeleting={isDeleting}
+        isUploading={isUploading}
+        isExporting={isExporting}
+        onSearchChange={useCallback(e => setSearchTerm(e.target.value), [])}
+        onStatusFilterChange={setStatusFilter}
+        onDeleteClick={useCallback(() => setShowDeleteConfirm(true), [])}
+        onUpload={handleUpload}
+        onExport={handleExport}
+        allColumns={allColumns}
+        selectedColumns={selectedColumns}
+        onSelectColumn={handleSelectColumn}
+      />
+
+      <CustomersTable
+        invoices={invoices}
+        selectedInvoices={selectedInvoices}
+        isLoading={isLoading}
+        onMarkCompleted={requestMarkCompleted}
+        onSelectInvoice={handleSelectInvoice}
+        onSelectAll={handleSelectAll}
+        onView={navigateToInvoice}
+        onDelete={handleSingleInvoiceDelete}
+        selectedColumns={selectedColumns}
+        onSelectColumn={handleSelectColumn}
+      />
+
+      <CompleteConfirmDialog />
+      <PaginationControls />
+    </div>
+  )
+}

@@ -7,7 +7,7 @@ import { fetchMonthlyStats } from "@/lib/apis"
 
 import type { MonthlyStats } from "@/lib/props"
 
-export function CampaignStats() {
+const CampaignStats = () => {
   const [stats, setStats] = useState<MonthlyStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -67,3 +67,5 @@ export function CampaignStats() {
     </div>
   )
 }
+
+export default CampaignStats;

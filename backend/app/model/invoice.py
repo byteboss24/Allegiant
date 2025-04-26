@@ -19,6 +19,7 @@ class InvoiceBase(BaseModel):
     email: str
     mailing_postcode: str
     payment_link: Optional[str] = None
+    is_deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True

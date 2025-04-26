@@ -8,6 +8,7 @@ class RecordBase(BaseModel):
     transcript: str
     audio_url: str
     status: str = "pending"
+    is_deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True

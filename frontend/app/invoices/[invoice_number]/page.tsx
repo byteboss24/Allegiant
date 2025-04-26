@@ -1,4 +1,4 @@
-import { CustomerDetails } from "@/components/customers/customer-details"
+import { CustomerDetails } from "@/components/Customers/CustomerDetails"
 
 export default function InvoiceDetailsPage() {
   return <CustomerDetails />

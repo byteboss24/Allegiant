@@ -42,7 +42,8 @@ class MySQLService:
                         outstanding_amount VARCHAR(255),
                         email VARCHAR(255),
                         mailing_postcode VARCHAR(255),
-                        payment_link VARCHAR(255)
+                        payment_link VARCHAR(255),
+                        is_deleted TINYINT(1) DEFAULT 0
                     )
                 """)
                 
@@ -55,7 +56,8 @@ class MySQLService:
                         audio_url VARCHAR(255),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         ended_at TIMESTAMP NULL,
-                        duration DECIMAL(10,2) DEFAULT 0
+                        duration DECIMAL(10,2) DEFAULT 0,
+                        is_deleted TINYINT(1) DEFAULT 0
                     )
                 """)
                 
@@ -139,23 +141,23 @@ class MySQLService:
             connection.close()
 
     async def get_invoice(self, invoice_number):
-        """Get an invoice by ID"""
+        """Get an invoice by ID (not deleted)"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices WHERE invoice_number = %s", (invoice_number))
+                cursor.execute("SELECT * FROM invoices WHERE invoice_number = %s AND is_deleted = 0", (invoice_number,))
                 return cursor.fetchone()
         finally:
             connection.close()
 
     async def get_invoices(self, page: int = 1, page_size: int = 10, search: str = None, status: str = "all"):
-        """Get paginated and optionally searched and filtered invoices"""
+        """Get paginated and optionally searched and filtered invoices (not deleted)"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
                 offset = (page - 1) * page_size
                 params = []
-                where_clauses = []
+                where_clauses = ["is_deleted = 0"]
                 if search:
                     where_clauses.append("(first_name LIKE %s OR last_name LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s)")
                     search_term = f"%{search}%"
@@ -253,14 +255,14 @@ class MySQLService:
             connection.close()
 
     async def delete_invoice(self, invoice_number):
-        """Delete an invoice and all associated records"""
+        """Soft delete an invoice and all associated records"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                # Delete all records with this invoice_number
-                cursor.execute("DELETE FROM calls WHERE invoice_number = %s", (invoice_number,))
-                # Delete the invoice itself
-                cursor.execute("DELETE FROM invoices WHERE invoice_number = %s", (invoice_number,))
+                # Soft delete all records with this invoice_number
+                cursor.execute("UPDATE calls SET is_deleted = 1 WHERE invoice_number = %s", (invoice_number,))
+                # Soft delete the invoice itself
+                cursor.execute("UPDATE invoices SET is_deleted = 1 WHERE invoice_number = %s", (invoice_number,))
                 connection.commit()
                 return cursor.rowcount > 0
         finally:
@@ -365,10 +367,10 @@ class MySQLService:
             connection.close()
 
     async def get_records(self, page: int = 1, per_page: int = 10, search: str = None, status: str = None):
-        """Get all records with pagination, search, and status filter"""
+        """Get all records with pagination, search, and status filter (not deleted)"""
         offset = (page - 1) * per_page
         params = []
-        where_clauses = []
+        where_clauses = ["c.is_deleted = 0"]
         if search:
             where_clauses.append("(c.transcript LIKE %s OR c.invoice_number LIKE %s OR i.first_name LIKE %s OR i.last_name LIKE %s)")
             search_term = f"%{search}%"
@@ -409,11 +411,11 @@ class MySQLService:
             connection.close()
     
     async def get_record(self, id):
-        """Get record with id from the database"""
+        """Get record with id from the database (not deleted)"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM calls WHERE id = %d", (id,))
+                cursor.execute("SELECT * FROM calls WHERE id = %s AND is_deleted = 0", (id,))
                 return cursor.fetchone()
         finally:
             connection.close()
@@ -455,7 +457,7 @@ class MySQLService:
             connection.close()
 
     async def get_record_recent(self, limit=5):
-        """Get recent call records with customer names from the database"""
+        """Get recent call records with customer names from the database (not deleted)"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
@@ -466,19 +468,20 @@ class MySQLService:
                         i.last_name
                     FROM calls c
                     LEFT JOIN invoices i ON c.invoice_number = i.invoice_number
+                    WHERE c.is_deleted = 0
                     ORDER BY c.created_at DESC
-                    LIMIT 5
-                """)
+                    LIMIT %s
+                """, (limit,))
                 return cursor.fetchall()
         finally:
             connection.close()
 
     async def delete_record(self, id):
-        """Delete a record with id from the database"""
+        """Soft delete a record with id from the database"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM calls WHERE id = %s", (id,))
+                cursor.execute("UPDATE calls SET is_deleted = 1 WHERE id = %s", (id,))
                 connection.commit()
                 return cursor.rowcount > 0
         finally:
@@ -568,11 +571,11 @@ class MySQLService:
             connection.close()
 
     async def get_all_invoices(self):
-        """Get all invoices from the database"""
+        """Get all invoices from the database (not deleted)"""
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices ORDER BY invoice_date DESC")
+                cursor.execute("SELECT * FROM invoices WHERE is_deleted = 0 ORDER BY invoice_date DESC")
                 return cursor.fetchall()
         finally:
             connection.close()

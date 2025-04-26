@@ -16,7 +16,7 @@ interface CallHistoryTableProps {
   error: string | null;
 }
 
-export const CallHistoryTable: React.FC<CallHistoryTableProps> = ({
+const CallHistoryTable: React.FC<CallHistoryTableProps> = ({
   callRecordings,
   loading,
   error,
@@ -92,3 +92,5 @@ export const CallHistoryTable: React.FC<CallHistoryTableProps> = ({
     </div>
   );
 }; 
+
+export default CallHistoryTable;

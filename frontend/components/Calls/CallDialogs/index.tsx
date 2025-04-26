@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { CallDialogsProps } from "@/lib/props";
 
-export const CallDialogs: React.FC<CallDialogsProps> = ({
+const CallDialogs: React.FC<CallDialogsProps> = ({
   showDeleteDialog,
   setShowDeleteDialog,
   showMultiDeleteDialog,
@@ -50,3 +50,5 @@ export const CallDialogs: React.FC<CallDialogsProps> = ({
     </AlertDialog>
   </>
 ); 
+
+export default CallDialogs;

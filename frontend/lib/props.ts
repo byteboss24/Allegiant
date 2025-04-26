@@ -1,5 +1,12 @@
 import type React from "react"
 
+export interface IconProps {
+  id?: string
+  className?: string
+  width?: string
+  height?: string
+}
+
 export interface CallRecordingItem {
   id: string
   audio_url: string
@@ -21,23 +28,21 @@ export interface CallListProps {
   loading: boolean
   error: string | null
   selectedIds: string[]
-  selectedCall: CallRecordingItem | null
   currentPage: number
   totalItems: number
   itemsPerPage: number
   onMultiDelete: () => void
-  onSelectCall: (call: CallRecordingItem) => void
   onSelectRow: (id: string) => void
   onSelectAll: () => void
   onDelete: (call: CallRecordingItem) => void
   setCurrentPage: (page: number) => void
+  onCallSelected?: (call: CallRecordingItem) => void
 }
 
 export interface CallPlayerProps {
   selectedCall: CallRecordingItem | null
   audioLoading: boolean
   audioUrl: string | null
-  audioRef: React.RefObject<HTMLAudioElement>
 }
 
 export interface CallDialogsProps {

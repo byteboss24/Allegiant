@@ -4,9 +4,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Sparkle } from "lucide-react";
-import { AgentConfig } from "@/components/agent/agent-config";
+import { Separator } from "@/components/ui/separator";
+import AgentConfig from "@/components/Agent/AgentConfig";
 
 export default function AgentPage() {
   return (
