@@ -149,7 +149,6 @@ export default function CallRecordingsPage() {
                   loading={loading}
                   error={error}
                   selectedIds={selectedIdsForMultiDelete}
-                  selectedCall={selectedCall}
                   currentPage={currentPage}
                   totalItems={totalItems}
                   itemsPerPage={itemsPerPage}
@@ -158,7 +157,7 @@ export default function CallRecordingsPage() {
                   onDelete={handleDeleteRequest}
                   onMultiDelete={handleMultiDeleteRequest}
                   setCurrentPage={setCurrentPage}
-                  onSelectCall={setSelectedCall}
+                  onCallSelected={setSelectedCall}
                 />
               </div>
               <div className="md:col-span-1 h-full flex flex-col min-h-0">

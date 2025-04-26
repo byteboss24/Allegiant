@@ -28,16 +28,15 @@ export interface CallListProps {
   loading: boolean
   error: string | null
   selectedIds: string[]
-  selectedCall: CallRecordingItem | null
   currentPage: number
   totalItems: number
   itemsPerPage: number
   onMultiDelete: () => void
-  onSelectCall: (call: CallRecordingItem) => void
   onSelectRow: (id: string) => void
   onSelectAll: () => void
   onDelete: (call: CallRecordingItem) => void
   setCurrentPage: (page: number) => void
+  onCallSelected?: (call: CallRecordingItem) => void
 }
 
 export interface CallPlayerProps {

@@ -29,7 +29,6 @@ export const CallList: React.FC<CallListProps> = ({
   loading,
   error,
   selectedIds,
-  selectedCall,
   currentPage,
   totalItems,
   itemsPerPage,
@@ -38,8 +37,10 @@ export const CallList: React.FC<CallListProps> = ({
   onDelete,
   onMultiDelete,
   setCurrentPage,
-  onSelectCall,
+  onCallSelected,
 }) => {
+  const [selectedCall, setSelectedCall] = React.useState(null);
+
   return (
     <>
       <a id="table-anchor" />
@@ -155,7 +156,10 @@ export const CallList: React.FC<CallListProps> = ({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => onSelectCall(call)}
+                                onClick={() => {
+                                  setSelectedCall(call);
+                                  if (onCallSelected) onCallSelected(call);
+                                }}
                               >
                                 <Play className="h-4 w-4" />
                               </Button>
