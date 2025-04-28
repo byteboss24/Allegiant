@@ -111,9 +111,10 @@ class MySQLService:
                         email,
                         mailing_postcode,
                         payment_link,
-                        status
+                        status,
+                        is_deleted
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
                 """
 
                 cursor.execute(sql, (
@@ -153,15 +154,16 @@ class MySQLService:
     async def get_invoices(self, page: int = 1, page_size: int = 10, search: str = None, status: str = "all"):
         """Get paginated and optionally searched and filtered invoices (not deleted)"""
         connection = self._get_connection()
+        print("Getting invoices", page, page_size, search, status)
         try:
             with connection.cursor() as cursor:
                 offset = (page - 1) * page_size
                 params = []
                 where_clauses = ["is_deleted = 0"]
                 if search:
-                    where_clauses.append("(first_name LIKE %s OR last_name LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s)")
+                    where_clauses.append("(CONCAT(first_name, ' ', last_name) LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s)")
                     search_term = f"%{search}%"
-                    params.extend([search_term] * 5)
+                    params.extend([search_term] * 4)
                 if status and status != "all":
                     where_clauses.append("status = %s")
                     params.append(status)
@@ -223,7 +225,7 @@ class MySQLService:
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' and status != 'calling' and status != 'sms' and status != 'completed2' limit 10")
+                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' and status != 'calling' and status != 'sms' and status != 'completed2' limit 10 where is_deleted = 0")
                 return cursor.fetchall()
         finally:
             connection.close()
@@ -373,14 +375,14 @@ class MySQLService:
         params = []
         where_clauses = ["c.is_deleted = 0"]
         if search:
-            where_clauses.append("(c.transcript LIKE %s OR c.invoice_number LIKE %s OR i.first_name LIKE %s OR i.last_name LIKE %s)")
+            where_clauses.append("(c.transcript LIKE %s OR c.invoice_number LIKE %s OR CONCAT(i.first_name, ' ', i.last_name) LIKE %s)")
             search_term = f"%{search}%"
-            params.extend([search_term, search_term, search_term, search_term])
+            params.extend([search_term, search_term, search_term])
         if status and status != "all":
             where_clauses.append("c.status = %s")
             params.append(status)
         where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-        count_query = f"SELECT COUNT(*) as total FROM calls c JOIN invoices i ON c.invoice_number = i.invoice_number {where_sql}"
+        count_query = f"SELECT COUNT(*) as total FROM calls c JOIN invoices i ON c.invoice_number = i.invoice_number AND i.is_deleted = 0 {where_sql}"
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
@@ -393,7 +395,7 @@ class MySQLService:
                 c.*,
                 CONCAT(i.first_name, ' ', i.last_name) AS name
             FROM calls c
-            JOIN invoices i ON c.invoice_number = i.invoice_number
+            JOIN invoices i ON c.invoice_number = i.invoice_number and i.is_deleted = 0
             {where_sql}
             ORDER BY c.created_at DESC 
             LIMIT %s OFFSET %s
@@ -468,7 +470,7 @@ class MySQLService:
                         i.first_name,
                         i.last_name
                     FROM calls c
-                    LEFT JOIN invoices i ON c.invoice_number = i.invoice_number
+                    LEFT JOIN invoices i ON c.invoice_number = i.invoice_number AND i.is_deleted = 0
                     WHERE c.is_deleted = 0
                     ORDER BY c.created_at DESC
                     LIMIT 5

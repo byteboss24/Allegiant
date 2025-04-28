@@ -174,18 +174,18 @@ async def control_call(request: ControlCallRequest):
             now = datetime.datetime.now(tz)
             start = now.replace(hour=9, minute=0, second=0, microsecond=0)
             end = now.replace(hour=18, minute=0, second=0, microsecond=0)
-            if not (start <= now < end):
-                # Calculate seconds until next 9:00
-                if now >= end:
-                    # After 18:00, wait until next day 9:00
-                    next_start = (now + datetime.timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
-                else:
-                    # Before 9:00 today
-                    next_start = start
-                sleep_seconds = (next_start - now).total_seconds()
-                logger.info(f"Outside call window, sleeping for {sleep_seconds} seconds until {next_start}")
-                await asyncio.sleep(sleep_seconds)
-                continue
+            # if not (start <= now < end):
+            #     # Calculate seconds until next 9:00
+            #     if now >= end:
+            #         # After 18:00, wait until next day 9:00
+            #         next_start = (now + datetime.timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
+            #     else:
+            #         # Before 9:00 today
+            #         next_start = start
+            #     sleep_seconds = (next_start - now).total_seconds()
+            #     logger.info(f"Outside call window, sleeping for {sleep_seconds} seconds until {next_start}")
+            #     await asyncio.sleep(sleep_seconds)
+            #     continue
             invoices = await invoice_service.get_invoices_to_process()
             if not invoices:
                 settings.active = False
