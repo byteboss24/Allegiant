@@ -192,8 +192,6 @@ async def control_call(request: ControlCallRequest):
                 return {"status": "no_invoices", "message": "No invoices to process"}
             tasks = [process_invoice(invoice) for invoice in invoices]
             await asyncio.gather(*tasks)
-            # Optionally, add a sleep or wait for new invoices
-            # await asyncio.sleep(1)
 
     elif request.control_type == "stop_call":
         settings.active = False

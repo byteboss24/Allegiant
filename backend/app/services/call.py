@@ -100,6 +100,25 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
     word_pronunciations = await word_pronunciation_service.get_word_pronunciations(settings.agent_id)
     pronunciations = "\n".join(f"{wp.word}: {wp.pronunciation}" for wp in word_pronunciations)
     system_message = settings.system_prompt.format(**invoice, percentage="10%", pronunciations=pronunciations)
+    tools = []
+    tools.append({
+        "type": "function",
+        "name": "stop_call",
+        "description": "Invoke this after confirming with the user that the conversation is completed.",
+        "parameters": {}
+    })
+    tools.append({
+        "type": "function",
+        "name": "send_payment_link",
+        "description": "If person requests a payment link, send to person that link via sms. Human saying examples are 'Please send me a link.', 'Could you please send me a link.', 'I need a link.', 'Could you send me a payment link?', 'Please send me a sms message.' or etc",
+        "parameters": {}
+    })
+    tools.append({
+        "type": "function",
+        "name": "send_invoice",
+        "description": "If the person doesn't speak after 5 seconds of the Agent speaking, say 'Hello' or 'Are you there?'",
+        "parameters": {}
+    })
     session_config = {
         "type": "session.update",
         "session": {
@@ -118,26 +137,7 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
             "instructions": system_message,
             "modalities": ["text", "audio"],
             "temperature": 0.8,
-            "tools": [
-                {
-                    "type": "function",
-                    "name": "stop_call",
-                    "description": "When you are finished with your conversation, end the call. End the call after the agent and customer say 'Bye', 'Goodbye', 'Nice talking to you.', 'Have a good day', 'Bye bye' or etc.",
-                    "parameters": {}
-                },
-                {
-                    "type": "function",
-                    "name": "send_payment_link",
-                    "description": "If person requests a payment link, send to person that link via sms. Human saying examples are 'Please send me a link.', 'Could you please send me a link.', 'I need a link.', 'Could you send me a payment link?', 'Please send me a sms message.' or etc",
-                    "parameters": {}
-                },
-                {
-                    "type": "function",
-                    "name": "say_hello",
-                    "description": "If the person doesn't speak after 5 seconds of the Agent speaking, say 'Hello' or 'Are you there?'",
-                    "parameters": {}
-                }
-            ],
+            "tools": tools,
             "tool_choice": "auto"
         }
     }
