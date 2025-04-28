@@ -1,4 +1,4 @@
-import { DashboardShell } from "@/components/dashboard/DashboardShell"
+import { DashboardShell } from "@/components/Dashboard/DashboardShell"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 
 export default function SettingsPage() {

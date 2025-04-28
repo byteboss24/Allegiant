@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { MenuIcon } from "@/components/icons/MenuIcon";
-import Overview from "@/components/dashboard/Overview";
-import RecentCalls from "@/components/dashboard/RecentCalls";
+import Overview from "@/components/Dashboard/Overview";
+import RecentCalls from "@/components/Dashboard/RecentCalls";
 
 interface ActivitySectionProps {
   isLoading: boolean;
