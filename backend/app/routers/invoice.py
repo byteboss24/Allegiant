@@ -142,7 +142,7 @@ async def export_invoices_csv():
             'customer_id', 'first_name', 'last_name', 'salutation', 
             'file_number', 'mobile_number', 'phone_number', 'claim_reference',
             'invoice_number', 'invoice_date', 'invoice_amount', 'fsp_name',
-            'outstanding_amount', 'email', 'mailing_postcode', 'payment_link',
+            'outstanding_amount', 'email', 'mailing_postcode', 'payment_link', 'is_deleted',
             'call_status', 'campaign_name', 'script', 'phone_strategy', 'resend_invoice', 'status'
         ]
     )

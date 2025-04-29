@@ -22,6 +22,7 @@ import websockets
 import asyncio
 import datetime
 import pytz
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/twilio", tags=["call"])
 
@@ -29,6 +30,10 @@ OPENAI_CLIENT = OpenAI(api_key=settings.openai_api_key)
 
 class OutboundRequest(BaseModel):
     invoice_number: str
+
+class CallResult(BaseModel):
+    type: str
+    content: str
 
 @router.post("/outbound")
 async def outbound(request: OutboundRequest) -> str:
@@ -53,7 +58,6 @@ async def outbound(request: OutboundRequest) -> str:
             twiml=twiml
         )
         logger.info(f"Now calling to {invoice.mobile_number} with SID {call.sid}")
-        print("invoice", invoice)
         invoice.status = "calling"
 
         call_state.invoices[call.sid] = invoice.model_dump()
@@ -88,6 +92,14 @@ async def outbound(request: OutboundRequest) -> str:
                 record_status = data.status
                 if call_state.invoices[call.sid]['status'] == 'sms':
                     record_status = 'sms'
+                response = OPENAI_CLIENT.responses.create(
+                    model="gpt-4.1-2025-04-14",
+                    instructions="""
+                        Analyze the transcript of the call and provide a summary of the conversation. return call status and description. e.g. = {"type": "sms_sent", "content": "call was completed"}""",
+                    temperature=0.5,
+                    input=call_state.invoices.get(call.sid, {}).get('script', "") or "",
+                )
+                print("response", response)
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
@@ -192,6 +204,7 @@ async def control_call(request: ControlCallRequest):
                 return {"status": "no_invoices", "message": "No invoices to process"}
             tasks = [process_invoice(invoice) for invoice in invoices]
             await asyncio.gather(*tasks)
+            await asyncio.sleep(2)
 
     elif request.control_type == "stop_call":
         settings.active = False

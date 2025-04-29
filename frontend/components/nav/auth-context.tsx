@@ -12,7 +12,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STATIC_USERNAME = 'admin@allegiant.com'; // Change as needed
-const STATIC_PASSWORD = '123456'; // Change as needed
+const STATIC_PASSWORD = 'bif9HX9ANv0phz2'; // Change as needed
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -161,9 +161,9 @@ class MySQLService:
                 params = []
                 where_clauses = ["is_deleted = 0"]
                 if search:
-                    where_clauses.append("(CONCAT(first_name, ' ', last_name) LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s)")
+                    where_clauses.append("(CONCAT(first_name, ' ', last_name) LIKE %s OR invoice_number LIKE %s OR mobile_number LIKE %s OR phone_number LIKE %s OR invoice_date LIKE %s)")
                     search_term = f"%{search}%"
-                    params.extend([search_term] * 4)
+                    params.extend([search_term] * 5)
                 if status and status != "all":
                     where_clauses.append("status = %s")
                     params.append(status)
@@ -225,7 +225,7 @@ class MySQLService:
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' and status != 'calling' and status != 'sms' and status != 'completed2' limit 10 where is_deleted = 0")
+                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' and status != 'calling' and status != 'sms' and status != 'completed2' and is_deleted = 0 LIMIT 10")
                 return cursor.fetchall()
         finally:
             connection.close()
@@ -375,9 +375,9 @@ class MySQLService:
         params = []
         where_clauses = ["c.is_deleted = 0"]
         if search:
-            where_clauses.append("(c.transcript LIKE %s OR c.invoice_number LIKE %s OR CONCAT(i.first_name, ' ', i.last_name) LIKE %s)")
+            where_clauses.append("(c.transcript LIKE %s OR c.invoice_number LIKE %s OR CONCAT(i.first_name, ' ', i.last_name) LIKE %s OR c.created_at LIKE %s)")
             search_term = f"%{search}%"
-            params.extend([search_term, search_term, search_term])
+            params.extend([search_term, search_term, search_term, search_term])
         if status and status != "all":
             where_clauses.append("c.status = %s")
             params.append(status)

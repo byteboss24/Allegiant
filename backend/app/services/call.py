@@ -104,18 +104,18 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
     tools.append({
         "type": "function",
         "name": "stop_call",
-        "description": "Invoke this after confirming with the user that the conversation is completed.",
+        "description": "Terminates the current conversation. Invoke this function when the user's query is fully resolved, user is done with the conversation, user confirms that call ends, no further information is needed, or the conversation should be ended based on context.",
         "parameters": {}
     })
     tools.append({
         "type": "function",
         "name": "send_payment_link",
-        "description": "If person requests a payment link, send to person that link via sms. Human saying examples are 'Please send me a link.', 'Could you please send me a link.', 'I need a link.', 'Could you send me a payment link?', 'Please send me a sms message.' or etc",
+        "description": "Invoke this function when the person requests a payment link. Human saying examples are 'Please send me a link.', 'Could you please send me a link.', 'I need a link.', 'Could you send me a payment link?', 'Please send me a sms message.' or etc",
         "parameters": {}
     })
     tools.append({
         "type": "function",
-        "name": "send_invoice",
+        "name": "say_hello",
         "description": "If the person doesn't speak after 5 seconds of the Agent speaking, say 'Hello' or 'Are you there?'",
         "parameters": {}
     })
@@ -124,7 +124,7 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
         "session": {
             "turn_detection": {
                 "type": "server_vad",
-                "threshold": 0.7,
+                "threshold": 0.8,
                 "prefix_padding_ms": 300,
                 "silence_duration_ms": 500,
             },
@@ -171,25 +171,25 @@ async def send_initial_greeting(openai_ws: websockets.WebSocketClientProtocol, c
 
 async def monitor_silence(openai_ws: websockets.WebSocketClientProtocol, callSid: str) -> None:
     """Monitor for 5 seconds of silence after agent finishes speaking and prompt if silent."""
-    while callSid in call_state.invoices:  # Run until call ends
+    while callSid in call_state.invoices:
         try:
             if (
                 call_state.last_agent_response_time.get(callSid, 0)
                 and not call_state.is_speaking.get(callSid, False)
                 and not call_state.silence_detected.get(callSid, False)
-                and (time.time() - call_state.last_agent_response_time[callSid]) >= 5
+                and (time.time() - call_state.last_agent_response_time[callSid]) >= 10
             ):
                 call_state.silence_detected[callSid] = True
-                logger.info(f"Detected 5 seconds of silence for call {callSid}, triggering say_hello")
-                # await openai_ws.send(json.dumps({
-                #     "type": "response.create",
-                #     "response": {
-                #         "modalities": ["text", "audio"],
-                #         "temperature": 0.8,
-                #         "instructions": "Say 'Are you still there?' in a polite and professional tone.",
-                #         "voice": settings.voice_type
-                #     }
-                # }))
+                logger.info(f"Detected 5 seconds of silence for call {callSid}, triggering Say Hello")
+                await openai_ws.send(json.dumps({
+                    "type": "response.create",
+                    "response": {
+                        "modalities": ["text", "audio"],
+                        "temperature": 0.8,
+                        "instructions": "Say 'Are you still there?' in a polite and professional tone.",
+                        "voice": settings.voice_type
+                    }
+                }))
                 # Reset the timer to prevent repeated prompts
                 call_state.last_agent_response_time[callSid] = time.time()
             await asyncio.sleep(1)
@@ -228,8 +228,6 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                         match event.get('name'):
                             case 'stop_call':
                                 logger.info(f"Function call: stop_call (call {callSid})")
-                                await openai_ws.close()
-                                TWILIO_CLIENT.calls(callSid).update(status="completed")
                             case 'send_payment_link':
                                 logger.info(f"Function call: send_payment_link (call {callSid})")
                                 try:
@@ -255,6 +253,15 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                             case 'say_hello':
                                 logger.info(f"Function call: say_hello (call {callSid})")
                                 await openai_ws.send(json.dumps({
+                                    "type": "response.create",
+                                    "response": {
+                                        "modalities": ["text", "audio"],
+                                        "temperature": 0.7,
+                                        "instructions": "Say 'Are you still there?' in a polite and professional tone.",
+                                        "voice": settings.voice_type
+                                    }
+                                }))
+                                await openai_ws.send(json.dumps({
                                     "type": "conversation.item.create",
                                     "item": {
                                         "type": "function_call_output",
@@ -275,6 +282,7 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                                     print("Function output:", transcript)
                                     match transcript[0]['name']:
                                         case 'send_payment_link':
+                                            print("Sending payment link...")
                                             welcome_message = {
                                                 "type": "response.create",
                                                 "response": {
@@ -288,6 +296,7 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                                             }
                                             await openai_ws.send(json.dumps(welcome_message))
                                         case 'say_hello':
+                                            print("Saying hello...")
                                             await openai_ws.send(json.dumps({
                                                 "type": "response.create",
                                                 "response": {
@@ -298,6 +307,7 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                                                 }
                                             }))
                                         case 'stop_call':
+                                            print("Stopping call...")
                                             await openai_ws.send(json.dumps({
                                                 "type": "response.create",
                                                 "response": {
