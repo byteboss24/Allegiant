@@ -4,7 +4,7 @@ import CallList from "@/components/Calls/CallList";
 import CallPlayer from "@/components/Calls/CallPlayer";
 import CallDialogs from "@/components/Calls/CallDialogs";
 import CallRecordingsToolbar from "@/components/Calls/CallRecordingsToolbar";
-import CallRecordingsHeader from "./CallRecordingsHeader";
+import CallRecordingsHeader from "../../components/Calls/Header";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { fetchRecords, deleteRecording, deleteMultipleRecordings } from "@/lib/apis";

@@ -1,16 +1,16 @@
 "use client"
 
-import { CustomersToolbar } from "../CustomersToolbar"
+import Toolbar from "./Toolbar"
 import CustomersTable from "../CustomersTable"
 import { DeleteDialog } from "../DeleteDialog"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import CompleteDialog from "./CompleteDialog";
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { useAtom } from "jotai"
 import { invoiceTableAllColumns, invoiceTableSelectedColumnsAtom } from "@/lib/atom"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
 import { fetchInvoices, uploadCsv, updateInvoiceStatus, deleteInvoices, exportInvoicesCsv } from "@/lib/apis"
-import PaginationControls from "./PaginationControls";
+import Pagination from "./Pagination";
 
 export function CustomersList() {
   // State from useCustomers
@@ -225,24 +225,6 @@ export function CustomersList() {
   // Memoized derived value
   const totalPages = useMemo(() => Math.ceil(totalInvoices / pageSize), [totalInvoices, pageSize]);
 
-  // Memoized Complete Confirmation Dialog
-  const CompleteConfirmDialog = React.memo(() => (
-    <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Mark as Completed?</AlertDialogTitle>
-        </AlertDialogHeader>
-        <p>Are you sure you want to mark this invoice as completed?</p>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setShowCompleteConfirm(false)}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={confirmMarkCompleted} className="bg-green-600 hover:bg-green-700">
-            Confirm
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  ));
-
   return (
     <div className="space-y-4">
       <DeleteDialog
@@ -254,7 +236,7 @@ export function CustomersList() {
         onCancel={useCallback(() => setShowDeleteConfirm(false), [])}
       />
 
-      <CustomersToolbar
+      <Toolbar
         searchTerm={searchTerm}
         statusFilter={statusFilter}
         selectedCount={selectedInvoices.length}
@@ -284,8 +266,12 @@ export function CustomersList() {
         onSelectColumn={handleSelectColumn}
       />
 
-      <CompleteConfirmDialog />
-      <PaginationControls
+      <CompleteDialog
+        open={showCompleteConfirm}
+        onOpenChange={setShowCompleteConfirm}
+        onConfirm={confirmMarkCompleted}
+      />
+      <Pagination
         page={page}
         totalPages={totalPages}
         invoicesLength={invoices.length}

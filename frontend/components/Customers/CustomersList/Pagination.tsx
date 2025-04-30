@@ -2,24 +2,24 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React from "react";
 
-interface PaginationControlsProps {
+interface PaginationProps {
   page: number;
   totalPages: number;
   invoicesLength: number;
   totalInvoices: number;
   selectedInvoicesLength: number;
-  setPage: (page: number) => void;
   isLoading: boolean;
+  setPage: (page: number) => void;
 }
 
-const PaginationControls: React.FC<PaginationControlsProps> = React.memo(({
+const Pagination: React.FC<PaginationProps> = React.memo(({
   page,
   totalPages,
   invoicesLength,
   totalInvoices,
   selectedInvoicesLength,
-  setPage,
   isLoading,
+  setPage,
 }) => (
   <div className="flex items-center justify-between mt-4">
     <div className="text-sm text-muted-foreground">
@@ -54,4 +54,4 @@ const PaginationControls: React.FC<PaginationControlsProps> = React.memo(({
   </div>
 ));
 
-export default PaginationControls;
+export default Pagination;

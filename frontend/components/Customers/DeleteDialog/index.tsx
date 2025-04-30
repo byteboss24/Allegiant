@@ -4,10 +4,10 @@ import React from "react";
 
 export const DeleteDialog: React.FC<DeleteDialogProps> = ({
   open,
-  onOpenChange,
   selectedCount,
-  onDelete,
   isDeleting,
+  onOpenChange,
+  onDelete,
   onCancel,
 }) => (
   <AlertDialog open={open} onOpenChange={onOpenChange}>

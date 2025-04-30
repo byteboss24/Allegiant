@@ -23,24 +23,22 @@ export function AgentConfigHeader({
   const [name, setName] = useState(selectedAgent?.name || "")
   const agents = useAtomValue(agentsAtom)
   const isActive = useAtomValue(isActiveAtom)
-  // Update local name state when selected agent changes
   useEffect(() => {
     setName(selectedAgent?.name || "")
-    setIsEditingName(false) // Exit editing mode when agent changes
+    setIsEditingName(false)
   }, [selectedAgent])
 
   const handleSaveName = async () => {
     if (!name.trim() || name === selectedAgent?.name) {
       setIsEditingName(false);
-      setName(selectedAgent?.name || ""); // Reset if invalid or unchanged
+      setName(selectedAgent?.name || "");
       return;
     }
     const updated = await updateAgent({ name: name.trim() });
     if (updated) {
         setIsEditingName(false);
     } else {
-        // Handle error case - maybe keep editing open?
-         setName(selectedAgent?.name || "");
+        setName(selectedAgent?.name || "");
     }
   }
 
@@ -60,7 +58,6 @@ export function AgentConfigHeader({
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                 disabled={isLoading || isActive}
               />
-              {/* No need for Done button, uses blur/Enter */}
             </div>
           ) : (
             <>

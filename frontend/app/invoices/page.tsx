@@ -4,7 +4,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import InvoicesHeader from "./InvoicesHeader";
+import InvoicesHeader from "../../components/Customers/Header";
 
 export default function InvoicesPage() {
   return (

@@ -11,8 +11,8 @@ import { Spinner } from "@/components/ui/spinner";
 import React, { useMemo, useCallback, useState } from "react";
 import type { CallListProps } from "@/lib/props";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import CallTableRow from "./CallTableRow";
-import PaginationControls from "./PaginationControls";
+import CallTableRow from "./Row";
+import Pagination from "./Pagination";
 
 export const CallList: React.FC<CallListProps> = ({
   callRecordings,
@@ -115,7 +115,7 @@ export const CallList: React.FC<CallListProps> = ({
             Delete Selected
           </Button>
         )}
-        <PaginationControls
+        <Pagination
           pages={pages}
           currentPage={currentPage}
           totalPages={totalPages}

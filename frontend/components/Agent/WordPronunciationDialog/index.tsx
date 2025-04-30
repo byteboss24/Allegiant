@@ -158,7 +158,6 @@ export function WordPronunciationDialog({ open, onOpenChange, agentId }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Sub-dialog for delete confirmation */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
