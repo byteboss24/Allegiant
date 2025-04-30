@@ -43,6 +43,7 @@ class MySQLService:
                         email VARCHAR(255),
                         mailing_postcode VARCHAR(255),
                         payment_link VARCHAR(255),
+                        content TEXT,
                         is_deleted TINYINT(1) DEFAULT 0
                     )
                 """)
@@ -54,6 +55,7 @@ class MySQLService:
                         status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
                         transcript TEXT,
                         audio_url VARCHAR(255),
+                        summary TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         ended_at TIMESTAMP NULL,
                         duration DECIMAL(10,2) DEFAULT 0,
@@ -335,14 +337,15 @@ class MySQLService:
     async def insert_record(self, record):
         """Insert a call record into the database"""
         connection = self._get_connection()
+        print("This is in insert_record", record)
         try:
             with connection.cursor() as cursor:
                 print(record)
                 sql = """
-                    INSERT INTO calls (invoice_number, duration, transcript, audio_url, status)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO calls (invoice_number, duration, transcript, audio_url, summary, status)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """
-                cursor.execute(sql, (record.invoice_number, record.duration, record.transcript, record.audio_url, record.status))
+                cursor.execute(sql, (record.invoice_number, record.duration, record.transcript, record.audio_url, record.summary, record.status))
                 connection.commit()
                 return cursor.lastrowid
         finally:

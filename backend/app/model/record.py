@@ -9,6 +9,7 @@ class RecordBase(BaseModel):
     audio_url: str
     status: str = "pending"
     is_deleted: Optional[bool] = False
+    summary: Optional[str] = None
 
     class Config:
         from_attributes = True

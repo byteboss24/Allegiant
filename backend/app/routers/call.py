@@ -89,7 +89,6 @@ async def outbound(request: OutboundRequest) -> str:
                 break
             if data.status == 'completed':
                 logger.info(f"Call completed successfully: {recording}")
-                print("Call is completed", call_state.invoices.get(call.sid, {}), call_state.invoices)
                 record_status = data.status
                 if call_state.invoices[call.sid]['status'] == 'sms':
                     record_status = 'sms'
@@ -102,16 +101,20 @@ async def outbound(request: OutboundRequest) -> str:
                     temperature=0.5,
                     input=call_state.invoices.get(call.sid, {}).get('script', "") or "",
                 )
-                text_content = response.output[0].content[0].text
+                text_content = json.loads(response.output[0].content[0].text)
                 print("response", text_content)
+                summary = text_content.get('content', '')
+                await invoice_service.update_invoice_summary(invoice.invoice_number, summary)
+                print("record status", record_status)
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
                     transcript=call_state.invoices.get(call.sid, {}).get('script', "") or "",
                     audio_url=f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Recordings/{recording.sid}" if recording else "",
-                    status=record_status
+                    status=record_status,
+                    summary=summary
                 ))
-                await invoice_service.update_invoice_status(invoice.invoice_number, json.loads(text_content)['type'])
+                await invoice_service.update_invoice_status(invoice.invoice_number, text_content['type'])
                 call_state.cleanup_call(call.sid)
                 break
             await asyncio.sleep(2)

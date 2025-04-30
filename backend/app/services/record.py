@@ -1,5 +1,6 @@
 from typing import List, Optional
 from app.model.record import Record, WeeklyStats, RecentStats, TodayStatus
+from app.core.logger import logger
 from app.services.mysql import mysql_service
 
 class RecordService:
@@ -16,8 +17,14 @@ class RecordService:
     async def get_record_by_id(self, record_id: int) -> Optional[Record]:
         return await mysql_service.get_record(record_id)
 
-    async def create_record(self, record: Record) -> Optional[Record]:
-        return await mysql_service.insert_record(record)
+    async def create_record(self, record_create):
+        """Create a new record in the database"""
+        try:
+            record_id = await mysql_service.insert_record(record_create)
+            return record_id
+        except Exception as e:
+            logger.error(f"Error creating record: {e}")
+            raise
 
     async def get_record_week(self) -> List[WeeklyStats]:
         raw_data = await mysql_service.get_record_week()

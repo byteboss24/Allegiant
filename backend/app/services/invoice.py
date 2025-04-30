@@ -100,6 +100,15 @@ class InvoiceService:
             logger.error(f"Error updating invoice: {e}")
             raise
 
+    async def update_invoice_summary(self, invoice_number: str, summary: str) -> Optional[Invoice]:
+        try:
+            # Update the content (summary) field for the invoice
+            updated_invoice = await mysql_service.update_invoice(invoice_number, {"content": summary})
+            return Invoice.model_validate(updated_invoice) if updated_invoice else None
+        except Exception as e:
+            logger.error(f"Error updating invoice summary: {e}")
+            raise
+
     async def delete_invoice(self, invoice_number: str) -> bool:
         try:
             return await mysql_service.delete_invoice(invoice_number)

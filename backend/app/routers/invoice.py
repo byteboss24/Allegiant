@@ -141,9 +141,9 @@ async def export_invoices_csv():
         fieldnames=[
             'customer_id', 'first_name', 'last_name', 'salutation', 
             'file_number', 'mobile_number', 'phone_number', 'claim_reference',
-            'invoice_number', 'invoice_date', 'invoice_amount', 'fsp_name',
-            'outstanding_amount', 'email', 'mailing_postcode', 'payment_link', 'is_deleted',
-            'call_status', 'campaign_name', 'script', 'phone_strategy', 'resend_invoice', 'status'
+            'invoice_number', 'invoice_date', 'invoice_amount', 'fsp_name', 'content',
+            'outstanding_amount', 'email', 'mailing_postcode', 'payment_link',
+            'campaign_name', 'phone_strategy', 'resend_invoice', 'status'
         ]
     )
     # Write header row
@@ -151,6 +151,8 @@ async def export_invoices_csv():
     # Write invoice data
     for invoice in invoices:
         invoice_dict = invoice.model_dump()
+        invoice_dict.pop('is_deleted')
+        invoice_dict.pop('script')
         if invoice_dict.get('invoice_date'):
             invoice_dict['invoice_date'] = invoice_dict['invoice_date'].strftime('%Y-%m-%d')
         match invoice_dict.get('status'):
@@ -158,12 +160,12 @@ async def export_invoices_csv():
                 invoice_dict['status'] = 'Called'
             case 'pending':
                 invoice_dict['status'] = 'Pending'
-            case 'sms':
+            case 'sms_sent':
                 invoice_dict['status'] = 'SMS Sent'
-            case 'completed2':
-                invoice_dict['status'] = 'Completed'
+            case 'seek':
+                invoice_dict['status'] = 'Seek'
             case _:
-                invoice_dict['status'] = invoice_dict['status'].upper()
+                invoice_dict['status'] = invoice_dict['status'].capitalize()
         writer.writerow(invoice_dict)
     # Create a StreamingResponse with the CSV data
     output.seek(0)
