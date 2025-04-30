@@ -1,5 +1,6 @@
 import { DashboardShell } from "@/components/Dashboard/DashboardShell"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import SettingsHeader from "./SettingsHeader";
 
 export default function SettingsPage() {
   return (
@@ -8,10 +9,7 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold mb-4">Settings</h1>
         <DashboardShell>
           <Card>
-            <CardHeader>
-              <CardTitle>System Settings</CardTitle>
-              <CardDescription>Configure your voice AI system settings</CardDescription>
-            </CardHeader>
+            <SettingsHeader />
             <CardContent>
               <p>Settings content will go here</p>
             </CardContent>

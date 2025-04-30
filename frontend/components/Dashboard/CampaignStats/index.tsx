@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import CampaignStatsHeader from "./CampaignStatsHeader";
+import CampaignStatsProgress from "./CampaignStatsProgress";
+import CampaignStatsGrid from "./CampaignStatsGrid";
+import NoData from "./NoData";
+import CenteredSpinner from "@/components/Dashboard/ActivitySection/CenteredSpinner";
 import { fetchMonthlyStats } from "@/lib/apis"
 
 import type { MonthlyStats } from "@/lib/props"
@@ -28,39 +32,27 @@ const CampaignStats = () => {
     fetchStats()
   }, [])
 
-  if (isLoading) return <div>Loading...</div>
-  if (!stats) return <div>No data available</div>
+  if (isLoading) return <CenteredSpinner />
+  if (!stats) return <NoData />
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold">{new Date().toLocaleString('default', { month: 'long' })}</h3>
-                <p className="text-sm text-muted-foreground">Outstanding invoices from {new Date().toLocaleString('default', { month: 'long' })}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-medium font-semibold">{stats.completion_rate}%</p>
-                <p className="text-xs text-muted-foreground">
-                  {stats.completed_invoices}/{stats.total_invoices} calls
-                </p>
-              </div>
-            </div>
+            <CampaignStatsHeader
+              month={new Date().toLocaleString('default', { month: 'long' })}
+              completionRate={stats.completion_rate}
+              completedInvoices={stats.completed_invoices}
+              totalInvoices={stats.total_invoices}
+            />
             <div className="mt-4">
-              <Progress value={stats.completion_rate} className="h-2" color="#03C3EC"/>
+              <CampaignStatsProgress value={stats.completion_rate} />
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-4 text-center text-sm text-[14px]">
-              <div>
-                <p className="text-[#7477FF]">{stats.total_calls || 0} Connected</p>
-              </div>
-              <div>
-                <p className="text-[#70DC37]">{(stats.completed_calls + stats.sms_sent_calls) || 0} Transferred</p>
-              </div>
-              <div>
-                <p className="text-[#ED9C39]">{stats.sms_sent_calls || 0} SMS Sent</p>
-              </div>
-            </div>
+            <CampaignStatsGrid
+              totalCalls={stats.total_calls}
+              transferredCalls={stats.completed_calls + stats.sms_sent_calls}
+              smsSent={stats.sms_sent_calls}
+            />
           </div>
         </CardContent>
       </Card>

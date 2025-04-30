@@ -2,11 +2,13 @@
 
 import { fetchWeeklyStats } from "@/lib/apis";
 import { useEffect, useState } from "react"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-import type { WeeklyStats } from "@/lib/props"
+import Loading from "./Loading";
+import WeeklyStatsBarChart from "./WeeklyStatsBarChart";
+
+type ChartData = { date: string; total: number; connected: number; other: number };
 
 export default function Overview() {
-  const [data, setData] = useState<WeeklyStats[]>([])
+  const [data, setData] = useState<ChartData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -15,7 +17,7 @@ export default function Overview() {
         const weekData = await fetchWeeklyStats()
         
         // Transform the data for the chart
-        const formattedData = weekData.map((item: WeeklyStats) => ({
+        const formattedData = weekData.map((item) => ({
           date: item.date,
           total: item.total_calls,
           connected: item.completed_calls,
@@ -34,19 +36,7 @@ export default function Overview() {
   }, [])
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <Loading />
   }
-  return (
-    <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data}>
-        <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-        <Tooltip />
-        <Bar dataKey="total" fill="#696CFF" radius={[4, 4, 0, 0]} name="Total Calls" />
-        <Bar dataKey="connected" fill="#22c55e" radius={[4, 4, 0, 0]} name="Connected" />
-        <Bar dataKey="other" fill="#a3a3a3" radius={[4, 4, 0, 0]} name="Other" />
-      </BarChart>
-    </ResponsiveContainer>
-  )
+  return <WeeklyStatsBarChart data={data} />
 }
-
