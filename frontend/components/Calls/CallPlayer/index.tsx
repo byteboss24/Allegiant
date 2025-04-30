@@ -58,6 +58,9 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({ selectedCall }) => {
   // Memoized transcript value
   const transcriptValue = useMemo(() => selectedCall?.transcript || "", [selectedCall]);
 
+  // Memoized summary value
+  const summaryValue = useMemo(() => selectedCall?.summary || "", [selectedCall]);
+
   // Memoized status badge
   const StatusBadge = useMemo(() => {
     if (!selectedCall) return null;
@@ -86,6 +89,18 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({ selectedCall }) => {
       </>
     );
   }, [selectedCall]);
+
+  // Memoized summary area
+  const SummaryArea = useMemo(() => (
+    summaryValue ? (
+      <div className="flex-1 flex flex-col mb-4">
+        <h4 className="font-medium mb-2">Summary</h4>
+        <div className="w-full p-3 border border-gray-200 rounded-lg bg-muted/30 text-sm whitespace-pre-line">
+          {summaryValue}
+        </div>
+      </div>
+    ) : null
+  ), [summaryValue]);
 
   // Memoized transcript area
   const TranscriptArea = useMemo(() => (
@@ -130,6 +145,7 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({ selectedCall }) => {
               </div>
             </div>
             <Separator className="my-2" />
+            {SummaryArea}
             <div className="space-y-4 pt-2">
               {(audioLoading || audioUrl) && (
                 <div className="relative">
