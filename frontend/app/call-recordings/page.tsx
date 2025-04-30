@@ -1,10 +1,10 @@
 "use client";
 
-import CallList from "@/components/Calls/CallList";
-import CallPlayer from "@/components/Calls/CallPlayer";
-import CallDialogs from "@/components/Calls/CallDialogs";
-import CallRecordingsToolbar from "@/components/Calls/CallRecordingsToolbar";
-import CallRecordingsHeader from "../../components/Calls/Header";
+import CallList from "@/components/features/Calls/CallList";
+import CallPlayer from "@/components/features/Calls/CallPlayer";
+import CallDialogs from "@/components/features/Calls/CallDialogs";
+import CallRecordingsToolbar from "@/components/features/Calls/CallRecordingsToolbar";
+import CallRecordingsHeader from "../../components/features/Calls/Header";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { fetchRecords, deleteRecording, deleteMultipleRecordings } from "@/lib/apis";

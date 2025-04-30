@@ -2,7 +2,6 @@
 
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/components/nav/auth-context';
 import AuthForm from "./AuthForm";
 import ErrorAlert from "./ErrorAlert";

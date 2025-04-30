@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import CenteredSpinner from "@/components/Dashboard/ActivitySection/CenteredSpinner";
-import CampaignStats from "@/components/Dashboard/CampaignStats";
+import CenteredSpinner from "@/components/features/Dashboard/ActivitySection/CenteredSpinner";
+import CampaignStats from "@/components/features/Dashboard/CampaignStats";
 
 interface CampaignPerformanceCardProps {
   isLoading: boolean;

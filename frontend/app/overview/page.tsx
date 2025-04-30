@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DashboardShell } from "@/components/Dashboard/DashboardShell";
+import { DashboardShell } from "@/components/features/Dashboard/DashboardShell";
 import {
   fetchTodayStatus,
   fetchWeeklyStats,
   fetchYesterdayStatus,
 } from "@/lib/apis";
 import type { TodayStatus, WeeklyStats } from "@/lib/props";
-import { OverviewHeader } from "@/components/Dashboard/OverviewHeader";
-import { StatsCards } from "@/components/Dashboard/StatsCards";
-import { ActivitySection } from "@/components/Dashboard/ActivitySection";
-import { CampaignPerformanceSection } from "@/components/Dashboard/CampaignPerformance";
+import { OverviewHeader } from "@/components/features/Dashboard/OverviewHeader";
+import { StatsCards } from "@/components/features/Dashboard/StatsCards";
+import { ActivitySection } from "@/components/features/Dashboard/ActivitySection";
+import { CampaignPerformanceSection } from "@/components/features/Dashboard/CampaignPerformance";
 
 export default function OverviewPage() {
   const [todayStatus, setTodayStatus] = useState<null | TodayStatus>(null);

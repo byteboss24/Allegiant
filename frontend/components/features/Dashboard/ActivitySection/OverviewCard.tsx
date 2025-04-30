@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CenteredSpinner from "./CenteredSpinner";
-import Overview from "@/components/Dashboard/Overview";
+import Overview from "@/components/features/Dashboard/Overview";
 
 interface OverviewCardProps {
   isLoading: boolean;

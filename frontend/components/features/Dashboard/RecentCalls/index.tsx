@@ -5,7 +5,7 @@ import { fetchRecentCalls as fetchRecentCallsApi } from "@/lib/apis"
 import { RecentCall } from "@/lib/props"
 import RecentCallItem from "./RecentCallItem";
 import NoCalls from "./NoCalls";
-import CenteredSpinner from "@/components/Dashboard/ActivitySection/CenteredSpinner";
+import CenteredSpinner from "@/components/features/Dashboard/ActivitySection/CenteredSpinner";
 
 export default function RecentCalls() {
   const [calls, setCalls] = useState<RecentCall[]>([])

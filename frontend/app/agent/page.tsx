@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import AgentConfig from "@/components/Agent/AgentConfig";
-import AgentPageHeader from "@/components/Agent/Header";
+import AgentConfig from "@/components/features/Agent/AgentConfig";
+import AgentPageHeader from "@/components/features/Agent/Header";
 
 export default function AgentPage() {
   return (

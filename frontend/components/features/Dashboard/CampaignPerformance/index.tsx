@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { CheckCircleIcon } from "@/components/icons/CheckCircleIcon";
-import CampaignStats from "@/components/Dashboard/CampaignStats";
+import CampaignStats from "@/components/features/Dashboard/CampaignStats";
 import CampaignPerformanceHeader from "./CampaignPerformanceHeader";
 import CampaignPerformanceCard from "./CampaignPerformanceCard";
 

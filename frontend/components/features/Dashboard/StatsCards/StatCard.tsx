@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import CenteredSpinner from "@/components/Dashboard/ActivitySection/CenteredSpinner";
+import CenteredSpinner from "@/components/features/Dashboard/ActivitySection/CenteredSpinner";
 import StatCardHeader from "./StatCardHeader";
 
 interface StatCardProps {

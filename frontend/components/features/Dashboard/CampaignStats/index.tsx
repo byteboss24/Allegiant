@@ -6,7 +6,7 @@ import CampaignStatsHeader from "./CampaignStatsHeader";
 import CampaignStatsProgress from "./CampaignStatsProgress";
 import CampaignStatsGrid from "./CampaignStatsGrid";
 import NoData from "./NoData";
-import CenteredSpinner from "@/components/Dashboard/ActivitySection/CenteredSpinner";
+import CenteredSpinner from "@/components/features/Dashboard/ActivitySection/CenteredSpinner";
 import { fetchMonthlyStats } from "@/lib/apis"
 
 import type { MonthlyStats } from "@/lib/props"

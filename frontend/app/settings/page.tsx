@@ -1,4 +1,4 @@
-import { DashboardShell } from "@/components/Dashboard/DashboardShell"
+import { DashboardShell } from "@/components/features/Dashboard/DashboardShell"
 import { Card, CardContent } from "@/components/ui/card"
 import SettingsHeader from "./SettingsHeader";
 

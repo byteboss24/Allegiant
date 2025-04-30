@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import CenteredSpinner from "./CenteredSpinner";
-import RecentCalls from "@/components/Dashboard/RecentCalls";
+import RecentCalls from "@/components/features/Dashboard/RecentCalls";
 
 interface RecentCallsCardProps {
   isLoading: boolean;

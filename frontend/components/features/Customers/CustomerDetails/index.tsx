@@ -31,7 +31,7 @@ import { toast } from "react-toastify";
 import { fetchCustomerDetails as fetchCustomerDetailsApi, fetchRecords } from "@/lib/apis";
 import type { Invoice as CustomerDetails, CallRecordingItem } from "@/lib/props";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import CallHistoryTable from "@/components/Calls/CallHistoryTable";
+import CallHistoryTable from "@/components/features/Calls/CallHistoryTable";
 
 // --- useCallRecordings minimal ---
 function useCallRecordingsMinimal() {

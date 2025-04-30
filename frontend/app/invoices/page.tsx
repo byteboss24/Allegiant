@@ -1,10 +1,10 @@
-import { CustomersList } from "@/components/Customers/CustomersList";
+import { CustomersList } from "@/components/features/Customers/CustomersList";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import InvoicesHeader from "../../components/Customers/Header";
+import InvoicesHeader from "../../components/features/Customers/Header";
 
 export default function InvoicesPage() {
   return (
