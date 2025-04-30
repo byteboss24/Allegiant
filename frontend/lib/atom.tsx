@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { Agent } from "@/lib/props";
+import { Agent } from "@/lib/datatypes";
 
 export const invoiceTableAllColumns = [
   { key: "name", label: "Name" },

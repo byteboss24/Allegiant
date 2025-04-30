@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { RecentCall } from "@/lib/props";
+import { RecentCall } from "@/lib/datatypes";
 
 interface RecentCallItemProps {
   call: RecentCall;

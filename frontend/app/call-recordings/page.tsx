@@ -113,7 +113,6 @@ export default function CallRecordingsPage() {
 
   return (
     <>
-      <div className="fixed inset-0 min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-background dark:via-background dark:to-blue-950 -z-10" />
       <div className="relative w-full flex items-start justify-center">
         <div className="shadow-xl w-full rounded-2xl border border-blue-100 dark:border-blue-900 bg-white/90 dark:bg-background/80 backdrop-blur">
           <CallRecordingsHeader />

@@ -1,6 +1,6 @@
 "use client"
 
-import Toolbar from "./Toolbar"
+import Toolbar from "../CustomersToolbar"
 import CustomersTable from "../CustomersTable"
 import { DeleteDialog } from "../DeleteDialog"
 import CompleteDialog from "./CompleteDialog";

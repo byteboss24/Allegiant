@@ -38,6 +38,7 @@ export default function RootLayout({
           </header>
           <ToastContainer className="mt-20" hideProgressBar/>
           <main className="container mx-auto py-6 flex-1 mt-[80px]">
+            <div className="fixed inset-0 min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-background dark:via-background dark:to-blue-950 -z-10" />
             {children}
           </main>
         </AuthProvider>

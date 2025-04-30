@@ -11,7 +11,7 @@ import type { AgentConfigHeaderProps } from "@/lib/props"
 import { useAtomValue } from "jotai"
 import { agentsAtom, isActiveAtom } from "@/lib/atom"
 
-export function AgentConfigHeader({
+export default function AgentConfigHeader({
   selectedAgentId,
   selectedAgent,
   isLoading,
@@ -36,9 +36,9 @@ export function AgentConfigHeader({
     }
     const updated = await updateAgent({ name: name.trim() });
     if (updated) {
-        setIsEditingName(false);
+      setIsEditingName(false);
     } else {
-        setName(selectedAgent?.name || "");
+      setName(selectedAgent?.name || "");
     }
   }
 

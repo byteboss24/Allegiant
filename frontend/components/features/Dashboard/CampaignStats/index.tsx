@@ -9,7 +9,7 @@ import NoData from "./NoData";
 import CenteredSpinner from "@/components/features/Dashboard/ActivitySection/CenteredSpinner";
 import { fetchMonthlyStats } from "@/lib/apis"
 
-import type { MonthlyStats } from "@/lib/props"
+import type { MonthlyStats } from "@/lib/datatypes"
 
 const CampaignStats = () => {
   const [stats, setStats] = useState<MonthlyStats | null>(null)

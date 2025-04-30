@@ -9,7 +9,7 @@ import type { AgentSystemPromptProps } from "@/lib/props";
 import { useAtomValue } from "jotai";
 import { isActiveAtom } from "@/lib/atom";
 
-export function AgentSystemPrompt({
+export default function AgentSystemPrompt({
   selectedAgent,
   isLoading,
   updateAgent,

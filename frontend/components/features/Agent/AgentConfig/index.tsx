@@ -16,13 +16,13 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { WordPronunciationDialog } from "../WordPronunciationDialog";
-import { AgentConfigHeader } from "../AgentConfigHeader";
-import { AgentSystemPrompt } from "../AgentSystemPrompt";
+import AgentConfigHeader from "../AgentConfigHeader";
+import AgentSystemPrompt from "../AgentSystemPrompt";
 import { isActiveAtom, agentsAtom } from "@/lib/atom";
 import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { Save } from "lucide-react";
 import { toast } from "react-toastify";
-import type { Agent } from "@/lib/props";
+import type { Agent } from "@/lib/datatypes";
 import {
   fetchAgents as apiFetchAgents,
   fetchSelectedAgent as apiFetchSelectedAgent,
@@ -62,7 +62,6 @@ export default function AgentConfig() {
 
   useEffect(() => {
     fetchAgentData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle agent select

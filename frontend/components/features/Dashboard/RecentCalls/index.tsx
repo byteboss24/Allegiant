@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { fetchRecentCalls as fetchRecentCallsApi } from "@/lib/apis"
-import { RecentCall } from "@/lib/props"
+import { RecentCall } from "@/lib/datatypes"
 import RecentCallItem from "./RecentCallItem";
 import NoCalls from "./NoCalls";
 import CenteredSpinner from "@/components/features/Dashboard/ActivitySection/CenteredSpinner";

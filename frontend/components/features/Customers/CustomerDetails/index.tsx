@@ -29,16 +29,14 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { fetchCustomerDetails as fetchCustomerDetailsApi, fetchRecords } from "@/lib/apis";
-import type { Invoice as CustomerDetails, CallRecordingItem } from "@/lib/props";
+import type { Invoice, CallRecordingItem } from "@/lib/datatypes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CallHistoryTable from "@/components/features/Calls/CallHistoryTable";
 
-// --- useCallRecordings minimal ---
 function useCallRecordingsMinimal() {
   const [callRecordings, setCallRecordings] = useState<CallRecordingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // If you want to add search/pagination, add here
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -59,14 +57,13 @@ export function CustomerDetails() {
   const router = useRouter();
   const { invoice_number } = useParams();
 
-  // Always call hooks at the top
   const {
     callRecordings,
     loading,
     error,
   } = useCallRecordingsMinimal();
 
-  const [customer, setCustomer] = useState<CustomerDetails | null>(null);
+  const [customer, setCustomer] = useState<Invoice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -87,7 +84,6 @@ export function CustomerDetails() {
     }
   }, [invoice_number]);
 
-  // Memoized filtered call recordings
   const filteredCallRecordings = useMemo(
     () => callRecordings.filter(
       (call) => call.invoice_number === customer?.invoice_number
@@ -95,10 +91,8 @@ export function CustomerDetails() {
     [callRecordings, customer?.invoice_number]
   );
 
-  // Memoized back handler
   const handleBack = useCallback(() => router.back(), [router]);
 
-  // Memoized Details Section
   const DetailsSection = useCallback(() => (
     <TabsContent value="details">
       <CardContent className="space-y-10 pt-6">
@@ -239,7 +233,6 @@ export function CustomerDetails() {
 
   return (
     <>
-      <div className="fixed inset-0 min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-background dark:via-background dark:to-blue-950 -z-10" />
       <div className="container mx-auto">
         <Button
           variant="ghost"

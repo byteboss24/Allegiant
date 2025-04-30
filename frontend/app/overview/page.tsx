@@ -7,7 +7,7 @@ import {
   fetchWeeklyStats,
   fetchYesterdayStatus,
 } from "@/lib/apis";
-import type { TodayStatus, WeeklyStats } from "@/lib/props";
+import type { TodayStatus, WeeklyStats } from "@/lib/datatypes";
 import { OverviewHeader } from "@/components/features/Dashboard/OverviewHeader";
 import { StatsCards } from "@/components/features/Dashboard/StatsCards";
 import { ActivitySection } from "@/components/features/Dashboard/ActivitySection";

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, ChevronDown, Search, UploadCloud, Download, Loader2, Trash2, Settings } from "lucide-react";
+import { Search, UploadCloud, Download, Loader2, Trash2, Settings } from "lucide-react";
 import React from "react";
 import type { CustomersToolbarProps } from "@/lib/props";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -12,20 +12,20 @@ interface CustomersToolbarExtendedProps extends CustomersToolbarProps {
   onSelectColumn: (columnKey: string) => void;
 }
 
-export const CustomersToolbar: React.FC<CustomersToolbarExtendedProps> = ({
+const Toolbar: React.FC<CustomersToolbarExtendedProps> = ({
   searchTerm,
   statusFilter,
   selectedCount,
   isDeleting,
   isUploading,
   isExporting,
+  allColumns,
+  selectedColumns,
   onSearchChange,
   onStatusFilterChange,
   onDeleteClick,
   onUpload,
   onExport,
-  allColumns,
-  selectedColumns,
   onSelectColumn,
 }) => (
   <>
@@ -149,3 +149,5 @@ export const CustomersToolbar: React.FC<CustomersToolbarExtendedProps> = ({
     </div>
   </>
 ); 
+
+export default Toolbar;
