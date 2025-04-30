@@ -21,6 +21,7 @@ from pydantic import BaseModel
 import websockets
 import asyncio
 import datetime
+import json
 import pytz
 from pydantic import BaseModel
 
@@ -95,11 +96,14 @@ async def outbound(request: OutboundRequest) -> str:
                 response = OPENAI_CLIENT.responses.create(
                     model="gpt-4.1-2025-04-14",
                     instructions="""
-                        Analyze the transcript of the call and provide a summary of the conversation. return call status and description. e.g. = {"type": "sms_sent", "content": "call was completed"}""",
+                        Analyze the transcript of the call and provide a summary of the conversation. return call status and description. e.g. = {"type": "sms_sent", "content": "call was completed"}
+                        types are 'completed': confirmed pay state, 'sms_sent': Payment link sent via sms state, 'seek': can't pay now state, 'reserve': paying time reserved state, 'voice_message': voice message.
+                        """,
                     temperature=0.5,
                     input=call_state.invoices.get(call.sid, {}).get('script', "") or "",
                 )
-                print("response", response)
+                text_content = response.output[0].content[0].text
+                print("response", text_content)
                 await record_service.create_record(RecordCreate(
                     invoice_number=invoice.invoice_number,
                     duration=int(data.duration),
@@ -107,7 +111,7 @@ async def outbound(request: OutboundRequest) -> str:
                     audio_url=f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Recordings/{recording.sid}" if recording else "",
                     status=record_status
                 ))
-                await invoice_service.update_invoice_status(invoice.invoice_number, record_status)
+                await invoice_service.update_invoice_status(invoice.invoice_number, json.loads(text_content)['type'])
                 call_state.cleanup_call(call.sid)
                 break
             await asyncio.sleep(2)
@@ -149,13 +153,13 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await asyncio.gather(
                 process_twilio_messages(websocket, openai_ws),
                 process_openai_messages(websocket, openai_ws, data),
-                monitor_silence(openai_ws, callSid)  # Monitor silence for this call
+                monitor_silence(openai_ws, callSid)
             )
     except (WebSocketDisconnect, ValueError) as e:
         logger.warning(f"WebSocket disconnected for call {callSid}: {e}")
     except asyncio.CancelledError:
         if callSid:
-            call_state.cleanup_call(callSid)  # Clean up on cancellation
+            call_state.cleanup_call(callSid)
         return
     except Exception as e:
         logger.error(f"Error in websocket_endpoint for call {callSid}: {e}", exc_info=True)
