@@ -204,7 +204,7 @@ export function CustomersList() {
 
   const confirmMarkCompleted = useCallback(async () => {
     if (!invoiceToComplete) return;
-    await handleStatusUpdate(invoiceToComplete, 'completed2');
+    await handleStatusUpdate(invoiceToComplete, 'completed');
     setShowCompleteConfirm(false);
     setInvoiceToComplete(null);
   }, [invoiceToComplete, handleStatusUpdate]);
@@ -239,13 +239,13 @@ export function CustomersList() {
         selectedCount={selectedInvoices.length}
         isUploading={isUploading}
         isExporting={isExporting}
+        allColumns={allColumns}
+        selectedColumns={selectedColumns}
         onSearchChange={useCallback(e => setSearchTerm(e.target.value), [])}
         onStatusFilterChange={setStatusFilter}
         onDeleteClick={useCallback(() => setShowDeleteConfirm(true), [])}
         onUpload={handleUpload}
         onExport={handleExport}
-        allColumns={allColumns}
-        selectedColumns={selectedColumns}
         onSelectColumn={handleSelectColumn}
       />
 

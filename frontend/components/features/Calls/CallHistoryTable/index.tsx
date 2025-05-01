@@ -65,7 +65,7 @@ const CallHistoryTable: React.FC<CallHistoryTableProps> = ({
                   <TableCell className="text-center px-4 py-3">
                     <Badge
                       variant={
-                        call.status === "completed" || call.status === "sms"
+                        call.status === "completed" || call.status === "sms_sent"
                           ? "secondary"
                           : call.status === "no-answer" ||
                             call.status === "failed" ||
@@ -74,12 +74,10 @@ const CallHistoryTable: React.FC<CallHistoryTableProps> = ({
                           : "secondary"
                       }
                     >
-                      {call.status?.toUpperCase() === "SMS"
+                      {call.status?.toUpperCase() === "SMS_SENT"
                         ? "SMS Sent"
                         : call.status?.toUpperCase() === "COMPLETED"
                         ? "CALLED"
-                        : call.status?.toUpperCase() === "COMPLETED2"
-                        ? "COMPLETED"
                         : call.status?.toUpperCase()}
                     </Badge>
                   </TableCell>

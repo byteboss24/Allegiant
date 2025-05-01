@@ -66,23 +66,21 @@ export const CallPlayer: React.FC<CallPlayerProps> = ({ selectedCall }) => {
     if (!selectedCall) return null;
     return (
       <>
-        {selectedCall.status?.toUpperCase() === "SMS" ? (
+        {selectedCall.status?.toUpperCase() === "SMS_SENT" ? (
           <Badge variant="secondary">CALLED</Badge>
         ) : null}
         <Badge
           variant={
-            selectedCall.status === "completed" || selectedCall.status === "sms"
+            selectedCall.status === "completed" || selectedCall.status === "sms_sent"
               ? "secondary"
               : selectedCall.status === "pending"
               ? "outline"
               : "destructive"
           }
         >
-          {selectedCall.status?.toUpperCase() === "SMS"
+          {selectedCall.status?.toUpperCase() === "SMS_SENT"
             ? "SMS Sent"
             : selectedCall.status?.toUpperCase() === "COMPLETED"
-            ? "CALLED"
-            : selectedCall.status?.toUpperCase() === "COMPLETED2"
             ? "CALLED"
             : selectedCall.status?.toUpperCase()}
         </Badge>

@@ -142,28 +142,21 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                 case "status":
                   return (
                     <TableCell key={col.key} className="text-center">
-                      {invoice.status?.toUpperCase() === "SMS" ? (
-                        <Badge variant="secondary">CALLED</Badge>
-                      ) : null}
                       <Badge
                         variant={
-                          invoice.status === "completed" ||
-                          invoice.status === "sms"
+                          invoice.status === "voice_message" ||
+                          invoice.status === "sms_sent" ||
+                          invoice.status === "seek" ||
+                          invoice.status === "reserve"
                             ? "secondary"
-                            : invoice.status === "completed2"
+                            : invoice.status === "completed"
                             ? "default"
                             : invoice.status === "pending"
                             ? "outline"
                             : "destructive"
                         }
                       >
-                        {invoice.status?.toUpperCase() === "SMS"
-                          ? "SMS Sent"
-                          : invoice.status?.toUpperCase() === "COMPLETED"
-                          ? "CALLED"
-                          : invoice.status?.toUpperCase() === "COMPLETED2"
-                          ? "COMPLETED"
-                          : invoice.status?.toUpperCase()}
+                        {invoice.status?.toUpperCase()}
                       </Badge>
                     </TableCell>
                   );
@@ -180,12 +173,12 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                           <ExternalLink className="h-4 w-4" />
                           <span className="sr-only">View Details</span>
                         </button>
-                        {invoice.status !== "completed2" && (
+                        {invoice.status !== "completed" && (
                           <button
                             type="button"
                             className="h-8 w-8 flex items-center justify-center text-green-600 disabled:opacity-50"
                             title={
-                              invoice.status === "completed2"
+                              invoice.status === "completed"
                                 ? "Already completed"
                                 : "Mark as completed"
                             }
