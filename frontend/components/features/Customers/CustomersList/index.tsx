@@ -2,7 +2,7 @@
 
 import Toolbar from "../CustomersToolbar"
 import CustomersTable from "../CustomersTable"
-import { DeleteDialog } from "../DeleteDialog"
+import DeleteDialog from "@/components/Dialogs/DeleteDialog"
 import CompleteDialog from "./CompleteDialog";
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { useAtom } from "jotai"
@@ -21,7 +21,6 @@ export function CustomersList() {
   const [isUploading, setIsUploading] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [selectedInvoices, setSelectedInvoices] = useState([])
-  const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
   const [invoiceToComplete, setInvoiceToComplete] = useState(null)
@@ -178,7 +177,6 @@ export function CustomersList() {
       toast.error("Please select at least one invoice to delete" )
       return
     }
-    setIsDeleting(true)
     try {
       await deleteInvoices(selectedInvoices)
       setInvoices(prevInvoices => 
@@ -190,7 +188,6 @@ export function CustomersList() {
       console.error('Error deleting invoices:', error)
       toast.error("Delete failed" )
     } finally {
-      setIsDeleting(false)
       setShowDeleteConfirm(false)
     }
   }, [selectedInvoices]);
@@ -230,17 +227,16 @@ export function CustomersList() {
       <DeleteDialog
         open={showDeleteConfirm}
         selectedCount={selectedInvoices.length}
-        isDeleting={isDeleting}
         onOpenChange={setShowDeleteConfirm}
         onDelete={handleDeleteInvoices}
         onCancel={useCallback(() => setShowDeleteConfirm(false), [])}
+        resourceType="invoice"
       />
 
       <Toolbar
         searchTerm={searchTerm}
         statusFilter={statusFilter}
         selectedCount={selectedInvoices.length}
-        isDeleting={isDeleting}
         isUploading={isUploading}
         isExporting={isExporting}
         onSearchChange={useCallback(e => setSearchTerm(e.target.value), [])}
@@ -266,11 +262,6 @@ export function CustomersList() {
         onSelectColumn={handleSelectColumn}
       />
 
-      <CompleteDialog
-        open={showCompleteConfirm}
-        onOpenChange={setShowCompleteConfirm}
-        onConfirm={confirmMarkCompleted}
-      />
       <Pagination
         page={page}
         totalPages={totalPages}
@@ -279,6 +270,12 @@ export function CustomersList() {
         selectedInvoicesLength={selectedInvoices.length}
         setPage={setPage}
         isLoading={isLoading}
+      />
+      
+      <CompleteDialog
+        open={showCompleteConfirm}
+        onOpenChange={setShowCompleteConfirm}
+        onConfirm={confirmMarkCompleted}
       />
     </div>
   )

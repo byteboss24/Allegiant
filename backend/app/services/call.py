@@ -47,19 +47,22 @@ class CallState:
         self.is_speaking: Dict[str, bool] = {}
         self.last_agent_response_time: Dict[str, float] = {}
         self.silence_detected: Dict[str, bool] = {}
+        self.audio_buffers: Dict[str, bytearray] = {}  # Buffer for stacking audio data per callSid
 
     def initialize_call(self, callSid: str):
         """Initialize state for a new call."""
         self.is_speaking[callSid] = False
-        self.last_agent_response_time[callSid] = 0
+        self.last_agent_response_time[callSid] = time.time()
         self.silence_detected[callSid] = False
+        self.audio_buffers[callSid] = bytearray()  # Initialize audio buffer
 
     def cleanup_call(self, callSid: str):
         """Remove state for a completed call."""
+        self.invoices.pop(callSid, None)
         self.is_speaking.pop(callSid, None)
         self.last_agent_response_time.pop(callSid, None)
         self.silence_detected.pop(callSid, None)
-        self.invoices.pop(callSid, None)
+        self.audio_buffers.pop(callSid, None)  # Cleanup audio buffer
 
 call_state = CallState()
 manager = ConnectionManager()
@@ -177,7 +180,7 @@ async def monitor_silence(openai_ws: websockets.WebSocketClientProtocol, callSid
                 call_state.last_agent_response_time.get(callSid, 0)
                 and not call_state.is_speaking.get(callSid, False)
                 and not call_state.silence_detected.get(callSid, False)
-                and (time.time() - call_state.last_agent_response_time[callSid]) >= 10
+                and (time.time() - call_state.last_agent_response_time[callSid]) >= 5
             ):
                 call_state.silence_detected[callSid] = True
                 logger.info(f"Detected 5 seconds of silence for call {callSid}, triggering Say Hello")
@@ -269,7 +272,6 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                                         "output": "Are you still there?"
                                     }
                                 }))
-                                
                 case 'response.done':
                     try:
                         transcript = response['response']['output']
@@ -323,7 +325,10 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                     except Exception as e:
                         logger.error(f"Error getting transcript for call {callSid}: {e}")
                 case 'response.audio.delta' if response.get('delta'):
-                    audio_payload = base64.b64encode(base64.b64decode(response['delta'])).decode('utf-8')
+                    # Decode and accumulate audio bytes for duration calculation
+                    audio_bytes = base64.b64decode(response['delta'])
+                    call_state.audio_buffers[callSid].extend(audio_bytes)
+                    audio_payload = base64.b64encode(audio_bytes).decode('utf-8')
                     await websocket.send_json({
                         "event": "media",
                         "streamSid": data['streamSid'],
@@ -331,8 +336,17 @@ async def process_openai_messages(websocket: WebSocket, openai_ws: websockets.We
                     })
                 case 'response.audio.done':
                     print("Response audio done")
+                    # Calculate duration of stacked audio
+                    audio_buffer = call_state.audio_buffers.get(callSid, bytearray())
+                    sample_rate = 8000
+                    num_channels = 1
+                    if audio_buffer:
+                        duration_sec = len(audio_buffer) / (sample_rate * num_channels)
+                        print(f"Total audio duration for call {callSid}: {duration_sec:.2f} seconds")
+                    # Reset buffer for next segment
+                    call_state.audio_buffers[callSid] = bytearray()
                     call_state.is_speaking[callSid] = False
-                    call_state.last_agent_response_time[callSid] = time.time()
+                    call_state.last_agent_response_time[callSid] = time.time() + duration_sec
                     call_state.silence_detected[callSid] = False
     except websockets.exceptions.ConnectionClosed as e:
         logger.warning(f"OpenAI WebSocket closed for call {callSid}: {e}")

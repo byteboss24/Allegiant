@@ -56,7 +56,6 @@ export interface CustomersToolbarProps {
   searchTerm: string
   statusFilter: string
   selectedCount: number
-  isDeleting: boolean
   isUploading: boolean
   isExporting: boolean
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -69,10 +68,10 @@ export interface CustomersToolbarProps {
 export interface DeleteDialogProps {
   open: boolean
   selectedCount: number
-  isDeleting: boolean
   onOpenChange: (open: boolean) => void
   onDelete: () => void
   onCancel?: () => void
+  resourceType: string;
 }
 
 export interface CallDialogProps {
@@ -89,16 +88,16 @@ export interface AgentConfigHeaderProps {
   selectedAgentId: number | null
   selectedAgent: Agent | null
   isLoading: boolean
+  isAgentActive?: boolean
   handleAgentSelect: (agentId: number) => void
   updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>
   handleStatusChange: (newStatus: boolean) => void
-  isAgentActive?: boolean
 }
 
 export interface AgentSystemPromptProps {
   selectedAgent: Agent | null
   isLoading: boolean
+  isAgentActive?: boolean
   updateAgent: (updatedFields: Partial<Agent>) => Promise<Agent | null>
   onOpenWordDialog: () => void
-  isAgentActive?: boolean
 }

@@ -2,13 +2,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DeleteDialogProps } from "@/lib/props";
 import React from "react";
 
-export const DeleteDialog: React.FC<DeleteDialogProps> = ({
+const DeleteDialog: React.FC<DeleteDialogProps> = ({
   open,
   selectedCount,
-  isDeleting,
   onOpenChange,
   onDelete,
   onCancel,
+  resourceType,
 }) => (
   <AlertDialog open={open} onOpenChange={onOpenChange}>
     <AlertDialogContent>
@@ -16,8 +16,8 @@ export const DeleteDialog: React.FC<DeleteDialogProps> = ({
         <AlertDialogTitle>Are you sure you want to delete?</AlertDialogTitle>
         <AlertDialogDescription>
           {selectedCount > 1
-            ? `You are about to delete ${selectedCount} invoices. This action cannot be undone.`
-            : "You are about to delete this invoice. This action cannot be undone."}
+            ? `You are about to delete ${selectedCount} ${resourceType}s. This action cannot be undone.`
+            : `You are about to delete this ${resourceType}. This action cannot be undone.`}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
@@ -26,9 +26,11 @@ export const DeleteDialog: React.FC<DeleteDialogProps> = ({
           onClick={onDelete}
           className="bg-red-600 hover:bg-red-700"
         >
-          {isDeleting ? "Deleting..." : "Delete"}
+          Delete
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
 ); 
+
+export default DeleteDialog;

@@ -162,7 +162,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await asyncio.gather(
                 process_twilio_messages(websocket, openai_connection),
                 process_openai_messages(websocket, openai_connection, call_data),
-                
                 monitor_silence(openai_connection, call_sid)
             )
     except (WebSocketDisconnect, ValueError) as e:

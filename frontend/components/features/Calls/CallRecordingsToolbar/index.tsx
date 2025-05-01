@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// TODO: Implement search and filter logic
 interface CallRecordingsToolbarProps {
   searchTerm?: string;
   statusFilter?: string;

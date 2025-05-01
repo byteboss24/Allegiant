@@ -16,7 +16,6 @@ const Toolbar: React.FC<CustomersToolbarExtendedProps> = ({
   searchTerm,
   statusFilter,
   selectedCount,
-  isDeleting,
   isUploading,
   isExporting,
   allColumns,
@@ -38,10 +37,10 @@ const Toolbar: React.FC<CustomersToolbarExtendedProps> = ({
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="completed">Called</SelectItem>
+            <SelectItem value="seek">Seek</SelectItem>
             <SelectItem value="completed2">Completed</SelectItem>
-            <SelectItem value="sms">SMS Sent</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="sms_sent">SMS Sent</SelectItem>
+            <SelectItem value="voice_message">Voice Message</SelectItem>
           </SelectContent>
         </Select>
         <DropdownMenu>
@@ -82,19 +81,11 @@ const Toolbar: React.FC<CustomersToolbarExtendedProps> = ({
             size="sm"
             className="h-8 gap-1"
             onClick={onDeleteClick}
-            disabled={isDeleting}
           >
-            {isDeleting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Deleting...</span>
-              </>
-            ) : (
-              <>
-                <Trash2 className="h-4 w-4" />
-                <span>Delete ({selectedCount})</span>
-              </>
-            )}
+            <>
+              <Trash2 className="h-4 w-4" />
+              <span>Delete ({selectedCount})</span>
+            </>
           </Button>
         )}
         <div className="relative">

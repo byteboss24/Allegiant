@@ -2,13 +2,13 @@
 
 import CallList from "@/components/features/Calls/CallList";
 import CallPlayer from "@/components/features/Calls/CallPlayer";
-import CallDialogs from "@/components/features/Calls/CallDialogs";
 import CallRecordingsToolbar from "@/components/features/Calls/CallRecordingsToolbar";
 import CallRecordingsHeader from "../../components/features/Calls/Header";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { fetchRecords, deleteRecording, deleteMultipleRecordings } from "@/lib/apis";
 import { Separator } from "@/components/ui/separator";
+import DeleteDialog from "@/components/Dialogs/DeleteDialog";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -35,7 +35,6 @@ export default function CallRecordingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
   const [selectedCall, setSelectedCall] = useState(null);
 
   useEffect(() => {
@@ -100,14 +99,14 @@ export default function CallRecordingsPage() {
     const idsToDelete = [...selectedIdsForMultiDelete];
     try {
       await deleteMultipleRecordings(idsToDelete);
-      setCallRecordings((prev) => prev.filter((rec) => !idsToDelete.includes(rec.id)));
+      setCallRecordings((prev) => prev.filter((recording) => !idsToDelete.includes(recording.id)));
       setTotalItems(prev => prev - idsToDelete.length);
-      setSelectedIdsForMultiDelete([]);
       setShowMultiDeleteDialog(false);
-      toast.success(`Deleted ${idsToDelete.length} call(s).`);
+      setSelectedIdsForMultiDelete([]);
+      toast.success("Selected call recordings deleted.");
     } catch (error) {
-      console.error('Error deleting multiple recordings:', error);
-      toast.error("Failed to delete selected calls.");
+      console.error('Error deleting recordings:', error);
+      toast.error("Failed to delete selected call recordings.");
     }
   }
 
@@ -151,13 +150,26 @@ export default function CallRecordingsPage() {
                 <CallPlayer selectedCall={selectedCall}/>
               </div>
             </div>
-            <CallDialogs
-              showDeleteDialog={showDeleteDialog}
-              showMultiDeleteDialog={showMultiDeleteDialog}
-              setShowDeleteDialog={setShowDeleteDialog}
-              setShowMultiDeleteDialog={setShowMultiDeleteDialog}
-              confirmDelete={confirmDelete}
-              confirmMultiDelete={confirmMultiDelete}
+            <DeleteDialog
+              open={showDeleteDialog}
+              selectedCount={selectedRecordingForDelete ? 1 : 0}
+              onOpenChange={setShowDeleteDialog}
+              onDelete={confirmDelete}
+              onCancel={() => {
+                setShowDeleteDialog(false);
+                setSelectedRecordingForDelete(null);
+              }}
+              resourceType="call recording"
+            />
+            <DeleteDialog
+              open={showMultiDeleteDialog}
+              selectedCount={selectedIdsForMultiDelete.length}
+              onOpenChange={setShowMultiDeleteDialog}
+              onDelete={confirmMultiDelete}
+              onCancel={() => {
+                setShowMultiDeleteDialog(false);
+              }}
+              resourceType="call recording"
             />
           </div>
         </div>
