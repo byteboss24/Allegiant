@@ -47,14 +47,14 @@ class CallState:
         self.is_speaking: Dict[str, bool] = {}
         self.last_agent_response_time: Dict[str, float] = {}
         self.silence_detected: Dict[str, bool] = {}
-        self.audio_buffers: Dict[str, bytearray] = {}  # Buffer for stacking audio data per callSid
+        self.audio_buffers: Dict[str, bytearray] = {}
 
     def initialize_call(self, callSid: str):
         """Initialize state for a new call."""
         self.is_speaking[callSid] = False
         self.last_agent_response_time[callSid] = time.time()
         self.silence_detected[callSid] = False
-        self.audio_buffers[callSid] = bytearray()  # Initialize audio buffer
+        self.audio_buffers[callSid] = bytearray()
 
     def cleanup_call(self, callSid: str):
         """Remove state for a completed call."""
@@ -62,7 +62,7 @@ class CallState:
         self.is_speaking.pop(callSid, None)
         self.last_agent_response_time.pop(callSid, None)
         self.silence_detected.pop(callSid, None)
-        self.audio_buffers.pop(callSid, None)  # Cleanup audio buffer
+        self.audio_buffers.pop(callSid, None)
 
 call_state = CallState()
 manager = ConnectionManager()
@@ -119,7 +119,7 @@ async def initialize_session(openai_ws: websockets.WebSocketClientProtocol, invo
     tools.append({
         "type": "function",
         "name": "say_hello",
-        "description": "If the person doesn't speak after 5 seconds of the Agent speaking, say 'Hello' or 'Are you there?'",
+        "description": "Invoke this function when the person doesn't speak after 5 seconds of the Agent speaking, say 'Hello' or 'Are you there?'",
         "parameters": {}
     })
     session_config = {

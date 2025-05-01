@@ -158,6 +158,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             if call_state.invoices[call_sid].get("script") is None:
                 call_state.invoices[call_sid]["script"] = ""
             await initialize_session(openai_connection, call_state.invoices.get(call_sid, {}))
+            await asyncio.sleep(2)
             await send_initial_greeting(openai_connection, call_sid)
             await asyncio.gather(
                 process_twilio_messages(websocket, openai_connection),
