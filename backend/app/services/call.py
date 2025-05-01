@@ -180,7 +180,7 @@ async def monitor_silence(openai_ws: websockets.WebSocketClientProtocol, callSid
                 call_state.last_agent_response_time.get(callSid, 0)
                 and not call_state.is_speaking.get(callSid, False)
                 and not call_state.silence_detected.get(callSid, False)
-                and (time.time() - call_state.last_agent_response_time[callSid]) >= 5
+                and (time.time() - call_state.last_agent_response_time[callSid]) >= 8
             ):
                 call_state.silence_detected[callSid] = True
                 logger.info(f"Detected 5 seconds of silence for call {callSid}, triggering Say Hello")
