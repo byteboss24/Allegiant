@@ -39,11 +39,10 @@ const CallRecordingsToolbar: React.FC<CallRecordingsToolbarProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Calls</SelectItem>
-          <SelectItem value="completed">Called</SelectItem>
-          <SelectItem value="completed2">Completed</SelectItem>
-          <SelectItem value="transferred">Transferred</SelectItem>
-          <SelectItem value="sms">SMS Sent</SelectItem>
-          <SelectItem value="failed">Failed</SelectItem>
+          <SelectItem value="seek">Seek</SelectItem>
+          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="sms_sent">SMS Sent</SelectItem>
+          <SelectItem value="voice_message">Voice Message</SelectItem>
         </SelectContent>
       </Select>
     </div>
