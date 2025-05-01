@@ -337,10 +337,8 @@ class MySQLService:
     async def insert_record(self, record):
         """Insert a call record into the database"""
         connection = self._get_connection()
-        print("This is in insert_record", record)
         try:
             with connection.cursor() as cursor:
-                print(record)
                 sql = """
                     INSERT INTO calls (invoice_number, duration, transcript, audio_url, summary, status)
                     VALUES (%s, %s, %s, %s, %s, %s)
@@ -373,7 +371,6 @@ class MySQLService:
 
     async def get_records(self, page: int = 1, per_page: int = 10, search: str = None, status: str = None):
         """Get all records with pagination, search, and status filter (not deleted)"""
-        print(page, per_page, search, status)
         offset = (page - 1) * per_page
         params = []
         where_clauses = ["c.is_deleted = 0"]

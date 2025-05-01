@@ -9,9 +9,7 @@ class RecordService:
 
     async def get_records(self, page: int = 1, per_page: int = 10, search: str = None, status: str = None) -> dict:
         """Get paginated, searched, and filtered records"""
-        print("Get Records", page, per_page, search, status)
         data = await mysql_service.get_records(page, per_page, search, status)
-        print(data)
         return data
 
     async def get_record_by_id(self, record_id: int) -> Optional[Record]:

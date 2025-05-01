@@ -96,7 +96,12 @@ async def outbound(request: OutboundRequest) -> str:
                     model="gpt-4.1-2025-04-14",
                     instructions="""
                         Analyze the transcript of the call and provide a summary of the conversation. return call status and description. e.g. = {"type": "sms_sent", "content": "call was completed"}
-                        types are 'completed': confirmed pay state, 'sms_sent': Payment link sent via sms state, 'seek': can't pay now state, 'reserve': paying time reserved state, 'voice_message': voice message.
+                        types are 
+                        'completed': confirmed pay state, 
+                        'sms_sent': Payment link sent via sms state, 
+                        'seek': can't pay now state, 
+                        'reserve': paying time reserved state, in this state content should be time in %Y-%m-%d %H:%M:%S format in GMT.
+                        'voice_message': voice message.
                         """,
                     temperature=0.5,
                     input=call_state.invoices.get(call.sid, {}).get('script', "") or "",
@@ -134,40 +139,42 @@ async def outbound(request: OutboundRequest) -> str:
 @router.websocket("/media-stream")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     """WebSocket endpoint for streaming media between Twilio and OpenAI."""
-    openai_ws = None
-    callSid = None
-    print("Connected")
+    openai_connection: websockets.WebSocketClientProtocol = None
+    call_sid: str = None
+
     try:
         await manager.connect(websocket)
-        data = await handle_twilio_connection(websocket)
-        print("data", data)
-        if not data:
+        call_data = await handle_twilio_connection(websocket)
+        if not call_data:
             return
-        callSid = data['callSid']
-        print("callsid", callSid, call_state.invoices.get(callSid, {}))
-        async with websockets.connect('wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17', additional_headers={
-            "Authorization": f"Bearer {settings.openai_api_key}",
-            "OpenAI-Beta": "realtime=v1"
-        }) as openai_ws:
-            if call_state.invoices[callSid].get('script') is None:
-                call_state.invoices[callSid]['script'] = ""
-            await initialize_session(openai_ws, call_state.invoices.get(callSid, {}))
-            await send_initial_greeting(openai_ws, callSid)
+        call_sid = call_data["callSid"]
+        async with websockets.connect(
+            'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17',
+            additional_headers={
+                "Authorization": f"Bearer {settings.openai_api_key}",
+                "OpenAI-Beta": "realtime=v1"
+            }
+        ) as openai_connection:
+            if call_state.invoices[call_sid].get("script") is None:
+                call_state.invoices[call_sid]["script"] = ""
+            await initialize_session(openai_connection, call_state.invoices.get(call_sid, {}))
+            await send_initial_greeting(openai_connection, call_sid)
             await asyncio.gather(
-                process_twilio_messages(websocket, openai_ws),
-                process_openai_messages(websocket, openai_ws, data),
-                monitor_silence(openai_ws, callSid)
+                process_twilio_messages(websocket, openai_connection),
+                process_openai_messages(websocket, openai_connection, call_data),
+                
+                monitor_silence(openai_connection, call_sid)
             )
     except (WebSocketDisconnect, ValueError) as e:
-        logger.warning(f"WebSocket disconnected for call {callSid}: {e}")
+        logger.warning(f"WebSocket disconnected for call {call_sid}: {e}")
     except asyncio.CancelledError:
-        if callSid:
-            call_state.cleanup_call(callSid)
+        if call_sid:
+            call_state.cleanup_call(call_sid)
         return
     except Exception as e:
-        logger.error(f"Error in websocket_endpoint for call {callSid}: {e}", exc_info=True)
-        if callSid:
-            call_state.cleanup_call(callSid)  # Clean up on error
+        logger.error(f"Error in websocket_endpoint for call {call_sid}: {e}", exc_info=True)
+        if call_sid:
+            call_state.cleanup_call(call_sid)
     finally:
         await manager.disconnect(websocket)
 
