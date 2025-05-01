@@ -43,10 +43,10 @@ class ConnectionManager:
 class CallState:
     """Tracks the state for each call, including invoices and silence detection."""
     def __init__(self):
-        self.invoices: Dict[str, Dict] = {}  # Invoice data per callSid
-        self.is_speaking: Dict[str, bool] = {}  # Speaking state per callSid
-        self.last_agent_response_time: Dict[str, float] = {}  # Last agent response time per callSid
-        self.silence_detected: Dict[str, bool] = {}  # Silence detection flag per callSid
+        self.invoices: Dict[str, Dict] = {}
+        self.is_speaking: Dict[str, bool] = {}
+        self.last_agent_response_time: Dict[str, float] = {}
+        self.silence_detected: Dict[str, bool] = {}
 
     def initialize_call(self, callSid: str):
         """Initialize state for a new call."""

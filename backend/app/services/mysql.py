@@ -227,7 +227,7 @@ class MySQLService:
         connection = self._get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' and status != 'calling' and status != 'sms' and status != 'completed2' and is_deleted = 0 LIMIT 10")
+                cursor.execute("SELECT * FROM invoices WHERE status != 'completed' and status != 'calling' and status != 'sms' and status != 'completed2' and status != 'reserve' and status != 'seek' and status != 'voice_message' and is_deleted = 0 LIMIT 10")
                 return cursor.fetchall()
         finally:
             connection.close()
